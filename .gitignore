@@ -1,0 +1,26 @@
+﻿# Global Ignore
+.env
+.env.*
+node_modules/
+dist/
+build/
+coverage/
+.DS_Store
+*.log
+
+# Python
+__pycache__/
+*.py[cod]
+*.class
+venv/
+env/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+
+# Mobile (React Native / Expo)
+.expo/
+android/
+ios/

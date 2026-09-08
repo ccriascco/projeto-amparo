@@ -1,0 +1,6 @@
+﻿Publishable key: sb_publishable_REMOVIDA
+
+API URL: https://ieqojnpwjezjthrktxfy.supabase.co/rest/v1/
+
+Ligar o Servidor do Backend: C:\Users\andra\OneDrive\Documentos\projeto-amparo\amparo-backend -> npm run start:dev 
+Ligar o Servidor do AI: venv\Scripts\activate -> python -m uvicorn main:app --reload --port 8000
