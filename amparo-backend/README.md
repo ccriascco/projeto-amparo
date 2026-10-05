@@ -1,114 +1,142 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Amparo — Backend
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+API do aplicativo Amparo, que ajuda mulheres em situação de violência a registrar ocorrências, manter uma rede de guardiãs, acionar um botão de emergência e receber uma classificação de risco feita por inteligência artificial.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+Feito com [NestJS](https://nestjs.com), [Supabase](https://supabase.com) (PostgreSQL e Storage) e autenticação própria com JWT.
 
-## Description
+## Funcionalidades
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+- **Usuárias:** cadastro com CPF validado (dígitos verificadores), login, login disfarçado (senha de disfarce), logout com revogação do token e exclusão da conta.
+- **Guardiãs:** de 1 a 5 por usuária. A última guardiã não pode ser removida enquanto a conta existir.
+- **Ocorrências:** registro com tipos de violência, upload de evidências (foto, vídeo ou áudio) com verificação do conteúdo real do arquivo, e listagem paginada.
+- **Botão de emergência:** acionamento com notificação simulada das guardiãs, rastreamento de localização e encerramento. Acionamentos por engano (até 30 s) não contam para o risco.
+- **Classificação de risco:** a cada ocorrência, o backend envia o histórico para o serviço de IA. Quando o risco passa a ser alto, as guardiãs são alertadas.
 
-## Project setup
+## Requisitos
+
+- Node.js 20 ou mais recente
+- Um projeto no Supabase com as tabelas e o bucket `evidencias_amparo` (ver [Banco de dados](#banco-de-dados))
+- O serviço de IA rodando (pasta `amparo-ia`)
+
+## Instalação
 
 ```bash
-$ npm install
+npm install
 ```
 
-## Compile and run the project
+Crie o arquivo `.env` na raiz do backend. Ele não vai para o git.
+
+```text
+SUPABASE_URL=https://seu-projeto.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=sua-service-role-key
+JWT_SECRET=um-segredo-longo-e-aleatorio
+JWT_EXPIRES_IN=2h
+IA_SHARED_SECRET=o-mesmo-valor-configurado-na-ia
+IA_SERVICE_URL=http://127.0.0.1:8000
+PORT=3000
+```
+
+| Variável | Para que serve |
+|---|---|
+| `SUPABASE_URL` | URL do projeto Supabase |
+| `SUPABASE_SERVICE_ROLE_KEY` | Chave de acesso do backend. Nunca envie para um cliente (ela ignora o RLS) |
+| `JWT_SECRET` | Segredo para assinar os tokens. Use um valor aleatório e diferente em cada ambiente |
+| `JWT_EXPIRES_IN` | Validade do token (padrão `2h`) |
+| `IA_SHARED_SECRET` | Segredo compartilhado com o serviço de IA |
+| `IA_SERVICE_URL` | Endereço do serviço de IA (padrão `http://127.0.0.1:8000`) |
+| `PORT` | Porta da API (padrão `3000`) |
+
+## Executar
 
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+npm run start:dev
 ```
 
-## Run tests
+Em produção:
 
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+npm run build
+npm run start:prod
 ```
 
-## Deployment
+Para confirmar que a API está no ar, `GET /` sem token deve responder `401`.
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+## Rotas
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+Todas as rotas exigem o cabeçalho `Authorization: Bearer <token>`, exceto as marcadas como públicas.
+
+| Método | Rota | Descrição |
+|---|---|---|
+| `POST` | `/usuarias` | Cadastro (público) |
+| `POST` | `/usuarias/login` | Login (público) |
+| `POST` | `/usuarias/login-disfarcado` | Login com a senha de disfarce (público) |
+| `POST` | `/usuarias/logout` | Revoga o token atual |
+| `DELETE` | `/usuarias/me` | Exclui a conta (exige a senha no corpo) |
+| `POST` | `/guardioes` | Cadastra uma guardiã |
+| `GET` | `/guardioes` | Lista as guardiãs da usuária |
+| `PUT` | `/guardioes/:id` | Edita uma guardiã |
+| `DELETE` | `/guardioes/:id` | Remove uma guardiã |
+| `POST` | `/ocorrencias` | Registra uma ocorrência |
+| `GET` | `/ocorrencias?limit=&offset=` | Lista as ocorrências (paginação: padrão 20, máximo 100) |
+| `POST` | `/ocorrencias/:id/evidencias` | Anexa uma evidência (multipart, campo `arquivo`) |
+| `DELETE` | `/ocorrencias/:id` | Remove a ocorrência e seus arquivos |
+| `POST` | `/emergencias/acionar` | Aciona o botão de emergência |
+| `POST` | `/emergencias/:id/localizacao` | Registra um ponto de localização |
+| `POST` | `/emergencias/:id/encerrar` | Encerra a emergência |
+| `GET` | `/emergencias/:id/rota` | Histórico de localização da emergência |
+| `GET` | `/` | Verificação de conexão com o banco |
+
+### Regras principais
+
+- Cadastro exige de 1 a 5 guardiãs e CPF válido. A senha de disfarce precisa ser diferente da senha real.
+- Só uma emergência ativa por usuária. Isso é garantido também por um índice único no banco.
+- Acionar o botão em nome de outra usuária responde `403`.
+- Uma ocorrência idêntica à anterior, criada nos últimos 30 segundos, é recusada com `409`.
+- Erros do banco não chegam ao cliente. Os status são: `409` para duplicidade, `400` para violação de regra, `503` quando o banco está indisponível, e `500` para o resto.
+
+## Banco de dados
+
+Os scripts estão em `supabase/` e devem ser executados no SQL Editor do Supabase, nesta ordem:
+
+1. `habilitar_rls.sql`: liga o RLS em todas as tabelas. O backend acessa o banco pela service role.
+2. `cadastrar_usuaria_transacional.sql`: função que cadastra a usuária e as guardiãs em uma única transação.
+3. `alertas_risco.sql`: tabela de alertas de risco alto.
+4. `emergencia_unica_ativa.sql`: índice único de emergência ativa por usuária.
+5. `logout_e_exclusao_conta.sql`: tabela de tokens revogados e função de exclusão de conta.
+
+Além dos scripts, o bucket de Storage `evidencias_amparo` deve existir e ser **privado**, sem políticas liberando acesso para `anon` ou `public`.
+
+## Testes
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+npm test          # testes unitários
+npm run test:e2e  # testes de rotas (sem gravar dados no banco)
+npm run lint      # análise estática
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+Os testes unitários usam um banco simulado. Os testes e2e exercitam apenas validação e autenticação, sem gravar nada no Supabase.
 
-## Observability
+## Estrutura
 
-In production applications, observability is essential for understanding how your system behaves, detecting issues early, and maintaining reliable performance.
+```text
+src/
+  auth/            guard de JWT, revogação de tokens e decoradores
+  common/          tratamento de erros, validação de arquivos e limite por usuária
+  usuarias/        cadastro, login, logout e exclusão de conta
+  guardioes/       CRUD das guardiãs
+  ocorrencias/     ocorrências, evidências e análise de risco
+  emergencias/     botão de emergência e rastreamento
+supabase/          scripts SQL do banco
+test/              testes e2e
+```
 
-[NestJS Observe](https://observe.nestjs.com) automatically instruments your NestJS application, giving you deep visibility into your system with minimal setup:
+## Segurança
 
-- **Distributed tracing:** Follow requests across services and understand how they flow through your system.
-- **Waterfall analysis:** Visualize request execution and identify slow operations, bottlenecks, and unexpected delays.
-- **Performance analysis:** Analyze application performance in real time and quickly pinpoint areas that need optimization.
-- **Metrics:** Track key application and infrastructure metrics to understand system health and performance trends.
-- **Logging:** Centralize and correlate logs with traces and other telemetry to make debugging easier.
-- **Error tracking:** Detect errors quickly and investigate their root causes with the surrounding context.
-- **SLA monitoring:** Track service-level objectives and identify when your application is approaching or exceeding defined thresholds.
-- **Alarms and alerts:** Set up alerts for critical errors, performance degradation, SLA violations, and other anomalies so your team can react quickly.
+- Autenticação por JWT com identificador por token (`jti`). O logout revoga o token.
+- Limite de requisições por usuária autenticada. Login é limitado por IP e e-mail.
+- Helmet ativo nos headers HTTP. CORS não é habilitado, porque ainda não há painel web.
+- Evidências guardadas no Storage privado, com o nome original descartado.
 
-## Resources
+## Serviço de IA
 
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Auto-instrument your application with [NestJS Observer](https://observer.nestjs.com). Distributed tracing, metrics, and logging made easy. Error tracking and performance monitoring for your NestJS applications.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+O backend chama `POST /classificar` no serviço de IA, enviando o histórico já resumido (sem nome, CPF ou localização textual) e o segredo `X-Internal-Secret`. Se o serviço estiver fora do ar, a ocorrência é registrada normalmente, mas a análise de risco daquela ocorrência não é refeita depois.
