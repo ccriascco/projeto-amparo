@@ -5,25 +5,26 @@ import { createClient } from '@supabase/supabase-js';
 export class AppService {
   async testarConexao() {
     const supabaseUrl = process.env.SUPABASE_URL;
-    const supabaseKey = process.env.SUPABASE_KEY;
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
     if (!supabaseUrl || !supabaseKey) {
       return { erro: 'Chaves do Supabase não encontradas no arquivo .env' };
     }
 
-    // Inicializa o cliente do Supabase
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Tenta fazer uma consulta na tabela de usuárias
-    const { data, error } = await supabase.from('usuarias').select('*');
+    // Só checa que o banco responde: nunca devolver linhas de usuárias aqui.
+    const { count, error } = await supabase
+      .from('usuarias')
+      .select('id', { count: 'exact', head: true });
 
     if (error) {
-      return { erro: `Falha ao conectar: ${error.message}` };
+      return { erro: 'Falha ao conectar com o banco de dados.' };
     }
 
     return {
       mensagem: 'Conexão com o Supabase realizada com sucesso! 🚀',
-      usuarias_cadastradas: data,
+      total_usuarias: count ?? 0,
     };
   }
 }

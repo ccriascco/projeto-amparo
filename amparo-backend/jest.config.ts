@@ -15,8 +15,14 @@ const config: Config = {
   rootDir: '.',
   testRegex: '.*\\.spec\\.ts$',
   transform: {
-    '^.+\\.(t|j)s$': 'ts-jest',
+    '^.+\\.ts$': ['ts-jest', { tsconfig: 'tsconfig.spec.json' }],
+    // @nestjs/* (e 12+) publica ESM puro; o Jest roda em modo CommonJS por
+    // padrão e não consegue dar require() nesses pacotes. O Babel converte
+    // esses módulos pra CommonJS só durante os testes.
+    '^.+\\.js$': 'babel-jest',
   },
+  transformIgnorePatterns: ['/node_modules/(?!(@nestjs)/)'],
+  setupFiles: ['<rootDir>/test/jest.setup.ts'],
   moduleNameMapper: pathsToModuleNameMapper(paths, { prefix: '<rootDir>/' }),
   collectCoverageFrom: [
     'src/**/*.(t|j)s',

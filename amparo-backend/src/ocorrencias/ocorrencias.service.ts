@@ -1,16 +1,45 @@
-﻿import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
+﻿import { Injectable, Logger, HttpException, HttpStatus } from '@nestjs/common';
 import { createClient } from '@supabase/supabase-js';
 import * as crypto from 'crypto';
+import { erroDoBanco, tratarErro } from '../common/erro.util';
+import { conteudoCorrespondeAoMime } from '../common/tipo-arquivo.util';
+
+const JANELA_DUPLICIDADE_MS = 30_000;
 
 @Injectable()
 export class OcorrenciasService {
+  private readonly logger = new Logger(OcorrenciasService.name);
+
   private supabase = createClient(
     process.env.SUPABASE_URL as string,
-    process.env.SUPABASE_KEY as string,
+    process.env.SUPABASE_SERVICE_ROLE_KEY as string,
   );
 
   async criar(dados: any) {
     try {
+      const desde = new Date(Date.now() - JANELA_DUPLICIDADE_MS).toISOString();
+      const { data: recentes, error: erroRecentes } = await this.supabase
+        .from('ocorrencias')
+        .select('tipos_violencia, mensagem')
+        .eq('usuaria_id', dados.usuaria_id)
+        .gte('criado_em', desde)
+        .limit(10);
+
+      if (erroRecentes) throw erroDoBanco(erroRecentes);
+
+      const duplicada = (recentes ?? []).some(
+        (o) =>
+          JSON.stringify([...(o.tipos_violencia ?? [])].sort()) ===
+            JSON.stringify([...(dados.tipos_violencia ?? [])].sort()) &&
+          (o.mensagem ?? null) === (dados.mensagem ?? null),
+      );
+      if (duplicada) {
+        throw new HttpException(
+          { erro: 'Esta ocorrência idêntica acabou de ser registrada.' },
+          HttpStatus.CONFLICT,
+        );
+      }
+
       const { data, error } = await this.supabase
         .from('ocorrencias')
         .insert([
@@ -18,34 +47,32 @@ export class OcorrenciasService {
             usuaria_id: dados.usuaria_id,
             tipos_violencia: dados.tipos_violencia,
             mensagem: dados.mensagem || null,
-            latitude: dados.latitude || null,
-            longitude: dados.longitude || null,
+            latitude: dados.latitude ?? null,
+            longitude: dados.longitude ?? null,
           },
         ])
         .select();
 
       if (error) {
-        throw new Error(error.message);
+        throw erroDoBanco(error);
       }
 
-      this.avaliarRiscoUsuaria(dados.usuaria_id).catch(err => 
-        console.error('Falha silenciosa ao chamar IA:', err)
+      this.avaliarRiscoUsuaria(dados.usuaria_id).catch(err =>
+        this.logger.error('Falha silenciosa ao chamar IA', err instanceof Error ? err.stack : err)
       );
 
       return {
-        mensagem: 'OcorrÃªncia registrada com sucesso!',
+        mensagem: 'Ocorrência registrada com sucesso!',
         ocorrencia: data ? data[0] : null,
       };
     } catch (error) {
-      const status = error instanceof HttpException ? error.getStatus() : HttpStatus.BAD_REQUEST;
-      const response = error instanceof HttpException ? error.getResponse() : { erro: (error as any).message };
-      throw new HttpException(response, status);
+      throw tratarErro(error, 'Não foi possível registrar a ocorrência.');
     }
   }
 
   private async avaliarRiscoUsuaria(usuariaId: string) {
     try {
-      console.log('\nðŸ§  Iniciando anÃ¡lise de risco para usuÃ¡ria: ' + usuariaId);
+      this.logger.log(`Iniciando análise de risco para usuária ${usuariaId}`);
       
       const { data: ocorrencias } = await this.supabase
         .from('ocorrencias')
@@ -60,9 +87,11 @@ export class OcorrenciasService {
 
       const { data: usuaria } = await this.supabase
         .from('usuarias')
-        .select('data_nascimento')
+        .select('data_nascimento, nivel_risco')
         .eq('id', usuariaId)
         .single();
+
+      const nivelRiscoAnterior = usuaria?.nivel_risco || null;
 
       const qtdOcorrencias = ocorrencias ? ocorrencias.length : 0;
       let teveFisica = 0, teveSexual = 0, teveAmeaca = 0;
@@ -72,9 +101,9 @@ export class OcorrenciasService {
       if (qtdOcorrencias > 0 && ocorrencias) {
         for (const oc of ocorrencias) {
           const tipos = oc.tipos_violencia || [];
-          if (tipos.includes('FÃ­sica')) teveFisica = 1;
+          if (tipos.includes('Física')) teveFisica = 1;
           if (tipos.includes('Sexual')) teveSexual = 1;
-          if (tipos.includes('AmeaÃ§a')) teveAmeaca = 1;
+          if (tipos.includes('Ameaça')) teveAmeaca = 1;
         }
 
         const dataUltima = new Date(ocorrencias[0].criado_em);
@@ -103,11 +132,24 @@ export class OcorrenciasService {
         qtd_panico_acionado: qtdEmergencias || 0
       };
 
-      const respostaIA = await fetch('http://127.0.0.1:8000/classificar', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payloadIA)
-      });
+      const iaUrl = process.env.IA_SERVICE_URL || 'http://127.0.0.1:8000';
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+      let respostaIA: Response;
+      try {
+        respostaIA = await fetch(`${iaUrl}/classificar`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(process.env.IA_SHARED_SECRET ? { 'X-Internal-Secret': process.env.IA_SHARED_SECRET } : {}),
+          },
+          body: JSON.stringify(payloadIA),
+          signal: controller.signal,
+        });
+      } finally {
+        clearTimeout(timeoutId);
+      }
 
       if (respostaIA.ok) {
         const resultado = await respostaIA.json();
@@ -115,9 +157,55 @@ export class OcorrenciasService {
           .from('usuarias')
           .update({ nivel_risco: resultado.risco })
           .eq('id', usuariaId);
+
+        if (resultado.risco === 'Alto' && nivelRiscoAnterior !== 'Alto') {
+          const ultimaOcorrencia = qtdOcorrencias > 0 && ocorrencias ? ocorrencias[0] : null;
+          await this.alertarGuardioes(usuariaId, ultimaOcorrencia);
+        }
       }
     } catch (err) {
-      console.error("Erro ao integrar com a IA:", err);
+      this.logger.warn(`Análise de risco indisponível: ${err instanceof Error ? err.message : err}`);
+    }
+  }
+
+  private async alertarGuardioes(usuariaId: string, ultimaOcorrencia: any) {
+    try {
+      const { data: guardioes, error: erroGuardioes } = await this.supabase
+        .from('guardioes')
+        .select('*')
+        .eq('usuaria_id', usuariaId);
+
+      if (erroGuardioes) throw erroDoBanco(erroGuardioes);
+
+      const horario = new Date().toLocaleString('pt-BR');
+      const temLocalizacao = ultimaOcorrencia?.latitude != null && ultimaOcorrencia?.longitude != null;
+      const linkLocalizacao = temLocalizacao
+        ? `https://www.google.com/maps?q=${ultimaOcorrencia.latitude},${ultimaOcorrencia.longitude}`
+        : null;
+
+      const mensagem = temLocalizacao
+        ? `Alerta Amparo: o nível de risco de uma pessoa que você protege subiu para ALTO. Horário: ${horario}. Última localização registrada: ${linkLocalizacao}`
+        : `Alerta Amparo: o nível de risco de uma pessoa que você protege subiu para ALTO. Horário: ${horario}. Localização não disponível no momento.`;
+
+      if (!guardioes || guardioes.length === 0) {
+        this.logger.warn(`Usuária ${usuariaId} atingiu risco ALTO, mas não possui guardiãs cadastradas.`);
+      } else {
+        this.logger.log(`🚨 Risco ALTO detectado para usuária ${usuariaId}!`);
+        guardioes.forEach(guardiao => {
+          this.logger.log(`Enviando [SMS/PUSH/WHATSAPP] para ${guardiao.nome_completo} (${guardiao.telefone}): ${mensagem}`);
+        });
+      }
+
+      await this.supabase.from('alertas_risco').insert([{
+        usuaria_id: usuariaId,
+        nivel_risco: 'Alto',
+        latitude: ultimaOcorrencia?.latitude ?? null,
+        longitude: ultimaOcorrencia?.longitude ?? null,
+        mensagem,
+        guardioes_notificados: guardioes?.length || 0,
+      }]);
+    } catch (err) {
+      this.logger.error('Falha ao alertar guardiãs sobre risco alto', err instanceof Error ? err.stack : err);
     }
   }
 
@@ -132,22 +220,26 @@ export class OcorrenciasService {
         .single();
 
       if (erroOcorrencia || !ocorrencia) {
-        throw new HttpException({ erro: 'OcorrÃªncia nÃ£o encontrada.' }, HttpStatus.NOT_FOUND);
+        throw new HttpException({ erro: 'Ocorrência não encontrada.' }, HttpStatus.NOT_FOUND);
       }
-      
+
       if (ocorrencia.usuaria_id !== usuariaIdAutenticada) {
-        throw new HttpException({ erro: 'Acesso Negado: Esta ocorrÃªncia nÃ£o pertence a vocÃª.' }, HttpStatus.FORBIDDEN);
+        throw new HttpException({ erro: 'Acesso Negado: Esta ocorrência não pertence a você.' }, HttpStatus.FORBIDDEN);
       }
 
       const tamanhoMb = arquivo.size / (1024 * 1024);
       if (arquivo.mimetype.startsWith('image/') && tamanhoMb > 5) {
-          throw new HttpException({ erro: 'Fotos nÃ£o podem exceder 5MB.' }, HttpStatus.PAYLOAD_TOO_LARGE);
+          throw new HttpException({ erro: 'Fotos não podem exceder 5MB.' }, HttpStatus.PAYLOAD_TOO_LARGE);
       }
       if (arquivo.mimetype.startsWith('audio/') && tamanhoMb > 10) {
-          throw new HttpException({ erro: 'Ãudios nÃ£o podem exceder 10MB.' }, HttpStatus.PAYLOAD_TOO_LARGE);
+          throw new HttpException({ erro: 'Áudios não podem exceder 10MB.' }, HttpStatus.PAYLOAD_TOO_LARGE);
       }
       if (arquivo.mimetype.startsWith('video/') && tamanhoMb > 20) {
-          throw new HttpException({ erro: 'VÃ­deos nÃ£o podem exceder 20MB.' }, HttpStatus.PAYLOAD_TOO_LARGE);
+          throw new HttpException({ erro: 'Vídeos não podem exceder 20MB.' }, HttpStatus.PAYLOAD_TOO_LARGE);
+      }
+
+      if (!conteudoCorrespondeAoMime(arquivo.buffer, arquivo.mimetype)) {
+        throw new HttpException({ erro: 'O conteúdo do arquivo não corresponde ao tipo informado.' }, HttpStatus.UNSUPPORTED_MEDIA_TYPE);
       }
 
       const hashIntegridade = crypto.createHash('sha256').update(arquivo.buffer).digest('hex');
@@ -161,7 +253,7 @@ export class OcorrenciasService {
       const nomeSeguro = crypto.randomUUID();
       const caminhoStorage = ocorrencia.usuaria_id + '/' + ocorrenciaId + '/' + nomeSeguro + '.' + extensaoSegura;
 
-      const { data: uploadData, error: uploadError } = await this.supabase.storage
+      const { error: uploadError } = await this.supabase.storage
         .from('evidencias_amparo')
         .upload(caminhoStorage, arquivo.buffer, {
           contentType: arquivo.mimetype,
@@ -179,31 +271,33 @@ export class OcorrenciasService {
             hash_integridade: hashIntegridade,
         }]).select();
 
-      if (evidenciaError) throw new Error(evidenciaError.message);
+      if (evidenciaError) {
+        await this.supabase.storage.from('evidencias_amparo').remove([caminhoStorage]);
+        throw erroDoBanco(evidenciaError);
+      }
 
       return {
-        mensagem: 'EvidÃªncia anexada e criptografada com seguranÃ§a mÃ¡xima!',
+        mensagem: 'Evidência anexada e criptografada com segurança máxima!',
         evidencia: evidencia ? evidencia[0] : null,
       };
     } catch (error) {
-      const status = error instanceof HttpException ? error.getStatus() : HttpStatus.BAD_REQUEST;
-      const response = error instanceof HttpException ? error.getResponse() : { erro: (error as any).message };
-      throw new HttpException(response, status);
+      throw tratarErro(error, 'Não foi possível anexar a evidência.');
     }
   }
 
-  async listarPorUsuaria(usuariaId: string) {
+  async listarPorUsuaria(usuariaId: string, limit = 20, offset = 0) {
     try {
-      const { data, error } = await this.supabase
+      const { data, error, count } = await this.supabase
         .from('ocorrencias')
-        .select('*, evidencias(*)')
+        .select('*, evidencias(*)', { count: 'exact' })
         .eq('usuaria_id', usuariaId)
-        .order('criado_em', { ascending: false });
+        .order('criado_em', { ascending: false })
+        .range(offset, offset + limit - 1);
 
-      if (error) throw new Error(error.message);
-      return { ocorrencias: data };
+      if (error) throw erroDoBanco(error);
+      return { ocorrencias: data, total: count ?? 0, limit, offset };
     } catch (error) {
-      throw new HttpException({ erro: (error as any).message }, HttpStatus.BAD_REQUEST);
+      throw tratarErro(error, 'Não foi possível listar as ocorrências.');
     }
   }
 
@@ -212,14 +306,21 @@ export class OcorrenciasService {
       const { data: ocorrencia } = await this.supabase.from('ocorrencias').select('usuaria_id').eq('id', id).single();
       if (!ocorrencia) throw new HttpException({ erro: 'Ocorrência não encontrada.' }, HttpStatus.NOT_FOUND);
       if (ocorrencia.usuaria_id !== usuariaIdAutenticada) throw new HttpException({ erro: 'Acesso Negado.' }, HttpStatus.FORBIDDEN);
+      const { data: arquivos } = await this.supabase.from('evidencias').select('caminho_storage').eq('ocorrencia_id', id);
       const { data, error } = await this.supabase.from('ocorrencias').delete().eq('id', id).select();
-      if (error) throw new Error(error.message);
-      if (!data || data.length === 0) throw new HttpException({ erro: 'OcorrÃªncia nÃ£o encontrada.' }, HttpStatus.NOT_FOUND);
-      return { mensagem: 'OcorrÃªncia removida com sucesso!' };
+      if (error) throw erroDoBanco(error);
+      if (!data || data.length === 0) throw new HttpException({ erro: 'Ocorrência não encontrada.' }, HttpStatus.NOT_FOUND);
+
+      const caminhos = (arquivos ?? []).map((a) => a.caminho_storage).filter(Boolean);
+      if (caminhos.length > 0) {
+        const { error: erroStorage } = await this.supabase.storage.from('evidencias_amparo').remove(caminhos);
+        if (erroStorage) {
+          this.logger.error(`Ocorrência ${id} removida, mas ${caminhos.length} arquivo(s) não foram apagados do Storage`, erroStorage.message);
+        }
+      }
+      return { mensagem: 'Ocorrência removida com sucesso!' };
     } catch (error) {
-      const status = error instanceof HttpException ? error.getStatus() : HttpStatus.BAD_REQUEST;
-      const response = error instanceof HttpException ? error.getResponse() : { erro: (error as any).message };
-      throw new HttpException(response, status);
+      throw tratarErro(error, 'Não foi possível remover a ocorrência.');
     }
   }
 }

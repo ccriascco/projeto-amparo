@@ -1,5 +1,7 @@
 ﻿import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ThrottlerModule } from '@nestjs/throttler';
+import { UsuariaThrottlerGuard } from './common/usuaria-throttler.guard';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UsuariasModule } from './usuarias/usuarias.module';
@@ -12,11 +14,14 @@ import { JwtAuthGuard } from './auth/jwt-auth.guard';
 
 @Module({
   imports: [
-    ConfigModule.forRoot(), 
+    ConfigModule.forRoot(),
+    ThrottlerModule.forRoot({
+      throttlers: [{ limit: 120, ttl: 60_000 }],
+    }),
     AuthModule,
-    UsuariasModule, 
-    GuardioesModule, 
-    OcorrenciasModule, 
+    UsuariasModule,
+    GuardioesModule,
+    OcorrenciasModule,
     EmergenciasModule
   ],
   controllers: [AppController],
@@ -25,6 +30,10 @@ import { JwtAuthGuard } from './auth/jwt-auth.guard';
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: UsuariaThrottlerGuard,
     }
   ],
 })

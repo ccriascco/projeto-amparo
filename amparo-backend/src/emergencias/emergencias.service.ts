@@ -1,32 +1,48 @@
-import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
+import { Injectable, Logger, HttpException, HttpStatus } from '@nestjs/common';
 import { createClient } from '@supabase/supabase-js';
+import { erroDoBanco, tratarErro } from '../common/erro.util';
 
 @Injectable()
 export class EmergenciasService {
+  private readonly logger = new Logger(EmergenciasService.name);
+
   private supabase = createClient(
     process.env.SUPABASE_URL as string,
-    process.env.SUPABASE_KEY as string,
+    process.env.SUPABASE_SERVICE_ROLE_KEY as string,
   );
 
-  async acionar(dados: any, usuariaIdAutenticada: string) {
-    try {
-      if (!dados.usuaria_id) {
-          throw new HttpException({ erro: 'O ID da usuária é obrigatório.' }, HttpStatus.BAD_REQUEST);
-      }
-      
-      // 1. Validar Autenticação e Permissão
-      if (dados.usuaria_id !== usuariaIdAutenticada) {
-          throw new HttpException({ erro: 'Acesso Negado: Você não pode acionar emergência para outra usuária.' }, HttpStatus.FORBIDDEN);
-      }
+  private readonly filasPorUsuaria = new Map<string, Promise<unknown>>();
 
-      // 2. Prevenção de Abuso e Duplicidade
+  /** Executa uma tarefa por vez para a mesma usuária (evita a corrida de duplo clique). */
+  private async exclusivoPorUsuaria<T>(usuariaId: string, tarefa: () => Promise<T>): Promise<T> {
+    const anterior = this.filasPorUsuaria.get(usuariaId) ?? Promise.resolve();
+    const atual = anterior.catch(() => undefined).then(tarefa);
+    this.filasPorUsuaria.set(usuariaId, atual);
+    try {
+      return await atual;
+    } finally {
+      if (this.filasPorUsuaria.get(usuariaId) === atual) this.filasPorUsuaria.delete(usuariaId);
+    }
+  }
+
+  async acionar(dados: any, usuariaIdAutenticada: string) {
+    if (dados.usuaria_id && dados.usuaria_id !== usuariaIdAutenticada) {
+      throw new HttpException({ erro: 'Acesso Negado: Você não pode acionar emergência para outra usuária.' }, HttpStatus.FORBIDDEN);
+    }
+    const dadosDaUsuaria = { ...dados, usuaria_id: usuariaIdAutenticada };
+    return this.exclusivoPorUsuaria(usuariaIdAutenticada, () => this.criarEmergencia(dadosDaUsuaria));
+  }
+
+  private async criarEmergencia(dados: any) {
+    try {
+      // Prevenção de abuso e duplicidade
       const { data: ativas, error: errAtivas } = await this.supabase
         .from('emergencias')
         .select('*')
         .eq('usuaria_id', dados.usuaria_id)
         .eq('status', 'ATIVA');
 
-      if (errAtivas) throw new Error(errAtivas.message);
+      if (errAtivas) throw erroDoBanco(errAtivas);
 
       if (ativas && ativas.length > 0) {
           throw new HttpException({ 
@@ -42,10 +58,10 @@ export class EmergenciasService {
         .select()
         .single();
 
-      if (erroEmergencia) throw new Error(erroEmergencia.message);
+      if (erroEmergencia) throw erroDoBanco(erroEmergencia);
 
       // 4. Salvar o ponto de GPS inicial, se aplicável
-      if (dados.latitude && dados.longitude) {
+      if (dados.latitude != null && dados.longitude != null) {
         await this.supabase.from('rastreamento_gps').insert([
           {
             emergencia_id: emergencia.id,
@@ -61,17 +77,16 @@ export class EmergenciasService {
         .select('*')
         .eq('usuaria_id', dados.usuaria_id);
 
-      if (erroGuardioes) throw new Error(erroGuardioes.message);
+      if (erroGuardioes) throw erroDoBanco(erroGuardioes);
       
       let statusAlerta = 'SUCESSO';
       if (!guardioes || guardioes.length === 0) {
           statusAlerta = 'ALERTA_FALHA_SEM_GUARDIOES';
-          console.warn('[AVISO] Emergência ' + emergencia.id + ': Nenhum guardião cadastrado para notificar.');
+          this.logger.warn(`Emergência ${emergencia.id}: nenhum guardião cadastrado para notificar.`);
       } else {
-          console.log('\n🚨 EMERGÊNCIA ACIONADA! (ID: ' + emergencia.id + ')');
-          console.log('Disparando mensagem de socorro para ' + guardioes.length + ' guardiões...');
+          this.logger.log(`🚨 Emergência acionada (ID: ${emergencia.id}). Disparando mensagem de socorro para ${guardioes.length} guardiões...`);
           guardioes.forEach(guardiao => {
-            console.log(' -> Enviando [SMS/PUSH/WHATSAPP] para ' + guardiao.nome_completo + ' (' + guardiao.telefone + ').');
+            this.logger.log(`Enviando [SMS/PUSH/WHATSAPP] para ${guardiao.nome_completo} (${guardiao.telefone}).`);
           });
       }
 
@@ -82,9 +97,7 @@ export class EmergenciasService {
         status_notificacao: statusAlerta
       };
     } catch (error) {
-      const status = error instanceof HttpException ? error.getStatus() : HttpStatus.BAD_REQUEST;
-      const response = error instanceof HttpException ? error.getResponse() : { erro: (error as any).message || 'Falha ao acionar' };
-      throw new HttpException(response, status);
+      throw tratarErro(error, 'Não foi possível acionar a emergência.');
     }
   }
 
@@ -103,16 +116,14 @@ export class EmergenciasService {
             longitude: dados.longitude,
         }]).select();
 
-      if (error) throw new Error(error.message);
+      if (error) throw erroDoBanco(error);
 
       return {
         mensagem: 'Localização atualizada.',
         ponto_gps: data ? data[0] : null,
       };
     } catch (error) {
-      const status = error instanceof HttpException ? error.getStatus() : HttpStatus.BAD_REQUEST;
-      const response = error instanceof HttpException ? error.getResponse() : { erro: (error as any).message };
-      throw new HttpException(response, status);
+      throw tratarErro(error, 'Não foi possível atualizar a localização.');
     }
   }
 
@@ -121,6 +132,7 @@ export class EmergenciasService {
       const { data: emergencia } = await this.supabase.from('emergencias').select('*').eq('id', emergenciaId).single();
       if (!emergencia) throw new HttpException({ erro: 'Emergência não encontrada.' }, HttpStatus.NOT_FOUND);
       if (emergencia.usuaria_id !== usuariaIdAutenticada) throw new HttpException({ erro: 'Acesso Negado.' }, HttpStatus.FORBIDDEN);
+      if (emergencia.status !== 'ATIVA') throw new HttpException({ erro: 'Emergência já foi encerrada.' }, HttpStatus.BAD_REQUEST);
 
       const { data, error } = await this.supabase
         .from('emergencias')
@@ -128,18 +140,16 @@ export class EmergenciasService {
         .eq('id', emergenciaId)
         .select();
 
-      if (error) throw new Error(error.message);
+      if (error) throw erroDoBanco(error);
 
-      console.log('✅ Emergência ' + emergenciaId + ' encerrada.');
+      this.logger.log(`Emergência ${emergenciaId} encerrada.`);
 
       return {
         mensagem: 'Emergência encerrada com segurança.',
         emergencia: data ? data[0] : null,
       };
     } catch (error) {
-      const status = error instanceof HttpException ? error.getStatus() : HttpStatus.BAD_REQUEST;
-      const response = error instanceof HttpException ? error.getResponse() : { erro: (error as any).message };
-      throw new HttpException(response, status);
+      throw tratarErro(error, 'Não foi possível encerrar a emergência.');
     }
   }
 
@@ -157,13 +167,11 @@ export class EmergenciasService {
         .eq('emergencia_id', emergenciaId)
         .order('registrado_em', { ascending: true });
 
-      if (error) throw new Error(error.message);
+      if (error) throw erroDoBanco(error);
 
       return { rastro_gps: data };
     } catch (error) {
-      const status = error instanceof HttpException ? error.getStatus() : HttpStatus.BAD_REQUEST;
-      const response = error instanceof HttpException ? error.getResponse() : { erro: (error as any).message };
-      throw new HttpException(response, status);
+      throw tratarErro(error, 'Não foi possível listar a rota.');
     }
   }
 }

@@ -1,11 +1,24 @@
-﻿from fastapi import FastAPI
+import os
+import logging
+from fastapi import FastAPI, Header, HTTPException
 from pydantic import BaseModel
 import pickle
 import pandas as pd
 import warnings
 warnings.filterwarnings('ignore')
 
+logger = logging.getLogger("amparo_ia")
+logging.basicConfig(level=logging.INFO)
+
 app = FastAPI(title="Amparo IA - Cerebro Preditivo")
+
+INTERNAL_SECRET = os.environ.get("IA_SHARED_SECRET")
+if not INTERNAL_SECRET:
+    logger.warning(
+        "IA_SHARED_SECRET não configurado: o endpoint /classificar está "
+        "aceitando qualquer chamada. Defina a variável de ambiente antes de "
+        "expor este serviço fora de localhost."
+    )
 
 try:
     with open('modelo_risco.pkl', 'rb') as f:
@@ -26,8 +39,13 @@ class DadosUsuaria(BaseModel):
     teve_ameaca: int
     qtd_panico_acionado: int
 
+def verificar_origem(x_internal_secret: str | None):
+    if INTERNAL_SECRET and x_internal_secret != INTERNAL_SECRET:
+        raise HTTPException(status_code=401, detail="Acesso não autorizado.")
+
 @app.post("/classificar")
-def classificar_risco(dados: DadosUsuaria):
+def classificar_risco(dados: DadosUsuaria, x_internal_secret: str | None = Header(default=None)):
+    verificar_origem(x_internal_secret)
     try:
         # 1. Regra de Negocio: Historico insuficiente
         if dados.qtd_ocorrencias_totais == 0 and dados.qtd_panico_acionado == 0:
@@ -57,12 +75,12 @@ def classificar_risco(dados: DadosUsuaria):
         # 3. Predicao
         previsao = modelo.predict(df_novo)[0]
         mapa_risco = {0: "Baixo", 1: "Medio", 2: "Alto"}
-        
+
         return {
             "risco": mapa_risco[previsao],
             "codigo": int(previsao),
             "justificativa": "Classificacao baseada em Inteligencia Artificial (Random Forest)."
         }
     except Exception as e:
-        import traceback
-        return {"erro": str(e), "traceback": traceback.format_exc()}
+        logger.exception("Falha ao classificar risco")
+        return {"erro": "Falha interna ao calcular o risco."}

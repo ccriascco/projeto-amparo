@@ -9,10 +9,16 @@ import { Reflector } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
 import { Request } from 'express';
 import { IS_PUBLIC_KEY } from './public.decorator';
+import { TokensService } from './tokens.service';
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
-  constructor(private jwtService: JwtService, private reflector: Reflector, private configService: ConfigService) {}
+  constructor(
+    private jwtService: JwtService,
+    private reflector: Reflector,
+    private configService: ConfigService,
+    private tokens: TokensService,
+  ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
@@ -28,14 +34,22 @@ export class JwtAuthGuard implements CanActivate {
     if (!token) {
       throw new UnauthorizedException('Acesso negado: Token ausente.');
     }
+    let payloadValido: { sub: string; jti?: string; exp: number };
     try {
       const payload = await this.jwtService.verifyAsync(token, {
         secret: this.configService.get<string>('JWT_SECRET'),
       });
-      request['user'] = { id: payload.sub }; // Populates request.user
+      payloadValido = payload;
     } catch {
       throw new UnauthorizedException('Acesso negado: Token inválido ou expirado.');
     }
+    if (!payloadValido.jti || (await this.tokens.estaRevogado(payloadValido.jti))) {
+      throw new UnauthorizedException('Sessão encerrada. Faça login novamente.');
+    }
+    if (!(await this.tokens.usuariaExiste(payloadValido.sub))) {
+      throw new UnauthorizedException('Sessão inválida. Faça login novamente.');
+    }
+    request['user'] = { id: payloadValido.sub, jti: payloadValido.jti, exp: payloadValido.exp };
     return true;
   }
 

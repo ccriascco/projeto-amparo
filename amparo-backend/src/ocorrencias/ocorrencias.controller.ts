@@ -5,6 +5,7 @@
   Delete,
   Body,
   Param,
+  Query,
   UseInterceptors,
   UploadedFile,
   HttpException,
@@ -13,15 +14,16 @@
 import { FileInterceptor } from '@nestjs/platform-express';
 import { OcorrenciasService } from './ocorrencias.service';
 import { CurrentUser } from '../auth/current-user.decorator';
+import { CriarOcorrenciaDto } from './dto/criar-ocorrencia.dto';
+import { ListarOcorrenciasQueryDto } from './dto/listar-ocorrencias-query.dto';
 
 @Controller('ocorrencias')
 export class OcorrenciasController {
   constructor(private readonly ocorrenciasService: OcorrenciasService) {}
 
   @Post()
-  async criar(@Body() body: any, @CurrentUser() user: any) {
-    body.usuaria_id = user.id; // Sobrescreve para ignorar o que vier no payload
-    return await this.ocorrenciasService.criar(body);
+  async criar(@Body() body: CriarOcorrenciaDto, @CurrentUser() user: any) {
+    return await this.ocorrenciasService.criar({ ...body, usuaria_id: user.id });
   }
 
   @Post(':id/evidencias')
@@ -51,8 +53,8 @@ export class OcorrenciasController {
   }
 
   @Get()
-  async listarMinhas(@CurrentUser() user: any) {
-    return await this.ocorrenciasService.listarPorUsuaria(user.id);
+  async listarMinhas(@Query() query: ListarOcorrenciasQueryDto, @CurrentUser() user: any) {
+    return await this.ocorrenciasService.listarPorUsuaria(user.id, query.limit, query.offset);
   }
 
   @Delete(':id')

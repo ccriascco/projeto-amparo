@@ -1,11 +1,12 @@
 ﻿import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { createClient } from '@supabase/supabase-js';
+import { erroDoBanco, tratarErro } from '../common/erro.util';
 
 @Injectable()
 export class GuardioesService {
   private supabase = createClient(
     process.env.SUPABASE_URL as string,
-    process.env.SUPABASE_KEY as string,
+    process.env.SUPABASE_SERVICE_ROLE_KEY as string,
   );
 
   async cadastrar(dados: any) {
@@ -15,7 +16,7 @@ export class GuardioesService {
         .select('id')
         .eq('usuaria_id', dados.usuaria_id);
 
-      if (erroBusca) throw new Error(erroBusca.message);
+      if (erroBusca) throw erroDoBanco(erroBusca);
 
       if (existentes && existentes.length >= 5) {
         throw new HttpException(
@@ -24,7 +25,7 @@ export class GuardioesService {
         );
       }
 
-      const { data, error } = await this.supabase.from('guardioes').insert([
+      const { error } = await this.supabase.from('guardioes').insert([
         {
           usuaria_id: dados.usuaria_id,
           nome_completo: dados.nome_completo,
@@ -35,14 +36,12 @@ export class GuardioesService {
       ]);
 
       if (error) {
-        throw new Error(error.message);
+        throw erroDoBanco(error);
       }
 
       return { mensagem: 'Guardião cadastrado com sucesso!' };
     } catch (error) {
-      const status = error instanceof HttpException ? error.getStatus() : HttpStatus.BAD_REQUEST;
-      const response = error instanceof HttpException ? error.getResponse() : { erro: (error as any).message };
-      throw new HttpException(response, status);
+      throw tratarErro(error, 'Não foi possível cadastrar a guardiã.');
     }
   }
 
@@ -54,12 +53,12 @@ export class GuardioesService {
         .eq('usuaria_id', usuariaId);
 
       if (error) {
-        throw new Error(error.message);
+        throw erroDoBanco(error);
       }
 
       return { guardioes: data };
     } catch (error) {
-      throw new HttpException({ erro: (error as any).message }, HttpStatus.BAD_REQUEST);
+      throw tratarErro(error, 'Não foi possível listar as guardiãs.');
     }
   }
 
@@ -91,7 +90,7 @@ export class GuardioesService {
         .select();
 
       if (error) {
-        throw new Error(error.message);
+        throw erroDoBanco(error);
       }
 
       return {
@@ -99,9 +98,7 @@ export class GuardioesService {
         guardiao: data[0],
       };
     } catch (error) {
-      const status = error instanceof HttpException ? error.getStatus() : HttpStatus.BAD_REQUEST;
-      const response = error instanceof HttpException ? error.getResponse() : { erro: (error as any).message };
-      throw new HttpException(response, status);
+      throw tratarErro(error, 'Não foi possível atualizar a guardiã.');
     }
   }
 
@@ -128,7 +125,7 @@ export class GuardioesService {
         .select('*', { count: 'exact', head: true })
         .eq('usuaria_id', guardiaoAlvo.usuaria_id);
 
-      if (erroCount) throw new Error(erroCount.message);
+      if (erroCount) throw erroDoBanco(erroCount);
 
       // 3. Validar a Regra de Negocio
       if (total !== null && total <= 1) {
@@ -145,14 +142,12 @@ export class GuardioesService {
         .eq('id', id);
 
       if (error) {
-        throw new Error(error.message);
+        throw erroDoBanco(error);
       }
 
       return { mensagem: 'Guardiã removida com sucesso!' };
     } catch (error) {
-      const status = error instanceof HttpException ? error.getStatus() : HttpStatus.BAD_REQUEST;
-      const response = error instanceof HttpException ? error.getResponse() : { erro: (error as any).message };
-      throw new HttpException(response, status);
+      throw tratarErro(error, 'Não foi possível remover a guardiã.');
     }
   }
 }

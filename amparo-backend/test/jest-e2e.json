@@ -1,9 +1,12 @@
 {
   "moduleFileExtensions": ["js", "json", "ts"],
-  "rootDir": ".",
+  "rootDir": "..",
   "testEnvironment": "node",
   "testRegex": ".e2e-spec.ts$",
   "transform": {
-    "^.+\\.(t|j)s$": "ts-jest"
-  }
+    "^.+\\.ts$": ["ts-jest", { "tsconfig": "tsconfig.spec.json" }],
+    "^.+\\.js$": "babel-jest"
+  },
+  "transformIgnorePatterns": ["/node_modules/(?!(@nestjs)/)"],
+  "setupFiles": ["<rootDir>/test/jest.setup.ts"]
 }
