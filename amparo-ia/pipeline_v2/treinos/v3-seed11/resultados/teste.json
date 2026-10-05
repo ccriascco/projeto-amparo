@@ -1,0 +1,147 @@
+{
+  "conjunto": "teste",
+  "n": 1350,
+  "distribuicao": {
+    "0": 450,
+    "1": 450,
+    "2": 450
+  },
+  "v2": {
+    "acuracia": 0.9978,
+    "por_nivel": {
+      "Baixo": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 450.0
+      },
+      "Medio": {
+        "precision": 0.9934,
+        "recall": 1.0,
+        "f1-score": 0.9967,
+        "support": 450.0
+      },
+      "Alto": {
+        "precision": 1.0,
+        "recall": 0.9933,
+        "f1-score": 0.9967,
+        "support": 450.0
+      }
+    },
+    "f1_macro": 0.9978,
+    "matriz_confusao": [
+      [
+        450,
+        0,
+        0
+      ],
+      [
+        0,
+        450,
+        0
+      ],
+      [
+        0,
+        3,
+        447
+      ]
+    ],
+    "erros_perigosos_alto_para_baixo": 0
+  },
+  "v1": {
+    "acuracia": 0.6696,
+    "por_nivel": {
+      "Baixo": {
+        "precision": 1.0,
+        "recall": 0.4444,
+        "f1-score": 0.6154,
+        "support": 450.0
+      },
+      "Medio": {
+        "precision": 0.5812,
+        "recall": 0.5644,
+        "f1-score": 0.5727,
+        "support": 450.0
+      },
+      "Alto": {
+        "precision": 0.6311,
+        "recall": 1.0,
+        "f1-score": 0.7739,
+        "support": 450.0
+      }
+    },
+    "f1_macro": 0.654,
+    "matriz_confusao": [
+      [
+        200,
+        183,
+        67
+      ],
+      [
+        0,
+        254,
+        196
+      ],
+      [
+        0,
+        0,
+        450
+      ]
+    ],
+    "erros_perigosos_alto_para_baixo": 0
+  },
+  "v2_anterior": {
+    "acuracia": 1.0,
+    "por_nivel": {
+      "Baixo": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 450.0
+      },
+      "Medio": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 450.0
+      },
+      "Alto": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 450.0
+      }
+    },
+    "f1_macro": 1.0,
+    "matriz_confusao": [
+      [
+        450,
+        0,
+        0
+      ],
+      [
+        0,
+        450,
+        0
+      ],
+      [
+        0,
+        0,
+        450
+      ]
+    ],
+    "erros_perigosos_alto_para_baixo": 0
+  },
+  "botao": {
+    "casos_com_botao_valido": 349,
+    "taxa_mudanca_ao_remover_botao": 0.3868,
+    "casos_com_engano": 225,
+    "taxa_mudanca_se_engano_contasse": 0.2889
+  },
+  "borda": {
+    "n": 20,
+    "acertos_candidato": 18,
+    "acertos_v2_anterior": 18,
+    "acertos_v1": 12
+  }
+}

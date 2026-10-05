@@ -1,0 +1,114 @@
+[
+  {
+    "dados": "v3-seed7",
+    "ruido": 0.0,
+    "modelo": "RandomForest",
+    "acuracia_teste": 1.0,
+    "alto_para_baixo": 0
+  },
+  {
+    "dados": "v3-seed7",
+    "ruido": 0.0,
+    "modelo": "ArvoreDecisao",
+    "acuracia_teste": 1.0,
+    "alto_para_baixo": 0
+  },
+  {
+    "dados": "v3-seed7",
+    "ruido": 0.1,
+    "modelo": "RandomForest",
+    "acuracia_teste": 1.0,
+    "alto_para_baixo": 0
+  },
+  {
+    "dados": "v3-seed7",
+    "ruido": 0.1,
+    "modelo": "ArvoreDecisao",
+    "acuracia_teste": 0.9704,
+    "alto_para_baixo": 8
+  },
+  {
+    "dados": "v3-seed7",
+    "ruido": 0.2,
+    "modelo": "RandomForest",
+    "acuracia_teste": 1.0,
+    "alto_para_baixo": 0
+  },
+  {
+    "dados": "v3-seed7",
+    "ruido": 0.2,
+    "modelo": "ArvoreDecisao",
+    "acuracia_teste": 0.9059,
+    "alto_para_baixo": 32
+  },
+  {
+    "dados": "v3-seed7",
+    "ruido": 0.3,
+    "modelo": "RandomForest",
+    "acuracia_teste": 0.9963,
+    "alto_para_baixo": 0
+  },
+  {
+    "dados": "v3-seed7",
+    "ruido": 0.3,
+    "modelo": "ArvoreDecisao",
+    "acuracia_teste": 0.7474,
+    "alto_para_baixo": 75
+  },
+  {
+    "dados": "v3-seed11",
+    "ruido": 0.0,
+    "modelo": "RandomForest",
+    "acuracia_teste": 1.0,
+    "alto_para_baixo": 0
+  },
+  {
+    "dados": "v3-seed11",
+    "ruido": 0.0,
+    "modelo": "ArvoreDecisao",
+    "acuracia_teste": 1.0,
+    "alto_para_baixo": 0
+  },
+  {
+    "dados": "v3-seed11",
+    "ruido": 0.1,
+    "modelo": "RandomForest",
+    "acuracia_teste": 0.9993,
+    "alto_para_baixo": 0
+  },
+  {
+    "dados": "v3-seed11",
+    "ruido": 0.1,
+    "modelo": "ArvoreDecisao",
+    "acuracia_teste": 0.9778,
+    "alto_para_baixo": 4
+  },
+  {
+    "dados": "v3-seed11",
+    "ruido": 0.2,
+    "modelo": "RandomForest",
+    "acuracia_teste": 0.9985,
+    "alto_para_baixo": 0
+  },
+  {
+    "dados": "v3-seed11",
+    "ruido": 0.2,
+    "modelo": "ArvoreDecisao",
+    "acuracia_teste": 0.8926,
+    "alto_para_baixo": 29
+  },
+  {
+    "dados": "v3-seed11",
+    "ruido": 0.3,
+    "modelo": "RandomForest",
+    "acuracia_teste": 0.997,
+    "alto_para_baixo": 0
+  },
+  {
+    "dados": "v3-seed11",
+    "ruido": 0.3,
+    "modelo": "ArvoreDecisao",
+    "acuracia_teste": 0.757,
+    "alto_para_baixo": 73
+  }
+]

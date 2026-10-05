@@ -1,0 +1,182 @@
+{
+  "versao": "v2",
+  "features": [
+    "idade",
+    "qtd_ocorrencias_totais",
+    "dias_desde_ultima_ocorrencia",
+    "frequencia_aumentou",
+    "teve_viol_fisica",
+    "teve_viol_sexual",
+    "teve_ameaca",
+    "teve_viol_psicologica",
+    "teve_viol_moral",
+    "teve_viol_patrimonial",
+    "qtd_panico_acionado"
+  ],
+  "amostras": {
+    "treino": 6300,
+    "validacao": 1350
+  },
+  "grade_hiperparametros": [
+    {
+      "n_estimators": 100,
+      "max_depth": null,
+      "min_samples_leaf": 1,
+      "acuracia_treino": 1.0,
+      "acuracia_validacao": 1.0,
+      "f1_macro_validacao": 1.0
+    },
+    {
+      "n_estimators": 100,
+      "max_depth": null,
+      "min_samples_leaf": 5,
+      "acuracia_treino": 1.0,
+      "acuracia_validacao": 1.0,
+      "f1_macro_validacao": 1.0
+    },
+    {
+      "n_estimators": 100,
+      "max_depth": 10,
+      "min_samples_leaf": 1,
+      "acuracia_treino": 1.0,
+      "acuracia_validacao": 1.0,
+      "f1_macro_validacao": 1.0
+    },
+    {
+      "n_estimators": 100,
+      "max_depth": 10,
+      "min_samples_leaf": 5,
+      "acuracia_treino": 1.0,
+      "acuracia_validacao": 1.0,
+      "f1_macro_validacao": 1.0
+    },
+    {
+      "n_estimators": 300,
+      "max_depth": null,
+      "min_samples_leaf": 1,
+      "acuracia_treino": 1.0,
+      "acuracia_validacao": 1.0,
+      "f1_macro_validacao": 1.0
+    },
+    {
+      "n_estimators": 300,
+      "max_depth": null,
+      "min_samples_leaf": 5,
+      "acuracia_treino": 1.0,
+      "acuracia_validacao": 1.0,
+      "f1_macro_validacao": 1.0
+    },
+    {
+      "n_estimators": 300,
+      "max_depth": 6,
+      "min_samples_leaf": 1,
+      "acuracia_treino": 0.9997,
+      "acuracia_validacao": 1.0,
+      "f1_macro_validacao": 1.0
+    },
+    {
+      "n_estimators": 300,
+      "max_depth": 6,
+      "min_samples_leaf": 5,
+      "acuracia_treino": 0.9997,
+      "acuracia_validacao": 1.0,
+      "f1_macro_validacao": 1.0
+    },
+    {
+      "n_estimators": 300,
+      "max_depth": 10,
+      "min_samples_leaf": 1,
+      "acuracia_treino": 1.0,
+      "acuracia_validacao": 1.0,
+      "f1_macro_validacao": 1.0
+    },
+    {
+      "n_estimators": 300,
+      "max_depth": 10,
+      "min_samples_leaf": 5,
+      "acuracia_treino": 1.0,
+      "acuracia_validacao": 1.0,
+      "f1_macro_validacao": 1.0
+    },
+    {
+      "n_estimators": 100,
+      "max_depth": 6,
+      "min_samples_leaf": 1,
+      "acuracia_treino": 0.9979,
+      "acuracia_validacao": 0.9985,
+      "f1_macro_validacao": 0.9985
+    },
+    {
+      "n_estimators": 100,
+      "max_depth": 6,
+      "min_samples_leaf": 5,
+      "acuracia_treino": 0.997,
+      "acuracia_validacao": 0.9985,
+      "f1_macro_validacao": 0.9985
+    }
+  ],
+  "escolhido": {
+    "n_estimators": 100,
+    "max_depth": null,
+    "min_samples_leaf": 1,
+    "acuracia_treino": 1.0,
+    "acuracia_validacao": 1.0,
+    "f1_macro_validacao": 1.0
+  },
+  "curva_aprendizado": [
+    {
+      "arvores": 10,
+      "acuracia_treino": 1.0,
+      "acuracia_validacao": 1.0
+    },
+    {
+      "arvores": 20,
+      "acuracia_treino": 1.0,
+      "acuracia_validacao": 1.0
+    },
+    {
+      "arvores": 30,
+      "acuracia_treino": 1.0,
+      "acuracia_validacao": 1.0
+    },
+    {
+      "arvores": 40,
+      "acuracia_treino": 1.0,
+      "acuracia_validacao": 1.0
+    },
+    {
+      "arvores": 50,
+      "acuracia_treino": 1.0,
+      "acuracia_validacao": 1.0
+    },
+    {
+      "arvores": 60,
+      "acuracia_treino": 1.0,
+      "acuracia_validacao": 1.0
+    },
+    {
+      "arvores": 70,
+      "acuracia_treino": 1.0,
+      "acuracia_validacao": 1.0
+    },
+    {
+      "arvores": 80,
+      "acuracia_treino": 1.0,
+      "acuracia_validacao": 1.0
+    },
+    {
+      "arvores": 90,
+      "acuracia_treino": 1.0,
+      "acuracia_validacao": 1.0
+    },
+    {
+      "arvores": 100,
+      "acuracia_treino": 1.0,
+      "acuracia_validacao": 1.0
+    }
+  ],
+  "ambiente": {
+    "python": "3.14.6",
+    "sklearn": "1.9.0"
+  }
+}

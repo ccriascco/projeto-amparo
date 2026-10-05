@@ -1,0 +1,5 @@
+dados,modelo,max_depth,min_samples_leaf,acuracia_teste,f1_macro_teste,erros_teste,alto_para_baixo,f1_val_escolhido
+v3-seed7,RandomForest,livre,5,0.9993,0.9993,1,0,0.9985
+v3-seed7,ArvoreDecisao,6,5,1.0,1.0,0,0,1.0
+v3-seed11,RandomForest,livre,5,1.0,1.0,0,0,1.0
+v3-seed11,ArvoreDecisao,6,5,0.9963,0.9963,5,1,0.9985

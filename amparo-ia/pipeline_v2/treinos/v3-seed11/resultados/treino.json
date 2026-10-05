@@ -1,0 +1,182 @@
+{
+  "versao": "v3-candidato",
+  "features": [
+    "idade",
+    "qtd_ocorrencias_totais",
+    "dias_desde_ultima_ocorrencia",
+    "frequencia_aumentou",
+    "teve_viol_fisica",
+    "teve_viol_sexual",
+    "teve_ameaca",
+    "teve_viol_psicologica",
+    "teve_viol_moral",
+    "teve_viol_patrimonial",
+    "qtd_panico_acionado"
+  ],
+  "amostras": {
+    "treino": 6300,
+    "validacao": 1350
+  },
+  "grade_hiperparametros": [
+    {
+      "n_estimators": 100,
+      "max_depth": 6,
+      "min_samples_leaf": 1,
+      "acuracia_treino": 0.9008,
+      "acuracia_validacao": 0.8978,
+      "f1_macro_validacao": 0.8978
+    },
+    {
+      "n_estimators": 100,
+      "max_depth": 6,
+      "min_samples_leaf": 5,
+      "acuracia_treino": 0.9013,
+      "acuracia_validacao": 0.8978,
+      "f1_macro_validacao": 0.8978
+    },
+    {
+      "n_estimators": 300,
+      "max_depth": 6,
+      "min_samples_leaf": 1,
+      "acuracia_treino": 0.9008,
+      "acuracia_validacao": 0.8978,
+      "f1_macro_validacao": 0.8978
+    },
+    {
+      "n_estimators": 300,
+      "max_depth": 6,
+      "min_samples_leaf": 5,
+      "acuracia_treino": 0.9013,
+      "acuracia_validacao": 0.8978,
+      "f1_macro_validacao": 0.8978
+    },
+    {
+      "n_estimators": 100,
+      "max_depth": null,
+      "min_samples_leaf": 5,
+      "acuracia_treino": 0.9029,
+      "acuracia_validacao": 0.897,
+      "f1_macro_validacao": 0.8971
+    },
+    {
+      "n_estimators": 100,
+      "max_depth": 10,
+      "min_samples_leaf": 1,
+      "acuracia_treino": 0.9095,
+      "acuracia_validacao": 0.897,
+      "f1_macro_validacao": 0.8971
+    },
+    {
+      "n_estimators": 100,
+      "max_depth": 10,
+      "min_samples_leaf": 5,
+      "acuracia_treino": 0.9029,
+      "acuracia_validacao": 0.897,
+      "f1_macro_validacao": 0.8971
+    },
+    {
+      "n_estimators": 300,
+      "max_depth": null,
+      "min_samples_leaf": 5,
+      "acuracia_treino": 0.9029,
+      "acuracia_validacao": 0.897,
+      "f1_macro_validacao": 0.8971
+    },
+    {
+      "n_estimators": 300,
+      "max_depth": 10,
+      "min_samples_leaf": 1,
+      "acuracia_treino": 0.9097,
+      "acuracia_validacao": 0.897,
+      "f1_macro_validacao": 0.8971
+    },
+    {
+      "n_estimators": 300,
+      "max_depth": 10,
+      "min_samples_leaf": 5,
+      "acuracia_treino": 0.9029,
+      "acuracia_validacao": 0.897,
+      "f1_macro_validacao": 0.8971
+    },
+    {
+      "n_estimators": 100,
+      "max_depth": null,
+      "min_samples_leaf": 1,
+      "acuracia_treino": 1.0,
+      "acuracia_validacao": 0.8837,
+      "f1_macro_validacao": 0.8837
+    },
+    {
+      "n_estimators": 300,
+      "max_depth": null,
+      "min_samples_leaf": 1,
+      "acuracia_treino": 1.0,
+      "acuracia_validacao": 0.8815,
+      "f1_macro_validacao": 0.8815
+    }
+  ],
+  "escolhido": {
+    "n_estimators": 100,
+    "max_depth": 6,
+    "min_samples_leaf": 1,
+    "acuracia_treino": 0.9008,
+    "acuracia_validacao": 0.8978,
+    "f1_macro_validacao": 0.8978
+  },
+  "curva_aprendizado": [
+    {
+      "arvores": 10,
+      "acuracia_treino": 0.9016,
+      "acuracia_validacao": 0.8956
+    },
+    {
+      "arvores": 20,
+      "acuracia_treino": 0.9006,
+      "acuracia_validacao": 0.897
+    },
+    {
+      "arvores": 30,
+      "acuracia_treino": 0.8994,
+      "acuracia_validacao": 0.897
+    },
+    {
+      "arvores": 40,
+      "acuracia_treino": 0.9008,
+      "acuracia_validacao": 0.8978
+    },
+    {
+      "arvores": 50,
+      "acuracia_treino": 0.9008,
+      "acuracia_validacao": 0.8978
+    },
+    {
+      "arvores": 60,
+      "acuracia_treino": 0.9008,
+      "acuracia_validacao": 0.8978
+    },
+    {
+      "arvores": 70,
+      "acuracia_treino": 0.9008,
+      "acuracia_validacao": 0.8978
+    },
+    {
+      "arvores": 80,
+      "acuracia_treino": 0.9008,
+      "acuracia_validacao": 0.8978
+    },
+    {
+      "arvores": 90,
+      "acuracia_treino": 0.9008,
+      "acuracia_validacao": 0.8978
+    },
+    {
+      "arvores": 100,
+      "acuracia_treino": 0.9008,
+      "acuracia_validacao": 0.8978
+    }
+  ],
+  "ambiente": {
+    "python": "3.14.6",
+    "sklearn": "1.9.0"
+  }
+}

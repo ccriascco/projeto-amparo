@@ -1,0 +1,330 @@
+[
+  {
+    "caso_id": "B01",
+    "descricao": "Nenhuma ocorrência e nenhum acionamento",
+    "esperado_regra": "sem histórico (RN07)",
+    "idade": 30,
+    "ocorrencias": [],
+    "botao": []
+  },
+  {
+    "caso_id": "B02",
+    "descricao": "Uma ocorrência verbal (Moral) de 200 dias atrás",
+    "esperado_regra": "Baixo",
+    "idade": 30,
+    "ocorrencias": [
+      {
+        "tipo": "Moral",
+        "dias_atras": 200
+      }
+    ],
+    "botao": []
+  },
+  {
+    "caso_id": "B03",
+    "descricao": "Uma ocorrência verbal (Moral) hoje",
+    "esperado_regra": "Baixo",
+    "idade": 30,
+    "ocorrencias": [
+      {
+        "tipo": "Moral",
+        "dias_atras": 0
+      }
+    ],
+    "botao": []
+  },
+  {
+    "caso_id": "B04",
+    "descricao": "Cinco ocorrências verbais recorrentes em 30 dias",
+    "esperado_regra": "Médio",
+    "idade": 30,
+    "ocorrencias": [
+      {
+        "tipo": "Moral",
+        "dias_atras": 1
+      },
+      {
+        "tipo": "Moral",
+        "dias_atras": 3
+      },
+      {
+        "tipo": "Moral",
+        "dias_atras": 6
+      },
+      {
+        "tipo": "Moral",
+        "dias_atras": 10
+      },
+      {
+        "tipo": "Moral",
+        "dias_atras": 20
+      }
+    ],
+    "botao": []
+  },
+  {
+    "caso_id": "B05",
+    "descricao": "Uma agressão física antiga (400 dias)",
+    "esperado_regra": "Alto",
+    "idade": 30,
+    "ocorrencias": [
+      {
+        "tipo": "Física",
+        "dias_atras": 400
+      }
+    ],
+    "botao": []
+  },
+  {
+    "caso_id": "B06",
+    "descricao": "Uma ameaça isolada",
+    "esperado_regra": "Médio",
+    "idade": 30,
+    "ocorrencias": [
+      {
+        "tipo": "Ameaça",
+        "dias_atras": 40
+      }
+    ],
+    "botao": []
+  },
+  {
+    "caso_id": "B07",
+    "descricao": "Três ameaças em 20 dias (recorrência)",
+    "esperado_regra": "Alto",
+    "idade": 30,
+    "ocorrencias": [
+      {
+        "tipo": "Ameaça",
+        "dias_atras": 2
+      },
+      {
+        "tipo": "Ameaça",
+        "dias_atras": 9
+      },
+      {
+        "tipo": "Ameaça",
+        "dias_atras": 18
+      }
+    ],
+    "botao": []
+  },
+  {
+    "caso_id": "B08",
+    "descricao": "Só um acionamento válido, sem ocorrências",
+    "esperado_regra": "Médio",
+    "idade": 30,
+    "ocorrencias": [],
+    "botao": [
+      {
+        "duracao_segundos": 300
+      }
+    ]
+  },
+  {
+    "caso_id": "B09",
+    "descricao": "Só um acionamento por engano (10s), sem ocorrências",
+    "esperado_regra": "sem histórico (RN07)",
+    "idade": 30,
+    "ocorrencias": [],
+    "botao": [
+      {
+        "duracao_segundos": 10
+      }
+    ]
+  },
+  {
+    "caso_id": "B10",
+    "descricao": "Ocorrência verbal recente (hoje) + acionamento válido",
+    "esperado_regra": "Alto",
+    "idade": 30,
+    "ocorrencias": [
+      {
+        "tipo": "Moral",
+        "dias_atras": 0
+      }
+    ],
+    "botao": [
+      {
+        "duracao_segundos": 200
+      }
+    ]
+  },
+  {
+    "caso_id": "B11",
+    "descricao": "Agressão física (hoje) sem acionamento",
+    "esperado_regra": "Alto",
+    "idade": 30,
+    "ocorrencias": [
+      {
+        "tipo": "Física",
+        "dias_atras": 0
+      }
+    ],
+    "botao": []
+  },
+  {
+    "caso_id": "B12",
+    "descricao": "Cinco acionamentos válidos, sem ocorrências",
+    "esperado_regra": "Médio",
+    "idade": 30,
+    "ocorrencias": [],
+    "botao": [
+      {
+        "duracao_segundos": 120
+      },
+      {
+        "duracao_segundos": 120
+      },
+      {
+        "duracao_segundos": 120
+      },
+      {
+        "duracao_segundos": 120
+      },
+      {
+        "duracao_segundos": 120
+      }
+    ]
+  },
+  {
+    "caso_id": "B13",
+    "descricao": "Três acionamentos válidos + agressão física",
+    "esperado_regra": "Alto",
+    "idade": 30,
+    "ocorrencias": [
+      {
+        "tipo": "Física",
+        "dias_atras": 30
+      }
+    ],
+    "botao": [
+      {
+        "duracao_segundos": 120
+      },
+      {
+        "duracao_segundos": 120
+      },
+      {
+        "duracao_segundos": 120
+      }
+    ]
+  },
+  {
+    "caso_id": "B14",
+    "descricao": "Acionamentos só por engano (3x 10s) + verbal antiga",
+    "esperado_regra": "Baixo",
+    "idade": 30,
+    "ocorrencias": [
+      {
+        "tipo": "Moral",
+        "dias_atras": 200
+      }
+    ],
+    "botao": [
+      {
+        "duracao_segundos": 10
+      },
+      {
+        "duracao_segundos": 10
+      },
+      {
+        "duracao_segundos": 10
+      }
+    ]
+  },
+  {
+    "caso_id": "B15",
+    "descricao": "Psicológica recente + acionamento por engano",
+    "esperado_regra": "Baixo",
+    "idade": 30,
+    "ocorrencias": [
+      {
+        "tipo": "Psicológica",
+        "dias_atras": 5
+      }
+    ],
+    "botao": [
+      {
+        "duracao_segundos": 10
+      }
+    ]
+  },
+  {
+    "caso_id": "B16",
+    "descricao": "Patrimonial + psicológica (duas leves, hoje)",
+    "esperado_regra": "Médio",
+    "idade": 30,
+    "ocorrencias": [
+      {
+        "tipo": "Patrimonial",
+        "dias_atras": 0
+      },
+      {
+        "tipo": "Psicológica",
+        "dias_atras": 0
+      }
+    ],
+    "botao": []
+  },
+  {
+    "caso_id": "B17",
+    "descricao": "Ameaça + física antiga (400 dias)",
+    "esperado_regra": "Alto",
+    "idade": 30,
+    "ocorrencias": [
+      {
+        "tipo": "Ameaça",
+        "dias_atras": 3
+      },
+      {
+        "tipo": "Física",
+        "dias_atras": 400
+      }
+    ],
+    "botao": []
+  },
+  {
+    "caso_id": "B18",
+    "descricao": "Física antiga (400 dias) + acionamento válido",
+    "esperado_regra": "Alto",
+    "idade": 30,
+    "ocorrencias": [
+      {
+        "tipo": "Física",
+        "dias_atras": 400
+      }
+    ],
+    "botao": [
+      {
+        "duracao_segundos": 90
+      }
+    ]
+  },
+  {
+    "caso_id": "B19",
+    "descricao": "Ocorrência sexual antiga sem acionamento",
+    "esperado_regra": "Alto",
+    "idade": 30,
+    "ocorrencias": [
+      {
+        "tipo": "Sexual",
+        "dias_atras": 250
+      }
+    ],
+    "botao": []
+  },
+  {
+    "caso_id": "B20",
+    "descricao": "Idade fora da faixa (-5) com uma ameaça",
+    "esperado_regra": "entrada inválida: deveria ser recusada",
+    "idade": -5,
+    "ocorrencias": [
+      {
+        "tipo": "Ameaça",
+        "dias_atras": 10
+      }
+    ],
+    "botao": []
+  }
+]

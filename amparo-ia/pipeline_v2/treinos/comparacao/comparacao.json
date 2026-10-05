@@ -1,0 +1,46 @@
+[
+  {
+    "dados": "v3-seed7",
+    "modelo": "RandomForest",
+    "max_depth": "livre",
+    "min_samples_leaf": 5,
+    "acuracia_teste": 0.9993,
+    "f1_macro_teste": 0.9993,
+    "erros_teste": 1,
+    "alto_para_baixo": 0,
+    "f1_val_escolhido": 0.9985
+  },
+  {
+    "dados": "v3-seed7",
+    "modelo": "ArvoreDecisao",
+    "max_depth": 6,
+    "min_samples_leaf": 5,
+    "acuracia_teste": 1.0,
+    "f1_macro_teste": 1.0,
+    "erros_teste": 0,
+    "alto_para_baixo": 0,
+    "f1_val_escolhido": 1.0
+  },
+  {
+    "dados": "v3-seed11",
+    "modelo": "RandomForest",
+    "max_depth": "livre",
+    "min_samples_leaf": 5,
+    "acuracia_teste": 1.0,
+    "f1_macro_teste": 1.0,
+    "erros_teste": 0,
+    "alto_para_baixo": 0,
+    "f1_val_escolhido": 1.0
+  },
+  {
+    "dados": "v3-seed11",
+    "modelo": "ArvoreDecisao",
+    "max_depth": 6,
+    "min_samples_leaf": 5,
+    "acuracia_teste": 0.9963,
+    "f1_macro_teste": 0.9963,
+    "erros_teste": 5,
+    "alto_para_baixo": 1,
+    "f1_val_escolhido": 0.9985
+  }
+]

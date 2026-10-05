@@ -1,6 +1,7 @@
-﻿fastapi
-uvicorn
-scikit-learn
-pandas
-numpy
-pydantic
+fastapi==0.142.2
+uvicorn==0.54.0
+scikit-learn==1.9.0
+pandas==3.0.5
+numpy==2.5.2
+pydantic==2.13.5
+python-dotenv==1.2.4

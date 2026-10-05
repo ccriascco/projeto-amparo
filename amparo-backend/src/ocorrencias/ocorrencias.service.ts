@@ -80,10 +80,14 @@ export class OcorrenciasService {
         .eq('usuaria_id', usuariaId)
         .order('criado_em', { ascending: false });
 
-      const { count: qtdEmergencias } = await this.supabase
+      const { data: emergenciasUsuaria } = await this.supabase
         .from('emergencias')
-        .select('*', { count: 'exact', head: true })
+        .select('criado_em, encerrado_em')
         .eq('usuaria_id', usuariaId);
+      const LIMITE_ENGANO_MS = 30_000;
+      const qtdAcionamentosValidos = (emergenciasUsuaria ?? []).filter((e) =>
+        !e.encerrado_em || new Date(e.encerrado_em).getTime() - new Date(e.criado_em).getTime() > LIMITE_ENGANO_MS,
+      ).length;
 
       const { data: usuaria } = await this.supabase
         .from('usuarias')
@@ -94,7 +98,7 @@ export class OcorrenciasService {
       const nivelRiscoAnterior = usuaria?.nivel_risco || null;
 
       const qtdOcorrencias = ocorrencias ? ocorrencias.length : 0;
-      let teveFisica = 0, teveSexual = 0, teveAmeaca = 0;
+      let teveFisica = 0, teveSexual = 0, teveAmeaca = 0, tevePsicologica = 0, teveMoral = 0, tevePatrimonial = 0;
       let diasUltimaOcorrencia = 999;
       let frequenciaAumentou = 0;
 
@@ -104,6 +108,9 @@ export class OcorrenciasService {
           if (tipos.includes('Física')) teveFisica = 1;
           if (tipos.includes('Sexual')) teveSexual = 1;
           if (tipos.includes('Ameaça')) teveAmeaca = 1;
+          if (tipos.includes('Psicológica')) tevePsicologica = 1;
+          if (tipos.includes('Moral')) teveMoral = 1;
+          if (tipos.includes('Patrimonial')) tevePatrimonial = 1;
         }
 
         const dataUltima = new Date(ocorrencias[0].criado_em);
@@ -118,7 +125,7 @@ export class OcorrenciasService {
       let idade = 35;
       if (usuaria && usuaria.data_nascimento) {
          const nascimento = new Date(usuaria.data_nascimento);
-         idade = new Date().getFullYear() - nascimento.getFullYear();
+         idade = Math.min(Math.max(new Date().getFullYear() - nascimento.getFullYear(), 0), 120);
       }
 
       const payloadIA = {
@@ -129,7 +136,10 @@ export class OcorrenciasService {
         teve_viol_fisica: teveFisica,
         teve_viol_sexual: teveSexual,
         teve_ameaca: teveAmeaca,
-        qtd_panico_acionado: qtdEmergencias || 0
+        teve_viol_psicologica: tevePsicologica,
+        teve_viol_moral: teveMoral,
+        teve_viol_patrimonial: tevePatrimonial,
+        qtd_panico_acionado: qtdAcionamentosValidos
       };
 
       const iaUrl = process.env.IA_SERVICE_URL || 'http://127.0.0.1:8000';

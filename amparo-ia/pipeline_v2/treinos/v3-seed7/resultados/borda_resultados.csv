@@ -1,0 +1,21 @@
+caso_id,descricao,esperado_regra,gabarito,previsto_v2,previsto_v1,acertou_v2,acertou_v1,previsto_v2_anterior,acertou_v2_anterior
+B01,Nenhuma ocorrência e nenhum acionamento,sem histórico (RN07),-,Baixo,Baixo,False,False,Medio,False
+B02,Uma ocorrência verbal (Moral) de 200 dias atrás,Baixo,Baixo,Baixo,Baixo,True,True,Baixo,True
+B03,Uma ocorrência verbal (Moral) hoje,Baixo,Baixo,Baixo,Medio,True,False,Baixo,True
+B04,Cinco ocorrências verbais recorrentes em 30 dias,Médio,Medio,Medio,Alto,True,False,Medio,True
+B05,Uma agressão física antiga (400 dias),Alto,Alto,Alto,Alto,True,True,Alto,True
+B06,Uma ameaça isolada,Médio,Medio,Medio,Medio,True,True,Medio,True
+B07,Três ameaças em 20 dias (recorrência),Alto,Alto,Alto,Alto,True,True,Alto,True
+B08,"Só um acionamento válido, sem ocorrências",Médio,Medio,Medio,Alto,True,False,Medio,True
+B09,"Só um acionamento por engano (10s), sem ocorrências",sem histórico (RN07),-,Baixo,Alto,False,False,Medio,False
+B10,Ocorrência verbal recente (hoje) + acionamento válido,Alto,Alto,Alto,Alto,True,True,Alto,True
+B11,Agressão física (hoje) sem acionamento,Alto,Alto,Alto,Alto,True,True,Alto,True
+B12,"Cinco acionamentos válidos, sem ocorrências",Médio,Medio,Medio,Alto,True,False,Medio,True
+B13,Três acionamentos válidos + agressão física,Alto,Alto,Alto,Alto,True,True,Alto,True
+B14,Acionamentos só por engano (3x 10s) + verbal antiga,Baixo,Baixo,Baixo,Alto,True,False,Baixo,True
+B15,Psicológica recente + acionamento por engano,Baixo,Baixo,Baixo,Alto,True,False,Baixo,True
+B16,"Patrimonial + psicológica (duas leves, hoje)",Médio,Medio,Medio,Medio,True,True,Medio,True
+B17,Ameaça + física antiga (400 dias),Alto,Alto,Alto,Alto,True,True,Alto,True
+B18,Física antiga (400 dias) + acionamento válido,Alto,Alto,Alto,Alto,True,True,Alto,True
+B19,Ocorrência sexual antiga sem acionamento,Alto,Alto,Alto,Alto,True,True,Alto,True
+B20,Idade fora da faixa (-5) com uma ameaça,entrada inválida: deveria ser recusada,Medio,Medio,Medio,True,True,Medio,True

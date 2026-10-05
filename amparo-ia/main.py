@@ -1,11 +1,17 @@
 import os
 import logging
+from pathlib import Path
+from dotenv import load_dotenv
 from fastapi import FastAPI, Header, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 import pickle
 import pandas as pd
 import warnings
 warnings.filterwarnings('ignore')
+
+BASE_DIR = Path(__file__).resolve().parent
+load_dotenv(BASE_DIR / ".env")
+load_dotenv(BASE_DIR.parent / "amparo-backend" / ".env")
 
 logger = logging.getLogger("amparo_ia")
 logging.basicConfig(level=logging.INFO)
@@ -14,10 +20,9 @@ app = FastAPI(title="Amparo IA - Cerebro Preditivo")
 
 INTERNAL_SECRET = os.environ.get("IA_SHARED_SECRET")
 if not INTERNAL_SECRET:
-    logger.warning(
-        "IA_SHARED_SECRET não configurado: o endpoint /classificar está "
-        "aceitando qualquer chamada. Defina a variável de ambiente antes de "
-        "expor este serviço fora de localhost."
+    raise RuntimeError(
+        "IA_SHARED_SECRET não definido. Configure no .env do amparo-backend "
+        "(ou no amparo-ia/.env). O serviço não sobe sem autenticação."
     )
 
 try:
@@ -29,15 +34,22 @@ except FileNotFoundError:
     modelo = None
     colunas = []
 
+FLAG = Field(ge=0, le=1)
+CONTAGEM = Field(ge=0, le=1000)
+
+
 class DadosUsuaria(BaseModel):
-    idade: int
-    qtd_ocorrencias_totais: int
-    dias_desde_ultima_ocorrencia: int
-    frequencia_aumentou: int
-    teve_viol_fisica: int
-    teve_viol_sexual: int
-    teve_ameaca: int
-    qtd_panico_acionado: int
+    idade: int = Field(ge=0, le=120)
+    qtd_ocorrencias_totais: int = CONTAGEM
+    dias_desde_ultima_ocorrencia: int = Field(ge=0, le=999)
+    frequencia_aumentou: int = FLAG
+    teve_viol_fisica: int = FLAG
+    teve_viol_sexual: int = FLAG
+    teve_ameaca: int = FLAG
+    qtd_panico_acionado: int = CONTAGEM
+    teve_viol_psicologica: int = Field(default=0, ge=0, le=1)
+    teve_viol_moral: int = Field(default=0, ge=0, le=1)
+    teve_viol_patrimonial: int = Field(default=0, ge=0, le=1)
 
 def verificar_origem(x_internal_secret: str | None):
     if INTERNAL_SECRET and x_internal_secret != INTERNAL_SECRET:
@@ -67,6 +79,9 @@ def classificar_risco(dados: DadosUsuaria, x_internal_secret: str | None = Heade
             'teve_viol_fisica': dados.teve_viol_fisica,
             'teve_viol_sexual': dados.teve_viol_sexual,
             'teve_ameaca': dados.teve_ameaca,
+            'teve_viol_psicologica': dados.teve_viol_psicologica,
+            'teve_viol_moral': dados.teve_viol_moral,
+            'teve_viol_patrimonial': dados.teve_viol_patrimonial,
             'qtd_panico_acionado': dados.qtd_panico_acionado
         }])
 

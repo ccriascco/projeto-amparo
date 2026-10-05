@@ -1,0 +1,104 @@
+{
+  "conjunto": "teste",
+  "n": 1350,
+  "distribuicao": {
+    "0": 450,
+    "1": 450,
+    "2": 450
+  },
+  "v2": {
+    "acuracia": 1.0,
+    "por_nivel": {
+      "Baixo": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 450.0
+      },
+      "Medio": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 450.0
+      },
+      "Alto": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 450.0
+      }
+    },
+    "f1_macro": 1.0,
+    "matriz_confusao": [
+      [
+        450,
+        0,
+        0
+      ],
+      [
+        0,
+        450,
+        0
+      ],
+      [
+        0,
+        0,
+        450
+      ]
+    ],
+    "erros_perigosos_alto_para_baixo": 0
+  },
+  "v1": {
+    "acuracia": 0.6822,
+    "por_nivel": {
+      "Baixo": {
+        "precision": 1.0,
+        "recall": 0.4756,
+        "f1-score": 0.6446,
+        "support": 450.0
+      },
+      "Medio": {
+        "precision": 0.5963,
+        "recall": 0.5711,
+        "f1-score": 0.5834,
+        "support": 450.0
+      },
+      "Alto": {
+        "precision": 0.6383,
+        "recall": 1.0,
+        "f1-score": 0.7792,
+        "support": 450.0
+      }
+    },
+    "f1_macro": 0.6691,
+    "matriz_confusao": [
+      [
+        214,
+        174,
+        62
+      ],
+      [
+        0,
+        257,
+        193
+      ],
+      [
+        0,
+        0,
+        450
+      ]
+    ],
+    "erros_perigosos_alto_para_baixo": 0
+  },
+  "botao": {
+    "casos_com_botao_valido": 309,
+    "taxa_mudanca_ao_remover_botao": 0.3689,
+    "casos_com_engano": 197,
+    "taxa_mudanca_se_engano_contasse": 0.3401
+  },
+  "borda": {
+    "n": 20,
+    "acertos_v2": 18,
+    "acertos_v1": 12
+  }
+}
