@@ -12,7 +12,7 @@ from pathlib import Path
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
-from regras import FEATURES, NIVEIS, TIPOS, features, gabarito
+from regras import FEATURES, NIVEIS, TIPOS, decisao_api_sem_dados, features, gabarito
 
 RAIZ = Path(__file__).resolve().parent
 SAIDA = RAIZ / 'dados'
@@ -34,10 +34,11 @@ def caso_aleatorio():
         })
     botoes = []
     for _ in range(rng.choices([0, 1, 2, 3, 4], weights=[60, 22, 10, 5, 3])[0]):
+        dias = rng.choice([rng.randint(0, 15), rng.randint(16, 30), rng.randint(31, 400)])
         if rng.random() < 0.7:
-            botoes.append({'duracao_segundos': rng.randint(31, 900)})  # acionamento válido
+            botoes.append({'duracao_segundos': rng.randint(31, 900), 'dias_atras': dias})  # válido
         else:
-            botoes.append({'duracao_segundos': rng.randint(1, 30)})    # engano
+            botoes.append({'duracao_segundos': rng.randint(1, 30), 'dias_atras': dias})    # engano
     return {'idade': rng.randint(18, 70), 'ocorrencias': ocorrencias, 'botao': botoes}
 
 
@@ -61,26 +62,28 @@ def gerar_equilibrado():
 
 
 CASOS_BORDA = [
-    ('B01', 'Nenhuma ocorrência e nenhum acionamento', 'sem histórico (RN07)', {'idade': 30, 'ocorrencias': [], 'botao': []}),
-    ('B02', 'Uma ocorrência verbal (Moral) de 200 dias atrás', 'Baixo', {'idade': 30, 'ocorrencias': [{'tipo': 'Moral', 'dias_atras': 200}], 'botao': []}),
-    ('B03', 'Uma ocorrência verbal (Moral) hoje', 'Baixo', {'idade': 30, 'ocorrencias': [{'tipo': 'Moral', 'dias_atras': 0}], 'botao': []}),
-    ('B04', 'Cinco ocorrências verbais recorrentes em 30 dias', 'Médio', {'idade': 30, 'ocorrencias': [{'tipo': 'Moral', 'dias_atras': d} for d in (1, 3, 6, 10, 20)], 'botao': []}),
-    ('B05', 'Uma agressão física antiga (400 dias)', 'Alto', {'idade': 30, 'ocorrencias': [{'tipo': 'Física', 'dias_atras': 400}], 'botao': []}),
-    ('B06', 'Uma ameaça isolada', 'Médio', {'idade': 30, 'ocorrencias': [{'tipo': 'Ameaça', 'dias_atras': 40}], 'botao': []}),
-    ('B07', 'Três ameaças em 20 dias (recorrência)', 'Alto', {'idade': 30, 'ocorrencias': [{'tipo': 'Ameaça', 'dias_atras': d} for d in (2, 9, 18)], 'botao': []}),
-    ('B08', 'Só um acionamento válido, sem ocorrências', 'Médio', {'idade': 30, 'ocorrencias': [], 'botao': [{'duracao_segundos': 300}]}),
-    ('B09', 'Só um acionamento por engano (10s), sem ocorrências', 'sem histórico (RN07)', {'idade': 30, 'ocorrencias': [], 'botao': [{'duracao_segundos': 10}]}),
-    ('B10', 'Ocorrência verbal recente (hoje) + acionamento válido', 'Alto', {'idade': 30, 'ocorrencias': [{'tipo': 'Moral', 'dias_atras': 0}], 'botao': [{'duracao_segundos': 200}]}),
-    ('B11', 'Agressão física (hoje) sem acionamento', 'Alto', {'idade': 30, 'ocorrencias': [{'tipo': 'Física', 'dias_atras': 0}], 'botao': []}),
-    ('B12', 'Cinco acionamentos válidos, sem ocorrências', 'Médio', {'idade': 30, 'ocorrencias': [], 'botao': [{'duracao_segundos': 120}] * 5}),
-    ('B13', 'Três acionamentos válidos + agressão física', 'Alto', {'idade': 30, 'ocorrencias': [{'tipo': 'Física', 'dias_atras': 30}], 'botao': [{'duracao_segundos': 120}] * 3}),
-    ('B14', 'Acionamentos só por engano (3x 10s) + verbal antiga', 'Baixo', {'idade': 30, 'ocorrencias': [{'tipo': 'Moral', 'dias_atras': 200}], 'botao': [{'duracao_segundos': 10}] * 3}),
-    ('B15', 'Psicológica recente + acionamento por engano', 'Baixo', {'idade': 30, 'ocorrencias': [{'tipo': 'Psicológica', 'dias_atras': 5}], 'botao': [{'duracao_segundos': 10}]}),
-    ('B16', 'Patrimonial + psicológica (duas leves, hoje)', 'Médio', {'idade': 30, 'ocorrencias': [{'tipo': 'Patrimonial', 'dias_atras': 0}, {'tipo': 'Psicológica', 'dias_atras': 0}], 'botao': []}),
-    ('B17', 'Ameaça + física antiga (400 dias)', 'Alto', {'idade': 30, 'ocorrencias': [{'tipo': 'Ameaça', 'dias_atras': 3}, {'tipo': 'Física', 'dias_atras': 400}], 'botao': []}),
-    ('B18', 'Física antiga (400 dias) + acionamento válido', 'Alto', {'idade': 30, 'ocorrencias': [{'tipo': 'Física', 'dias_atras': 400}], 'botao': [{'duracao_segundos': 90}]}),
-    ('B19', 'Ocorrência sexual antiga sem acionamento', 'Alto', {'idade': 30, 'ocorrencias': [{'tipo': 'Sexual', 'dias_atras': 250}], 'botao': []}),
-    ('B20', 'Idade fora da faixa (-5) com uma ameaça', 'entrada inválida: deveria ser recusada', {'idade': -5, 'ocorrencias': [{'tipo': 'Ameaça', 'dias_atras': 10}], 'botao': []}),
+    ('B01', 'Nenhuma ocorrência e nenhum acionamento', {'idade': 30, 'ocorrencias': [], 'botao': []}),
+    ('B02', 'Uma ocorrência verbal (Moral) de 200 dias atrás', {'idade': 30, 'ocorrencias': [{'tipo': 'Moral', 'dias_atras': 200}], 'botao': []}),
+    ('B03', 'Uma ocorrência verbal (Moral) hoje', {'idade': 30, 'ocorrencias': [{'tipo': 'Moral', 'dias_atras': 0}], 'botao': []}),
+    ('B04', 'Cinco ocorrências verbais em 30 dias', {'idade': 30, 'ocorrencias': [{'tipo': 'Moral', 'dias_atras': d} for d in (1, 3, 6, 10, 20)], 'botao': []}),
+    ('B05', 'Uma agressão física antiga (400 dias)', {'idade': 30, 'ocorrencias': [{'tipo': 'Física', 'dias_atras': 400}], 'botao': []}),
+    ('B06', 'Uma ameaça há 40 dias (fora da janela)', {'idade': 30, 'ocorrencias': [{'tipo': 'Ameaça', 'dias_atras': 40}], 'botao': []}),
+    ('B07', 'Três ameaças em 20 dias (recorrência)', {'idade': 30, 'ocorrencias': [{'tipo': 'Ameaça', 'dias_atras': d} for d in (2, 9, 18)], 'botao': []}),
+    ('B08', 'Só um acionamento válido hoje, sem ocorrências', {'idade': 30, 'ocorrencias': [], 'botao': [{'duracao_segundos': 300, 'dias_atras': 0}]}),
+    ('B09', 'Só um acionamento por engano (10 s), sem ocorrências', {'idade': 30, 'ocorrencias': [], 'botao': [{'duracao_segundos': 10, 'dias_atras': 0}]}),
+    ('B10', 'Ocorrência verbal hoje + acionamento válido', {'idade': 30, 'ocorrencias': [{'tipo': 'Moral', 'dias_atras': 0}], 'botao': [{'duracao_segundos': 200, 'dias_atras': 0}]}),
+    ('B11', 'Agressão física hoje, sem acionamento', {'idade': 30, 'ocorrencias': [{'tipo': 'Física', 'dias_atras': 0}], 'botao': []}),
+    ('B12', 'Cinco acionamentos válidos recentes, sem ocorrências', {'idade': 30, 'ocorrencias': [], 'botao': [{'duracao_segundos': 120, 'dias_atras': 2}] * 5}),
+    ('B13', 'Três acionamentos válidos + agressão física há 30 dias (limite da janela)', {'idade': 30, 'ocorrencias': [{'tipo': 'Física', 'dias_atras': 30}], 'botao': [{'duracao_segundos': 120, 'dias_atras': 1}] * 3}),
+    ('B14', 'Três acionamentos por engano + verbal antiga', {'idade': 30, 'ocorrencias': [{'tipo': 'Moral', 'dias_atras': 200}], 'botao': [{'duracao_segundos': 10, 'dias_atras': 1}] * 3}),
+    ('B15', 'Psicológica há 5 dias + acionamento por engano', {'idade': 30, 'ocorrencias': [{'tipo': 'Psicológica', 'dias_atras': 5}], 'botao': [{'duracao_segundos': 10, 'dias_atras': 5}]}),
+    ('B16', 'Patrimonial + psicológica, hoje', {'idade': 30, 'ocorrencias': [{'tipo': 'Patrimonial', 'dias_atras': 0}, {'tipo': 'Psicológica', 'dias_atras': 0}], 'botao': []}),
+    ('B17', 'Ameaça há 3 dias + física antiga (400 dias)', {'idade': 30, 'ocorrencias': [{'tipo': 'Ameaça', 'dias_atras': 3}, {'tipo': 'Física', 'dias_atras': 400}], 'botao': []}),
+    ('B18', 'Física antiga (400 dias) + acionamento válido hoje', {'idade': 30, 'ocorrencias': [{'tipo': 'Física', 'dias_atras': 400}], 'botao': [{'duracao_segundos': 90, 'dias_atras': 0}]}),
+    ('B19', 'Ocorrência sexual antiga (250 dias), sem acionamento', {'idade': 30, 'ocorrencias': [{'tipo': 'Sexual', 'dias_atras': 250}], 'botao': []}),
+    ('B20', 'Idade fora da faixa (-5) com uma ameaça', {'idade': -5, 'ocorrencias': [{'tipo': 'Ameaça', 'dias_atras': 10}], 'botao': []}),
+    ('B21', 'Só um acionamento válido há 60 dias', {'idade': 30, 'ocorrencias': [], 'botao': [{'duracao_segundos': 300, 'dias_atras': 60}]}),
+    ('B22', 'Agressão física há 31 dias (um dia fora da janela)', {'idade': 30, 'ocorrencias': [{'tipo': 'Física', 'dias_atras': 31}], 'botao': []}),
 ]
 
 
@@ -110,9 +113,15 @@ def main():
 
     linhas_borda = []
     casos = []
-    for cid, descricao, esperado, caso in CASOS_BORDA:
+    for cid, descricao, caso in CASOS_BORDA:
         f = features(caso)
         y = gabarito(caso)
+        if caso['idade'] < 0:
+            esperado = 'recusado (422)'
+        elif y is None:
+            esperado = decisao_api_sem_dados(caso) + ' (regra da API, antes do modelo)'
+        else:
+            esperado = NIVEIS[y]
         linhas_borda.append({
             'caso_id': cid, 'descricao': descricao, 'esperado_regra': esperado,
             'nivel_risco': y if y is not None else -1, **f,

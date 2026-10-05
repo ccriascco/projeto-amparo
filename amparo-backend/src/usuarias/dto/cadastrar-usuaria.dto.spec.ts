@@ -8,7 +8,7 @@ const base = {
   telefone: '11988887777',
   nome_completo: 'Ana Teste',
   data_nascimento: '1995-05-05',
-  senha: 'senha1234',
+  senha: 'Amparo2026Seguro',
   senha_app: 'calc12345',
   guardioes: [{ nome_completo: 'Guardiã', telefone: '11999998888' }],
 };

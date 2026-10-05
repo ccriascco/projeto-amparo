@@ -1,7 +1,8 @@
-﻿import {
+import {
   Controller,
   Post,
   Get,
+  Put,
   Delete,
   Body,
   Param,
@@ -15,7 +16,9 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { OcorrenciasService } from './ocorrencias.service';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { CriarOcorrenciaDto } from './dto/criar-ocorrencia.dto';
+import { AtualizarOcorrenciaDto } from './dto/atualizar-ocorrencia.dto';
 import { ListarOcorrenciasQueryDto } from './dto/listar-ocorrencias-query.dto';
+import { TIPOS_ARQUIVO_PERMITIDOS } from '../common/tipo-arquivo.util';
 
 @Controller('ocorrencias')
 export class OcorrenciasController {
@@ -30,12 +33,7 @@ export class OcorrenciasController {
   @UseInterceptors(FileInterceptor('arquivo', {
     limits: { fileSize: 20 * 1024 * 1024 },
     fileFilter: (req, file, cb) => {
-      const permitidos = [
-        'image/jpeg', 'image/png', 'image/webp',
-        'video/mp4', 'video/quicktime', 'video/webm',
-        'audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/mp4', 'audio/x-m4a'
-      ];
-      if (permitidos.includes(file.mimetype)) {
+      if (TIPOS_ARQUIVO_PERMITIDOS.includes(file.mimetype)) {
         cb(null, true);
       } else {
         cb(new HttpException('Formato não suportado', HttpStatus.UNSUPPORTED_MEDIA_TYPE), false);
@@ -52,9 +50,24 @@ export class OcorrenciasController {
     return await this.ocorrenciasService.anexarEvidencia(id, tipo, arquivo, user.id);
   }
 
+  @Get(':id/evidencias/:evidenciaId')
+  async linkEvidencia(@Param('id') id: string, @Param('evidenciaId') evidenciaId: string, @CurrentUser() user: any) {
+    return await this.ocorrenciasService.linkEvidencia(id, evidenciaId, user.id);
+  }
+
   @Get()
   async listarMinhas(@Query() query: ListarOcorrenciasQueryDto, @CurrentUser() user: any) {
     return await this.ocorrenciasService.listarPorUsuaria(user.id, query.limit, query.offset);
+  }
+
+  @Get(':id')
+  async buscar(@Param('id') id: string, @CurrentUser() user: any) {
+    return await this.ocorrenciasService.buscarPorId(id, user.id);
+  }
+
+  @Put(':id')
+  async atualizar(@Param('id') id: string, @Body() body: AtualizarOcorrenciaDto, @CurrentUser() user: any) {
+    return await this.ocorrenciasService.atualizar(id, body, user.id);
   }
 
   @Delete(':id')

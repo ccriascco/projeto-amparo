@@ -44,7 +44,7 @@ def metricas(y, p):
 
 def main():
     v2, cols2 = carregar_modelo(RAIZ / 'modelo_candidato.pkl', RAIZ / 'colunas_candidato.pkl')
-    v2_antigo, cols2_antigo = carregar_modelo(IA / 'modelos_anteriores' / 'v2' / 'modelo_risco.pkl', IA / 'modelos_anteriores' / 'v2' / 'colunas_modelo.pkl')
+    v2_antigo, cols2_antigo = carregar_modelo(IA / 'modelos_anteriores' / 'v3-historico-completo' / 'modelo_risco.pkl', IA / 'modelos_anteriores' / 'v3-historico-completo' / 'colunas_modelo.pkl')
     v1, cols1 = carregar_modelo(V1 / 'modelo_risco.pkl', V1 / 'colunas_modelo.pkl')
 
     teste = pd.read_csv(DADOS / 'teste.csv')
@@ -80,23 +80,34 @@ def main():
     }
 
     borda = pd.read_csv(DADOS / 'borda.csv')
-    b2 = v2.predict(borda[cols2])
-    b1 = v1.predict(borda.assign(qtd_panico_acionado=borda['qtd_panico_todos'])[cols1])
+
+    def resposta_api(modelo, colunas, linhas):
+        """Reproduz a API: idade inválida é recusada; sem dados na janela, a regra decide antes do modelo."""
+        previsto = modelo.predict(linhas[colunas])
+        respostas = []
+        for (_, l), p in zip(linhas.iterrows(), previsto):
+            if l['idade'] < 0:
+                respostas.append('recusado (422)')
+            elif l['qtd_ocorrencias_totais'] == 0 and l['qtd_panico_acionado'] == 0:
+                respostas.append(('Baixo' if l['possui_historico_anterior'] else 'Medio') + ' (regra da API, antes do modelo)')
+            else:
+                respostas.append(NIVEIS[p])
+        return respostas
+
     tabela = borda[['caso_id', 'descricao', 'esperado_regra']].copy()
-    tabela['gabarito'] = [NIVEIS.get(v, '-') if v >= 0 else '-' for v in borda['nivel_risco']]
-    tabela['previsto_v2'] = [NIVEIS[v] for v in b2]
-    tabela['previsto_v1'] = [NIVEIS[v] for v in b1]
-    tabela['acertou_v2'] = tabela['gabarito'] == tabela['previsto_v2']
-    tabela['acertou_v1'] = tabela['gabarito'] == tabela['previsto_v1']
+    tabela['resposta_candidato'] = resposta_api(v2, cols2, borda)
+    tabela['resposta_producao_anterior'] = [NIVEIS[v] for v in v2_antigo.predict(borda[cols2_antigo])]
+    tabela['acertou_candidato'] = tabela['esperado_regra'] == tabela['resposta_candidato']
+    tabela['acertou_producao_anterior'] = tabela['esperado_regra'] == tabela['resposta_producao_anterior']
     tabela.to_csv(RESULTADOS / 'borda_resultados.csv', index=False)
-    b_antigo = v2_antigo.predict(borda[cols2_antigo])
-    tabela['previsto_v2_anterior'] = [NIVEIS[v] for v in b_antigo]
-    tabela['acertou_v2_anterior'] = tabela['gabarito'] == tabela['previsto_v2_anterior']
-    tabela.to_csv(RESULTADOS / 'borda_resultados.csv', index=False)
-    resultado['borda'] = {'n': len(borda), 'acertos_candidato': int(tabela['acertou_v2'].sum()), 'acertos_v2_anterior': int(tabela['acertou_v2_anterior'].sum()), 'acertos_v1': int(tabela['acertou_v1'].sum())}
+    resultado['borda'] = {
+        'n': len(borda),
+        'acertos_candidato': int(tabela['acertou_candidato'].sum()),
+        'acertos_producao_anterior': int(tabela['acertou_producao_anterior'].sum()),
+    }
 
     (RESULTADOS / 'teste.json').write_text(json.dumps(resultado, ensure_ascii=False, indent=2), encoding='utf-8')
-    print(json.dumps({k: resultado[k] for k in ('v2', 'botao', 'borda')}, ensure_ascii=False, indent=1)[:1500])
+    print(json.dumps({k: resultado[k] for k in ('v2', 'v2_anterior', 'borda')}, ensure_ascii=False, indent=1)[:2500])
     print(tabela.to_string())
 
 

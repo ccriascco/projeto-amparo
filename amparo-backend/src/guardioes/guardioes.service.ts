@@ -1,6 +1,9 @@
 ﻿import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { createClient } from '@supabase/supabase-js';
 import { erroDoBanco, tratarErro } from '../common/erro.util';
+import { normalizarTelefone } from '../common/validadores';
+
+const GUARDIA_DUPLICADA = { erro: 'Esta guardiã (telefone) já está cadastrada.' };
 
 @Injectable()
 export class GuardioesService {
@@ -13,10 +16,14 @@ export class GuardioesService {
     try {
       const { data: existentes, error: erroBusca } = await this.supabase
         .from('guardioes')
-        .select('id')
+        .select('id, telefone')
         .eq('usuaria_id', dados.usuaria_id);
 
       if (erroBusca) throw erroDoBanco(erroBusca);
+
+      if ((existentes ?? []).some((g) => normalizarTelefone(g.telefone) === normalizarTelefone(dados.telefone))) {
+        throw new HttpException(GUARDIA_DUPLICADA, HttpStatus.CONFLICT);
+      }
 
       if (existentes && existentes.length >= 5) {
         throw new HttpException(
@@ -76,6 +83,17 @@ export class GuardioesService {
 
       if (alvo.usuaria_id !== usuariaIdAutenticada) {
          throw new HttpException({ erro: 'Acesso Negado.' }, HttpStatus.FORBIDDEN);
+      }
+
+      if (dados.telefone) {
+        const { data: outras, error: erroOutras } = await this.supabase
+          .from('guardioes')
+          .select('id, telefone')
+          .eq('usuaria_id', usuariaIdAutenticada);
+        if (erroOutras) throw erroDoBanco(erroOutras);
+        if ((outras ?? []).some((g) => g.id !== id && normalizarTelefone(g.telefone) === normalizarTelefone(dados.telefone))) {
+          throw new HttpException(GUARDIA_DUPLICADA, HttpStatus.CONFLICT);
+        }
       }
 
       const { data, error } = await this.supabase

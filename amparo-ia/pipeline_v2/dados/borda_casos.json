@@ -2,7 +2,7 @@
   {
     "caso_id": "B01",
     "descricao": "Nenhuma ocorrência e nenhum acionamento",
-    "esperado_regra": "sem histórico (RN07)",
+    "esperado_regra": "Medio (regra da API, antes do modelo)",
     "idade": 30,
     "ocorrencias": [],
     "botao": []
@@ -10,7 +10,7 @@
   {
     "caso_id": "B02",
     "descricao": "Uma ocorrência verbal (Moral) de 200 dias atrás",
-    "esperado_regra": "Baixo",
+    "esperado_regra": "Baixo (regra da API, antes do modelo)",
     "idade": 30,
     "ocorrencias": [
       {
@@ -35,8 +35,8 @@
   },
   {
     "caso_id": "B04",
-    "descricao": "Cinco ocorrências verbais recorrentes em 30 dias",
-    "esperado_regra": "Médio",
+    "descricao": "Cinco ocorrências verbais em 30 dias",
+    "esperado_regra": "Medio",
     "idade": 30,
     "ocorrencias": [
       {
@@ -65,7 +65,7 @@
   {
     "caso_id": "B05",
     "descricao": "Uma agressão física antiga (400 dias)",
-    "esperado_regra": "Alto",
+    "esperado_regra": "Baixo (regra da API, antes do modelo)",
     "idade": 30,
     "ocorrencias": [
       {
@@ -77,8 +77,8 @@
   },
   {
     "caso_id": "B06",
-    "descricao": "Uma ameaça isolada",
-    "esperado_regra": "Médio",
+    "descricao": "Uma ameaça há 40 dias (fora da janela)",
+    "esperado_regra": "Baixo (regra da API, antes do modelo)",
     "idade": 30,
     "ocorrencias": [
       {
@@ -111,31 +111,33 @@
   },
   {
     "caso_id": "B08",
-    "descricao": "Só um acionamento válido, sem ocorrências",
-    "esperado_regra": "Médio",
+    "descricao": "Só um acionamento válido hoje, sem ocorrências",
+    "esperado_regra": "Medio",
     "idade": 30,
     "ocorrencias": [],
     "botao": [
       {
-        "duracao_segundos": 300
+        "duracao_segundos": 300,
+        "dias_atras": 0
       }
     ]
   },
   {
     "caso_id": "B09",
-    "descricao": "Só um acionamento por engano (10s), sem ocorrências",
-    "esperado_regra": "sem histórico (RN07)",
+    "descricao": "Só um acionamento por engano (10 s), sem ocorrências",
+    "esperado_regra": "Medio (regra da API, antes do modelo)",
     "idade": 30,
     "ocorrencias": [],
     "botao": [
       {
-        "duracao_segundos": 10
+        "duracao_segundos": 10,
+        "dias_atras": 0
       }
     ]
   },
   {
     "caso_id": "B10",
-    "descricao": "Ocorrência verbal recente (hoje) + acionamento válido",
+    "descricao": "Ocorrência verbal hoje + acionamento válido",
     "esperado_regra": "Alto",
     "idade": 30,
     "ocorrencias": [
@@ -146,13 +148,14 @@
     ],
     "botao": [
       {
-        "duracao_segundos": 200
+        "duracao_segundos": 200,
+        "dias_atras": 0
       }
     ]
   },
   {
     "caso_id": "B11",
-    "descricao": "Agressão física (hoje) sem acionamento",
+    "descricao": "Agressão física hoje, sem acionamento",
     "esperado_regra": "Alto",
     "idade": 30,
     "ocorrencias": [
@@ -165,31 +168,36 @@
   },
   {
     "caso_id": "B12",
-    "descricao": "Cinco acionamentos válidos, sem ocorrências",
-    "esperado_regra": "Médio",
+    "descricao": "Cinco acionamentos válidos recentes, sem ocorrências",
+    "esperado_regra": "Medio",
     "idade": 30,
     "ocorrencias": [],
     "botao": [
       {
-        "duracao_segundos": 120
+        "duracao_segundos": 120,
+        "dias_atras": 2
       },
       {
-        "duracao_segundos": 120
+        "duracao_segundos": 120,
+        "dias_atras": 2
       },
       {
-        "duracao_segundos": 120
+        "duracao_segundos": 120,
+        "dias_atras": 2
       },
       {
-        "duracao_segundos": 120
+        "duracao_segundos": 120,
+        "dias_atras": 2
       },
       {
-        "duracao_segundos": 120
+        "duracao_segundos": 120,
+        "dias_atras": 2
       }
     ]
   },
   {
     "caso_id": "B13",
-    "descricao": "Três acionamentos válidos + agressão física",
+    "descricao": "Três acionamentos válidos + agressão física há 30 dias (limite da janela)",
     "esperado_regra": "Alto",
     "idade": 30,
     "ocorrencias": [
@@ -200,20 +208,23 @@
     ],
     "botao": [
       {
-        "duracao_segundos": 120
+        "duracao_segundos": 120,
+        "dias_atras": 1
       },
       {
-        "duracao_segundos": 120
+        "duracao_segundos": 120,
+        "dias_atras": 1
       },
       {
-        "duracao_segundos": 120
+        "duracao_segundos": 120,
+        "dias_atras": 1
       }
     ]
   },
   {
     "caso_id": "B14",
-    "descricao": "Acionamentos só por engano (3x 10s) + verbal antiga",
-    "esperado_regra": "Baixo",
+    "descricao": "Três acionamentos por engano + verbal antiga",
+    "esperado_regra": "Baixo (regra da API, antes do modelo)",
     "idade": 30,
     "ocorrencias": [
       {
@@ -223,19 +234,22 @@
     ],
     "botao": [
       {
-        "duracao_segundos": 10
+        "duracao_segundos": 10,
+        "dias_atras": 1
       },
       {
-        "duracao_segundos": 10
+        "duracao_segundos": 10,
+        "dias_atras": 1
       },
       {
-        "duracao_segundos": 10
+        "duracao_segundos": 10,
+        "dias_atras": 1
       }
     ]
   },
   {
     "caso_id": "B15",
-    "descricao": "Psicológica recente + acionamento por engano",
+    "descricao": "Psicológica há 5 dias + acionamento por engano",
     "esperado_regra": "Baixo",
     "idade": 30,
     "ocorrencias": [
@@ -246,14 +260,15 @@
     ],
     "botao": [
       {
-        "duracao_segundos": 10
+        "duracao_segundos": 10,
+        "dias_atras": 5
       }
     ]
   },
   {
     "caso_id": "B16",
-    "descricao": "Patrimonial + psicológica (duas leves, hoje)",
-    "esperado_regra": "Médio",
+    "descricao": "Patrimonial + psicológica, hoje",
+    "esperado_regra": "Medio",
     "idade": 30,
     "ocorrencias": [
       {
@@ -269,8 +284,8 @@
   },
   {
     "caso_id": "B17",
-    "descricao": "Ameaça + física antiga (400 dias)",
-    "esperado_regra": "Alto",
+    "descricao": "Ameaça há 3 dias + física antiga (400 dias)",
+    "esperado_regra": "Medio",
     "idade": 30,
     "ocorrencias": [
       {
@@ -286,8 +301,8 @@
   },
   {
     "caso_id": "B18",
-    "descricao": "Física antiga (400 dias) + acionamento válido",
-    "esperado_regra": "Alto",
+    "descricao": "Física antiga (400 dias) + acionamento válido hoje",
+    "esperado_regra": "Medio",
     "idade": 30,
     "ocorrencias": [
       {
@@ -297,14 +312,15 @@
     ],
     "botao": [
       {
-        "duracao_segundos": 90
+        "duracao_segundos": 90,
+        "dias_atras": 0
       }
     ]
   },
   {
     "caso_id": "B19",
-    "descricao": "Ocorrência sexual antiga sem acionamento",
-    "esperado_regra": "Alto",
+    "descricao": "Ocorrência sexual antiga (250 dias), sem acionamento",
+    "esperado_regra": "Baixo (regra da API, antes do modelo)",
     "idade": 30,
     "ocorrencias": [
       {
@@ -317,12 +333,38 @@
   {
     "caso_id": "B20",
     "descricao": "Idade fora da faixa (-5) com uma ameaça",
-    "esperado_regra": "entrada inválida: deveria ser recusada",
+    "esperado_regra": "recusado (422)",
     "idade": -5,
     "ocorrencias": [
       {
         "tipo": "Ameaça",
         "dias_atras": 10
+      }
+    ],
+    "botao": []
+  },
+  {
+    "caso_id": "B21",
+    "descricao": "Só um acionamento válido há 60 dias",
+    "esperado_regra": "Baixo (regra da API, antes do modelo)",
+    "idade": 30,
+    "ocorrencias": [],
+    "botao": [
+      {
+        "duracao_segundos": 300,
+        "dias_atras": 60
+      }
+    ]
+  },
+  {
+    "caso_id": "B22",
+    "descricao": "Agressão física há 31 dias (um dia fora da janela)",
+    "esperado_regra": "Baixo (regra da API, antes do modelo)",
+    "idade": 30,
+    "ocorrencias": [
+      {
+        "tipo": "Física",
+        "dias_atras": 31
       }
     ],
     "botao": []

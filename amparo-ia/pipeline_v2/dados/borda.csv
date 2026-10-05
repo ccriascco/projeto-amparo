@@ -1,21 +1,23 @@
-caso_id,descricao,esperado_regra,nivel_risco,idade,qtd_ocorrencias_totais,dias_desde_ultima_ocorrencia,frequencia_aumentou,teve_viol_fisica,teve_viol_sexual,teve_ameaca,teve_viol_psicologica,teve_viol_moral,teve_viol_patrimonial,qtd_panico_acionado,qtd_panico_todos
-B01,Nenhuma ocorrência e nenhum acionamento,sem histórico (RN07),-1,30,0,999,0,0,0,0,0,0,0,0,0
-B02,Uma ocorrência verbal (Moral) de 200 dias atrás,Baixo,0,30,1,200,0,0,0,0,0,1,0,0,0
-B03,Uma ocorrência verbal (Moral) hoje,Baixo,0,30,1,0,0,0,0,0,0,1,0,0,0
-B04,Cinco ocorrências verbais recorrentes em 30 dias,Médio,1,30,5,1,1,0,0,0,0,1,0,0,0
-B05,Uma agressão física antiga (400 dias),Alto,2,30,1,400,0,1,0,0,0,0,0,0,0
-B06,Uma ameaça isolada,Médio,1,30,1,40,0,0,0,1,0,0,0,0,0
-B07,Três ameaças em 20 dias (recorrência),Alto,2,30,3,2,1,0,0,1,0,0,0,0,0
-B08,"Só um acionamento válido, sem ocorrências",Médio,1,30,0,999,0,0,0,0,0,0,0,1,1
-B09,"Só um acionamento por engano (10s), sem ocorrências",sem histórico (RN07),-1,30,0,999,0,0,0,0,0,0,0,0,1
-B10,Ocorrência verbal recente (hoje) + acionamento válido,Alto,2,30,1,0,0,0,0,0,0,1,0,1,1
-B11,Agressão física (hoje) sem acionamento,Alto,2,30,1,0,0,1,0,0,0,0,0,0,0
-B12,"Cinco acionamentos válidos, sem ocorrências",Médio,1,30,0,999,0,0,0,0,0,0,0,5,5
-B13,Três acionamentos válidos + agressão física,Alto,2,30,1,30,0,1,0,0,0,0,0,3,3
-B14,Acionamentos só por engano (3x 10s) + verbal antiga,Baixo,0,30,1,200,0,0,0,0,0,1,0,0,3
-B15,Psicológica recente + acionamento por engano,Baixo,0,30,1,5,0,0,0,0,1,0,0,0,1
-B16,"Patrimonial + psicológica (duas leves, hoje)",Médio,1,30,2,0,1,0,0,0,1,0,1,0,0
-B17,Ameaça + física antiga (400 dias),Alto,2,30,2,3,1,1,0,1,0,0,0,0,0
-B18,Física antiga (400 dias) + acionamento válido,Alto,2,30,1,400,0,1,0,0,0,0,0,1,1
-B19,Ocorrência sexual antiga sem acionamento,Alto,2,30,1,250,0,0,1,0,0,0,0,0,0
-B20,Idade fora da faixa (-5) com uma ameaça,entrada inválida: deveria ser recusada,1,-5,1,10,0,0,0,1,0,0,0,0,0
+caso_id,descricao,esperado_regra,nivel_risco,idade,qtd_ocorrencias_totais,dias_desde_ultima_ocorrencia,frequencia_aumentou,teve_viol_fisica,teve_viol_sexual,teve_ameaca,teve_viol_psicologica,teve_viol_moral,teve_viol_patrimonial,qtd_panico_acionado,qtd_panico_todos,possui_historico_anterior
+B01,Nenhuma ocorrência e nenhum acionamento,"Medio (regra da API, antes do modelo)",-1,30,0,999,0,0,0,0,0,0,0,0,0,0
+B02,Uma ocorrência verbal (Moral) de 200 dias atrás,"Baixo (regra da API, antes do modelo)",-1,30,0,999,0,0,0,0,0,0,0,0,0,1
+B03,Uma ocorrência verbal (Moral) hoje,Baixo,0,30,1,0,0,0,0,0,0,1,0,0,0,0
+B04,Cinco ocorrências verbais em 30 dias,Medio,1,30,5,1,1,0,0,0,0,1,0,0,0,0
+B05,Uma agressão física antiga (400 dias),"Baixo (regra da API, antes do modelo)",-1,30,0,999,0,0,0,0,0,0,0,0,0,1
+B06,Uma ameaça há 40 dias (fora da janela),"Baixo (regra da API, antes do modelo)",-1,30,0,999,0,0,0,0,0,0,0,0,0,1
+B07,Três ameaças em 20 dias (recorrência),Alto,2,30,3,2,1,0,0,1,0,0,0,0,0,0
+B08,"Só um acionamento válido hoje, sem ocorrências",Medio,1,30,0,999,0,0,0,0,0,0,0,1,1,0
+B09,"Só um acionamento por engano (10 s), sem ocorrências","Medio (regra da API, antes do modelo)",-1,30,0,999,0,0,0,0,0,0,0,0,1,0
+B10,Ocorrência verbal hoje + acionamento válido,Alto,2,30,1,0,0,0,0,0,0,1,0,1,1,0
+B11,"Agressão física hoje, sem acionamento",Alto,2,30,1,0,0,1,0,0,0,0,0,0,0,0
+B12,"Cinco acionamentos válidos recentes, sem ocorrências",Medio,1,30,0,999,0,0,0,0,0,0,0,5,5,0
+B13,Três acionamentos válidos + agressão física há 30 dias (limite da janela),Alto,2,30,1,30,0,1,0,0,0,0,0,3,3,0
+B14,Três acionamentos por engano + verbal antiga,"Baixo (regra da API, antes do modelo)",-1,30,0,999,0,0,0,0,0,0,0,0,3,1
+B15,Psicológica há 5 dias + acionamento por engano,Baixo,0,30,1,5,0,0,0,0,1,0,0,0,1,0
+B16,"Patrimonial + psicológica, hoje",Medio,1,30,2,0,1,0,0,0,1,0,1,0,0,0
+B17,Ameaça há 3 dias + física antiga (400 dias),Medio,1,30,1,3,0,0,0,1,0,0,0,0,0,1
+B18,Física antiga (400 dias) + acionamento válido hoje,Medio,1,30,0,999,0,0,0,0,0,0,0,1,1,1
+B19,"Ocorrência sexual antiga (250 dias), sem acionamento","Baixo (regra da API, antes do modelo)",-1,30,0,999,0,0,0,0,0,0,0,0,0,1
+B20,Idade fora da faixa (-5) com uma ameaça,recusado (422),1,-5,1,10,0,0,0,1,0,0,0,0,0,0
+B21,Só um acionamento válido há 60 dias,"Baixo (regra da API, antes do modelo)",-1,30,0,999,0,0,0,0,0,0,0,0,0,1
+B22,Agressão física há 31 dias (um dia fora da janela),"Baixo (regra da API, antes do modelo)",-1,30,0,999,0,0,0,0,0,0,0,0,0,1

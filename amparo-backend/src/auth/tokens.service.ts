@@ -14,6 +14,9 @@ export class TokensService {
       .from('tokens_revogados')
       .insert([{ jti, usuaria_id: usuariaId, expira_em: expiraEm.toISOString() }]);
     if (error) throw erroDoBanco(error);
+
+    // Token expirado já é recusado pela assinatura; manter a linha só guardaria dado à toa.
+    await this.supabase.from('tokens_revogados').delete().lt('expira_em', new Date().toISOString());
   }
 
   async estaRevogado(jti: string): Promise<boolean> {

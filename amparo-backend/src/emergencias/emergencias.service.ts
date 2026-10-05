@@ -1,6 +1,7 @@
 import { Injectable, Logger, HttpException, HttpStatus } from '@nestjs/common';
 import { createClient } from '@supabase/supabase-js';
 import { erroDoBanco, tratarErro } from '../common/erro.util';
+import { mascararTelefone } from '../common/mascara.util';
 
 @Injectable()
 export class EmergenciasService {
@@ -86,7 +87,7 @@ export class EmergenciasService {
       } else {
           this.logger.log(`🚨 Emergência acionada (ID: ${emergencia.id}). Disparando mensagem de socorro para ${guardioes.length} guardiões...`);
           guardioes.forEach(guardiao => {
-            this.logger.log(`Enviando [SMS/PUSH/WHATSAPP] para ${guardiao.nome_completo} (${guardiao.telefone}).`);
+            this.logger.log(`Enviando [SMS/PUSH/WHATSAPP] para guardiã ${guardiao.id} (${mascararTelefone(guardiao.telefone)}).`);
           });
       }
 

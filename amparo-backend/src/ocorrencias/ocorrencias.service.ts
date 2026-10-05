@@ -2,9 +2,13 @@
 import { createClient } from '@supabase/supabase-js';
 import * as crypto from 'crypto';
 import { erroDoBanco, tratarErro } from '../common/erro.util';
+import { mascararTelefone } from '../common/mascara.util';
 import { conteudoCorrespondeAoMime } from '../common/tipo-arquivo.util';
+import { montarEntradaRisco } from './risco.util';
 
 const JANELA_DUPLICIDADE_MS = 30_000;
+const VALIDADE_LINK_EVIDENCIA_S = 300;
+const CAMPOS_EDITAVEIS = ['tipos_violencia', 'mensagem', 'data_ocorrencia', 'latitude', 'longitude'];
 
 @Injectable()
 export class OcorrenciasService {
@@ -47,6 +51,7 @@ export class OcorrenciasService {
             usuaria_id: dados.usuaria_id,
             tipos_violencia: dados.tipos_violencia,
             mensagem: dados.mensagem || null,
+            data_ocorrencia: dados.data_ocorrencia ?? null,
             latitude: dados.latitude ?? null,
             longitude: dados.longitude ?? null,
           },
@@ -57,7 +62,7 @@ export class OcorrenciasService {
         throw erroDoBanco(error);
       }
 
-      this.avaliarRiscoUsuaria(dados.usuaria_id).catch(err =>
+      this.avaliarRiscoUsuaria(dados.usuaria_id, data?.[0]?.id).catch(err =>
         this.logger.error('Falha silenciosa ao chamar IA', err instanceof Error ? err.stack : err)
       );
 
@@ -70,10 +75,10 @@ export class OcorrenciasService {
     }
   }
 
-  private async avaliarRiscoUsuaria(usuariaId: string) {
+  private async avaliarRiscoUsuaria(usuariaId: string, ocorrenciaId?: string) {
     try {
       this.logger.log(`Iniciando análise de risco para usuária ${usuariaId}`);
-      
+
       const { data: ocorrencias } = await this.supabase
         .from('ocorrencias')
         .select('*')
@@ -84,10 +89,6 @@ export class OcorrenciasService {
         .from('emergencias')
         .select('criado_em, encerrado_em')
         .eq('usuaria_id', usuariaId);
-      const LIMITE_ENGANO_MS = 30_000;
-      const qtdAcionamentosValidos = (emergenciasUsuaria ?? []).filter((e) =>
-        !e.encerrado_em || new Date(e.encerrado_em).getTime() - new Date(e.criado_em).getTime() > LIMITE_ENGANO_MS,
-      ).length;
 
       const { data: usuaria } = await this.supabase
         .from('usuarias')
@@ -96,51 +97,7 @@ export class OcorrenciasService {
         .single();
 
       const nivelRiscoAnterior = usuaria?.nivel_risco || null;
-
-      const qtdOcorrencias = ocorrencias ? ocorrencias.length : 0;
-      let teveFisica = 0, teveSexual = 0, teveAmeaca = 0, tevePsicologica = 0, teveMoral = 0, tevePatrimonial = 0;
-      let diasUltimaOcorrencia = 999;
-      let frequenciaAumentou = 0;
-
-      if (qtdOcorrencias > 0 && ocorrencias) {
-        for (const oc of ocorrencias) {
-          const tipos = oc.tipos_violencia || [];
-          if (tipos.includes('Física')) teveFisica = 1;
-          if (tipos.includes('Sexual')) teveSexual = 1;
-          if (tipos.includes('Ameaça')) teveAmeaca = 1;
-          if (tipos.includes('Psicológica')) tevePsicologica = 1;
-          if (tipos.includes('Moral')) teveMoral = 1;
-          if (tipos.includes('Patrimonial')) tevePatrimonial = 1;
-        }
-
-        const dataUltima = new Date(ocorrencias[0].criado_em);
-        const diffTempo = Math.abs(new Date().getTime() - dataUltima.getTime());
-        diasUltimaOcorrencia = Math.floor(diffTempo / (1000 * 60 * 60 * 24));
-        
-        if (qtdOcorrencias >= 2 && diasUltimaOcorrencia <= 30) {
-           frequenciaAumentou = 1;
-        }
-      }
-
-      let idade = 35;
-      if (usuaria && usuaria.data_nascimento) {
-         const nascimento = new Date(usuaria.data_nascimento);
-         idade = Math.min(Math.max(new Date().getFullYear() - nascimento.getFullYear(), 0), 120);
-      }
-
-      const payloadIA = {
-        idade: idade,
-        qtd_ocorrencias_totais: qtdOcorrencias,
-        dias_desde_ultima_ocorrencia: diasUltimaOcorrencia,
-        frequencia_aumentou: frequenciaAumentou,
-        teve_viol_fisica: teveFisica,
-        teve_viol_sexual: teveSexual,
-        teve_ameaca: teveAmeaca,
-        teve_viol_psicologica: tevePsicologica,
-        teve_viol_moral: teveMoral,
-        teve_viol_patrimonial: tevePatrimonial,
-        qtd_panico_acionado: qtdAcionamentosValidos
-      };
+      const payloadIA = montarEntradaRisco(ocorrencias ?? [], emergenciasUsuaria ?? [], usuaria?.data_nascimento);
 
       const iaUrl = process.env.IA_SERVICE_URL || 'http://127.0.0.1:8000';
       const controller = new AbortController();
@@ -167,11 +124,16 @@ export class OcorrenciasService {
           .from('usuarias')
           .update({ nivel_risco: resultado.risco })
           .eq('id', usuariaId);
+        if (ocorrenciaId) {
+          await this.supabase.from('ocorrencias').update({ nivel_risco: resultado.risco }).eq('id', ocorrenciaId);
+        }
 
         if (resultado.risco === 'Alto' && nivelRiscoAnterior !== 'Alto') {
-          const ultimaOcorrencia = qtdOcorrencias > 0 && ocorrencias ? ocorrencias[0] : null;
+          const ultimaOcorrencia = ocorrencias?.[0] ?? null;
           await this.alertarGuardioes(usuariaId, ultimaOcorrencia);
         }
+      } else {
+        this.logger.warn(`Análise de risco indisponível: serviço de IA respondeu ${respostaIA.status}.`);
       }
     } catch (err) {
       this.logger.warn(`Análise de risco indisponível: ${err instanceof Error ? err.message : err}`);
@@ -202,7 +164,7 @@ export class OcorrenciasService {
       } else {
         this.logger.log(`🚨 Risco ALTO detectado para usuária ${usuariaId}!`);
         guardioes.forEach(guardiao => {
-          this.logger.log(`Enviando [SMS/PUSH/WHATSAPP] para ${guardiao.nome_completo} (${guardiao.telefone}): ${mensagem}`);
+          this.logger.log(`Enviando [SMS/PUSH/WHATSAPP] alerta de risco alto para guardiã ${guardiao.id} (${mascararTelefone(guardiao.telefone)}).`);
         });
       }
 
@@ -247,6 +209,9 @@ export class OcorrenciasService {
       if (arquivo.mimetype.startsWith('video/') && tamanhoMb > 20) {
           throw new HttpException({ erro: 'Vídeos não podem exceder 20MB.' }, HttpStatus.PAYLOAD_TOO_LARGE);
       }
+      if (arquivo.mimetype === 'application/pdf' && tamanhoMb > 10) {
+          throw new HttpException({ erro: 'Documentos não podem exceder 10MB.' }, HttpStatus.PAYLOAD_TOO_LARGE);
+      }
 
       if (!conteudoCorrespondeAoMime(arquivo.buffer, arquivo.mimetype)) {
         throw new HttpException({ erro: 'O conteúdo do arquivo não corresponde ao tipo informado.' }, HttpStatus.UNSUPPORTED_MEDIA_TYPE);
@@ -257,7 +222,8 @@ export class OcorrenciasService {
       const mapaExtensoes: Record<string, string> = {
         'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp',
         'video/mp4': 'mp4', 'video/quicktime': 'mov', 'video/webm': 'webm',
-        'audio/mpeg': 'mp3', 'audio/wav': 'wav', 'audio/ogg': 'ogg', 'audio/mp4': 'm4a', 'audio/x-m4a': 'm4a'
+        'audio/mpeg': 'mp3', 'audio/wav': 'wav', 'audio/ogg': 'ogg', 'audio/mp4': 'm4a', 'audio/x-m4a': 'm4a',
+        'application/pdf': 'pdf',
       };
       const extensaoSegura = mapaExtensoes[arquivo.mimetype] || 'bin';
       const nomeSeguro = crypto.randomUUID();
@@ -276,7 +242,7 @@ export class OcorrenciasService {
         .from('evidencias')
         .insert([{
             ocorrencia_id: ocorrenciaId,
-            tipo: arquivo.mimetype.split('/')[0].toUpperCase(),
+            tipo: arquivo.mimetype === 'application/pdf' ? 'DOCUMENTO' : arquivo.mimetype.split('/')[0].toUpperCase(),
             caminho_storage: caminhoStorage,
             hash_integridade: hashIntegridade,
         }]).select();
@@ -308,6 +274,73 @@ export class OcorrenciasService {
       return { ocorrencias: data, total: count ?? 0, limit, offset };
     } catch (error) {
       throw tratarErro(error, 'Não foi possível listar as ocorrências.');
+    }
+  }
+
+  private async ocorrenciaDaUsuaria(id: string, usuariaIdAutenticada: string, colunas = '*') {
+    const { data: ocorrencia } = await this.supabase.from('ocorrencias').select(colunas).eq('id', id).maybeSingle();
+    if (!ocorrencia) throw new HttpException({ erro: 'Ocorrência não encontrada.' }, HttpStatus.NOT_FOUND);
+    if ((ocorrencia as any).usuaria_id !== usuariaIdAutenticada) {
+      throw new HttpException({ erro: 'Acesso Negado.' }, HttpStatus.FORBIDDEN);
+    }
+    return ocorrencia as any;
+  }
+
+  async buscarPorId(id: string, usuariaIdAutenticada: string) {
+    try {
+      return { ocorrencia: await this.ocorrenciaDaUsuaria(id, usuariaIdAutenticada, '*, evidencias(*)') };
+    } catch (error) {
+      throw tratarErro(error, 'Não foi possível carregar a ocorrência.');
+    }
+  }
+
+  async atualizar(id: string, dados: Record<string, any>, usuariaIdAutenticada: string) {
+    try {
+      await this.ocorrenciaDaUsuaria(id, usuariaIdAutenticada);
+      const alteracoes: Record<string, any> = {};
+      for (const campo of CAMPOS_EDITAVEIS) {
+        if (dados[campo] !== undefined) alteracoes[campo] = dados[campo];
+      }
+      if (Object.keys(alteracoes).length === 0) {
+        throw new HttpException({ erro: 'Nenhum campo para atualizar.' }, HttpStatus.BAD_REQUEST);
+      }
+      alteracoes.atualizado_em = new Date().toISOString();
+
+      const { data, error } = await this.supabase.from('ocorrencias').update(alteracoes).eq('id', id).select();
+      if (error) throw erroDoBanco(error);
+
+      this.avaliarRiscoUsuaria(usuariaIdAutenticada, id).catch(err =>
+        this.logger.error('Falha silenciosa ao chamar IA', err instanceof Error ? err.stack : err)
+      );
+      return { mensagem: 'Ocorrência atualizada com sucesso!', ocorrencia: data?.[0] ?? null };
+    } catch (error) {
+      throw tratarErro(error, 'Não foi possível atualizar a ocorrência.');
+    }
+  }
+
+  async linkEvidencia(ocorrenciaId: string, evidenciaId: string, usuariaIdAutenticada: string) {
+    try {
+      await this.ocorrenciaDaUsuaria(ocorrenciaId, usuariaIdAutenticada, 'id, usuaria_id');
+      const { data: evidencia } = await this.supabase
+        .from('evidencias')
+        .select('id, ocorrencia_id, tipo, caminho_storage, hash_integridade')
+        .eq('id', evidenciaId)
+        .maybeSingle();
+      if (!evidencia || evidencia.ocorrencia_id !== ocorrenciaId) {
+        throw new HttpException({ erro: 'Evidência não encontrada.' }, HttpStatus.NOT_FOUND);
+      }
+      const { data, error } = await this.supabase.storage
+        .from('evidencias_amparo')
+        .createSignedUrl(evidencia.caminho_storage, VALIDADE_LINK_EVIDENCIA_S);
+      if (error || !data?.signedUrl) throw new Error(error?.message ?? 'link não gerado');
+      return {
+        url: data.signedUrl,
+        expira_em_segundos: VALIDADE_LINK_EVIDENCIA_S,
+        tipo: evidencia.tipo,
+        hash_integridade: evidencia.hash_integridade,
+      };
+    } catch (error) {
+      throw tratarErro(error, 'Não foi possível gerar o link da evidência.');
     }
   }
 

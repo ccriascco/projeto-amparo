@@ -50,6 +50,8 @@ class DadosUsuaria(BaseModel):
     teve_viol_psicologica: int = Field(default=0, ge=0, le=1)
     teve_viol_moral: int = Field(default=0, ge=0, le=1)
     teve_viol_patrimonial: int = Field(default=0, ge=0, le=1)
+    # 1 quando a usuária tem histórico, mas nada dentro da janela de 30 dias.
+    possui_historico_anterior: int = Field(default=0, ge=0, le=1)
 
 def verificar_origem(x_internal_secret: str | None):
     if INTERNAL_SECRET and x_internal_secret != INTERNAL_SECRET:
@@ -61,6 +63,12 @@ def classificar_risco(dados: DadosUsuaria, x_internal_secret: str | None = Heade
     try:
         # 1. Regra de Negocio: Historico insuficiente
         if dados.qtd_ocorrencias_totais == 0 and dados.qtd_panico_acionado == 0:
+            if dados.possui_historico_anterior:
+                return {
+                    "risco": "Baixo",
+                    "codigo": 0,
+                    "justificativa": "Sem ocorrencias nem acionamentos nos ultimos 30 dias."
+                }
             return {
                 "risco": "Medio",
                 "codigo": 1,

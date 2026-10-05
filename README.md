@@ -31,16 +31,18 @@ O problema que ele resolve: provas de violência costumam se perder ou ficar ace
 ## Funcionalidades
 
 **Conta e acesso**
-- Cadastro com validação de CPF (dígitos verificadores, com ou sem máscara).
+- Cadastro com validação de CPF (dígitos verificadores, com ou sem máscara) e senha forte (letras e números, sem sequências nem senhas comuns).
 - Login com senha e **login disfarçado**: uma segunda senha, pensada para abrir o app a partir de uma tela de calculadora.
 - Logout com revogação do token e exclusão definitiva da conta (confirmada com a senha).
 
 **Rede de apoio**
-- De 1 a 5 guardiãs por usuária. A última guardiã não pode ser removida enquanto a conta existir.
+- De 1 a 5 guardiãs por usuária, sem repetir a mesma pessoa (telefone). A última guardiã não pode ser removida enquanto a conta existir.
 
 **Ocorrências e evidências**
-- Registro de ocorrências com tipos de violência (física, sexual, ameaça, psicológica, moral e patrimonial) e localização opcional.
-- Upload de fotos, vídeos e áudios para um armazenamento privado, com verificação do conteúdo real do arquivo e hash SHA-256 para provar integridade.
+- Registro de ocorrências com tipos de violência (física, sexual, ameaça, psicológica, moral e patrimonial), data em que aconteceu e localização opcionais.
+- Visualização e edição da ocorrência. A edição fica registrada e recalcula o risco.
+- Upload de fotos, vídeos, áudios e PDFs (boletim, laudo) para um armazenamento privado, com verificação do conteúdo real do arquivo e hash SHA-256 para provar integridade.
+- Download da própria evidência por um link temporário de 5 minutos.
 - Listagem paginada.
 
 **Botão de emergência**
@@ -140,6 +142,7 @@ No SQL Editor do Supabase, com as tabelas `usuarias`, `guardioes`, `ocorrencias`
 3. `alertas_risco.sql`
 4. `emergencia_unica_ativa.sql` (antes, rode a consulta de verificação que está no próprio arquivo)
 5. `logout_e_exclusao_conta.sql`
+6. `janela_30_dias_e_lgpd.sql` (inclui uma consulta de verificação; rode antes de subir o backend)
 
 Crie também o bucket de Storage **`evidencias_amparo`**, como **privado** e sem políticas para `anon` ou `public`.
 
@@ -243,8 +246,9 @@ npm run lint        # análise estática (oxlint)
 
 | Tipo | O que cobre | Usa o banco? |
 |---|---|---|
-| Unitários (93 testes) | Regras de negócio dos services, validação de CPF e DTOs, guard JWT e revogação, tratamento de erros, verificação de arquivos, concorrência do botão de emergência | Não: o Supabase é simulado |
-| E2E (6 testes) | Autenticação obrigatória, token forjado, validação de entrada e campos não permitidos | Não grava dados |
+| Unitários (110 testes) | Regras de negócio dos services, CPF, senha forte, janela de 30 dias do risco, guard JWT e revogação, tratamento de erros, verificação de arquivos, concorrência do botão de emergência | Não: o Supabase é simulado |
+| E2E básico (6 testes) | Autenticação obrigatória, token forjado, validação de entrada e campos não permitidos | Não grava dados |
+| E2E de fluxo completo (125 testes) | A aplicação inteira, do cadastro à exclusão de conta, sobre um banco em memória com as regras do banco. Rede bloqueada: nunca acessa o Supabase. Com `IA_REAL=1`, a seção de risco usa a IA real | Não: banco em memória |
 
 O serviço de IA não tem testes automatizados (`amparo-ia/test_local.py` é só um script manual que carrega o modelo e faz uma previsão). A avaliação do modelo é feita pelo pipeline descrito abaixo.
 
@@ -263,10 +267,12 @@ Definidas em `amparo-ia/pipeline_v2/regras.py`:
 | Violência física ou sexual | Alto |
 | Ameaça | Médio |
 | Psicológica, moral ou patrimonial | Baixo |
+| Janela | só contam ocorrências e acionamentos válidos dos **últimos 30 dias**, pela data em que a violência aconteceu (ou do registro) |
 | 2 ou mais ocorrências em 30 dias | sobe um nível |
 | Acionamento válido do botão | no mínimo Médio; Alto se houver violência física/sexual ou ocorrência nos últimos 15 dias |
 | Acionamento encerrado em até 30 s | ignorado (engano) |
-| Sem ocorrências e sem acionamento válido | Médio, pela regra de histórico insuficiente (aplicada pela API, fora do modelo) |
+| Nada nos últimos 30 dias, mas com histórico antigo | Baixo (aplicada pela API, fora do modelo) |
+| Nunca registrou ocorrência nem acionamento válido | Médio, por segurança (aplicada pela API, fora do modelo) |
 
 ### Passo a passo
 
@@ -382,7 +388,7 @@ curl -X POST http://localhost:3000/ocorrencias \
   -d '{ "tipos_violencia": ["Física", "Ameaça"], "mensagem": "Discussão em casa", "latitude": -23.5505, "longitude": -46.6333 }'
 ```
 
-Tipos aceitos: `Física`, `Psicológica`, `Sexual`, `Patrimonial`, `Moral`, `Ameaça`.
+Tipos aceitos: `Física`, `Psicológica`, `Sexual`, `Patrimonial`, `Moral`, `Ameaça`. O campo opcional `data_ocorrencia` (`AAAA-MM-DD`, não pode ser futura) informa quando a violência aconteceu.
 
 ```json
 { "mensagem": "Ocorrência registrada com sucesso!", "ocorrencia": { "id": "a940...", "tipos_violencia": ["Física", "Ameaça"], "criado_em": "2026-10-05T17:10:29Z" } }
@@ -398,7 +404,17 @@ curl -X POST http://localhost:3000/ocorrencias/<id>/evidencias \
   -F "arquivo=@foto.jpg;type=image/jpeg"
 ```
 
-Limites: foto até 5 MB, áudio até 10 MB, vídeo até 20 MB.
+Limites: foto até 5 MB, áudio e PDF até 10 MB, vídeo até 20 MB.
+
+Para baixar a evidência, peça um link temporário (válido por 5 minutos):
+
+```bash
+curl http://localhost:3000/ocorrencias/<id>/evidencias/<evidenciaId> -H "Authorization: Bearer $TOKEN"
+```
+
+```json
+{ "url": "https://...supabase.co/storage/v1/object/sign/...", "expira_em_segundos": 300, "tipo": "IMAGE", "hash_integridade": "9f86d0..." }
+```
 
 ### Acionar o botão de emergência
 

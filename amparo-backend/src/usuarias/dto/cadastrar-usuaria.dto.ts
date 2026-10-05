@@ -15,6 +15,7 @@ import {
   ValidateNested,
   buildMessage,
 } from 'class-validator';
+import { NaoPodeSerFutura, SenhaForte, TelefonesSemRepeticao } from '../../common/validadores';
 
 function cpfEhValido(cpf: unknown): boolean {
   if (typeof cpf !== 'string' || !/^\d{11}$/.test(cpf) || /^(\d)\1{10}$/.test(cpf)) return false;
@@ -42,16 +43,6 @@ function SenhaDisfarceDiferente() {
     validator: {
       validate: (valor, args) => valor !== (args?.object as { senha?: string })?.senha,
       defaultMessage: buildMessage(() => 'senha_app não pode ser igual à senha'),
-    },
-  });
-}
-
-function NaoPodeSerFutura() {
-  return ValidateBy({
-    name: 'naoPodeSerFutura',
-    validator: {
-      validate: (valor) => typeof valor === 'string' && new Date(valor) <= new Date(),
-      defaultMessage: buildMessage(() => 'data_nascimento não pode ser uma data futura'),
     },
   });
 }
@@ -98,6 +89,7 @@ export class CadastrarUsuariaDto {
   @IsString()
   @MinLength(8)
   @MaxLength(72)
+  @SenhaForte()
   senha: string;
 
   @IsString()
@@ -115,5 +107,6 @@ export class CadastrarUsuariaDto {
   @ArrayMaxSize(5)
   @ValidateNested({ each: true })
   @Type(() => GuardiaoCadastroDto)
+  @TelefonesSemRepeticao()
   guardioes: GuardiaoCadastroDto[];
 }

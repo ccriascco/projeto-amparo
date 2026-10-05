@@ -78,6 +78,9 @@ Todas as rotas exigem o cabeçalho `Authorization: Bearer <token>`, exceto as ma
 | `DELETE` | `/guardioes/:id` | Remove uma guardiã |
 | `POST` | `/ocorrencias` | Registra uma ocorrência |
 | `GET` | `/ocorrencias?limit=&offset=` | Lista as ocorrências (paginação: padrão 20, máximo 100) |
+| `GET` | `/ocorrencias/:id` | Detalhe da ocorrência, com os anexos |
+| `PUT` | `/ocorrencias/:id` | Edita tipos, relato, data e localização (recalcula o risco) |
+| `GET` | `/ocorrencias/:id/evidencias/:evidenciaId` | Link temporário (5 min) para baixar a evidência |
 | `POST` | `/ocorrencias/:id/evidencias` | Anexa uma evidência (multipart, campo `arquivo`) |
 | `DELETE` | `/ocorrencias/:id` | Remove a ocorrência e seus arquivos |
 | `POST` | `/emergencias/acionar` | Aciona o botão de emergência |
@@ -88,7 +91,8 @@ Todas as rotas exigem o cabeçalho `Authorization: Bearer <token>`, exceto as ma
 
 ### Regras principais
 
-- Cadastro exige de 1 a 5 guardiãs e CPF válido. A senha de disfarce precisa ser diferente da senha real.
+- Cadastro exige de 1 a 5 guardiãs (sem repetir telefone), CPF válido e senha forte (letras e números, sem sequência nem senha comum). A senha de disfarce precisa ser diferente da senha real.
+- O risco considera só ocorrências e acionamentos válidos dos últimos 30 dias. Cada ocorrência guarda o risco calculado quando foi registrada ou editada.
 - Só uma emergência ativa por usuária. Isso é garantido também por um índice único no banco.
 - Acionar o botão em nome de outra usuária responde `403`.
 - Uma ocorrência idêntica à anterior, criada nos últimos 30 segundos, é recusada com `409`.
@@ -103,6 +107,7 @@ Os scripts estão em `supabase/` e devem ser executados no SQL Editor do Supabas
 3. `alertas_risco.sql`: tabela de alertas de risco alto.
 4. `emergencia_unica_ativa.sql`: índice único de emergência ativa por usuária.
 5. `logout_e_exclusao_conta.sql`: tabela de tokens revogados e função de exclusão de conta.
+6. `janela_30_dias_e_lgpd.sql`: colunas `data_ocorrencia`, `nivel_risco` e `atualizado_em` em ocorrências, PDF como evidência e exclusão dos tokens revogados junto com a conta.
 
 Além dos scripts, o bucket de Storage `evidencias_amparo` deve existir e ser **privado**, sem políticas liberando acesso para `anon` ou `public`.
 

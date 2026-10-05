@@ -7,7 +7,7 @@
     "2": 450
   },
   "v2": {
-    "acuracia": 0.9978,
+    "acuracia": 1.0,
     "por_nivel": {
       "Baixo": {
         "precision": 1.0,
@@ -16,19 +16,19 @@
         "support": 450.0
       },
       "Medio": {
-        "precision": 0.9934,
+        "precision": 1.0,
         "recall": 1.0,
-        "f1-score": 0.9967,
+        "f1-score": 1.0,
         "support": 450.0
       },
       "Alto": {
         "precision": 1.0,
-        "recall": 0.9933,
-        "f1-score": 0.9967,
+        "recall": 1.0,
+        "f1-score": 1.0,
         "support": 450.0
       }
     },
-    "f1_macro": 0.9978,
+    "f1_macro": 1.0,
     "matriz_confusao": [
       [
         450,
@@ -42,45 +42,45 @@
       ],
       [
         0,
-        3,
-        447
+        0,
+        450
       ]
     ],
     "erros_perigosos_alto_para_baixo": 0
   },
   "v1": {
-    "acuracia": 0.6696,
+    "acuracia": 0.6889,
     "por_nivel": {
       "Baixo": {
         "precision": 1.0,
-        "recall": 0.4444,
-        "f1-score": 0.6154,
+        "recall": 0.32,
+        "f1-score": 0.4848,
         "support": 450.0
       },
       "Medio": {
-        "precision": 0.5812,
-        "recall": 0.5644,
-        "f1-score": 0.5727,
+        "precision": 0.5638,
+        "recall": 0.7467,
+        "f1-score": 0.6424,
         "support": 450.0
       },
       "Alto": {
-        "precision": 0.6311,
+        "precision": 0.7377,
         "recall": 1.0,
-        "f1-score": 0.7739,
+        "f1-score": 0.8491,
         "support": 450.0
       }
     },
-    "f1_macro": 0.654,
+    "f1_macro": 0.6588,
     "matriz_confusao": [
       [
-        200,
-        183,
-        67
+        144,
+        260,
+        46
       ],
       [
         0,
-        254,
-        196
+        336,
+        114
       ],
       [
         0,
@@ -133,15 +133,14 @@
     "erros_perigosos_alto_para_baixo": 0
   },
   "botao": {
-    "casos_com_botao_valido": 349,
-    "taxa_mudanca_ao_remover_botao": 0.3868,
-    "casos_com_engano": 225,
-    "taxa_mudanca_se_engano_contasse": 0.2889
+    "casos_com_botao_valido": 262,
+    "taxa_mudanca_ao_remover_botao": 0.4733,
+    "casos_com_engano": 163,
+    "taxa_mudanca_se_engano_contasse": 0.4294
   },
   "borda": {
-    "n": 20,
-    "acertos_candidato": 18,
-    "acertos_v2_anterior": 18,
-    "acertos_v1": 12
+    "n": 22,
+    "acertos_candidato": 22,
+    "acertos_producao_anterior": 12
   }
 }

@@ -11,22 +11,15 @@ import {
   Length,
 } from 'class-validator';
 import { NaoPodeSerFutura } from '../../common/validadores';
+import { TIPOS_VIOLENCIA } from './criar-ocorrencia.dto';
 
-export const TIPOS_VIOLENCIA = [
-  'Física',
-  'Psicológica',
-  'Sexual',
-  'Patrimonial',
-  'Moral',
-  'Ameaça',
-] as const;
-
-export class CriarOcorrenciaDto {
+export class AtualizarOcorrenciaDto {
+  @IsOptional()
   @IsArray()
   @ArrayMinSize(1)
   @ArrayMaxSize(20)
   @IsIn(TIPOS_VIOLENCIA, { each: true })
-  tipos_violencia: string[];
+  tipos_violencia?: string[];
 
   @IsOptional()
   @IsString()

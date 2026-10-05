@@ -10,7 +10,10 @@ const ASSINATURAS: Record<string, (b: Buffer) => boolean> = {
   'audio/mpeg': (b) => b.length >= 3 && (b.subarray(0, 3).toString('ascii') === 'ID3' || (b[0] === 0xff && (b[1] & 0xe0) === 0xe0)),
   'audio/wav': (b) => b.length >= 12 && b.subarray(0, 4).toString('ascii') === 'RIFF' && b.subarray(8, 12).toString('ascii') === 'WAVE',
   'audio/ogg': (b) => b.length >= 4 && b.subarray(0, 4).toString('ascii') === 'OggS',
+  'application/pdf': (b) => b.length >= 5 && b.subarray(0, 5).toString('ascii') === '%PDF-',
 };
+
+export const TIPOS_ARQUIVO_PERMITIDOS = Object.keys(ASSINATURAS);
 
 export function conteudoCorrespondeAoMime(buffer: Buffer, mimetype: string): boolean {
   const verificar = ASSINATURAS[mimetype];
