@@ -1,4 +1,4 @@
-﻿import {
+import {
   CanActivate,
   ExecutionContext,
   Injectable,
@@ -10,6 +10,7 @@ import { ConfigService } from '@nestjs/config';
 import { Request } from 'express';
 import { IS_PUBLIC_KEY } from './public.decorator';
 import { TokensService } from './tokens.service';
+import { SessoesService } from './sessoes.service';
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
@@ -18,6 +19,7 @@ export class JwtAuthGuard implements CanActivate {
     private reflector: Reflector,
     private configService: ConfigService,
     private tokens: TokensService,
+    private sessoes: SessoesService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -34,7 +36,7 @@ export class JwtAuthGuard implements CanActivate {
     if (!token) {
       throw new UnauthorizedException('Acesso negado: Token ausente.');
     }
-    let payloadValido: { sub: string; jti?: string; exp: number };
+    let payloadValido: { sub: string; jti?: string; sid?: string; exp: number };
     try {
       const payload = await this.jwtService.verifyAsync(token, {
         secret: this.configService.get<string>('JWT_SECRET'),
@@ -49,7 +51,11 @@ export class JwtAuthGuard implements CanActivate {
     if (!(await this.tokens.usuariaExiste(payloadValido.sub))) {
       throw new UnauthorizedException('Sessão inválida. Faça login novamente.');
     }
-    request['user'] = { id: payloadValido.sub, jti: payloadValido.jti, exp: payloadValido.exp };
+    // A sessão do aparelho pode ter sido encerrada (logout, troca de senha, códigos errados)
+    if (payloadValido.sid && !(await this.sessoes.existe(payloadValido.sid))) {
+      throw new UnauthorizedException('Sessão encerrada. Faça login novamente.');
+    }
+    request['user'] = { id: payloadValido.sub, jti: payloadValido.jti, sid: payloadValido.sid, exp: payloadValido.exp };
     return true;
   }
 

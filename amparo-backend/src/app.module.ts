@@ -1,4 +1,4 @@
-﻿import { Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { UsuariaThrottlerGuard } from './common/usuaria-throttler.guard';
@@ -9,6 +9,8 @@ import { GuardioesModule } from './guardioes/guardioes.module';
 import { OcorrenciasModule } from './ocorrencias/ocorrencias.module';
 import { EmergenciasModule } from './emergencias/emergencias.module';
 import { AuthModule } from './auth/auth.module';
+import { MensagensModule } from './mensagens/mensagens.module';
+import { ConfirmacoesModule } from './confirmacoes/confirmacoes.module';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
 
@@ -19,10 +21,12 @@ import { JwtAuthGuard } from './auth/jwt-auth.guard';
       throttlers: [{ limit: 120, ttl: 60_000 }],
     }),
     AuthModule,
+    MensagensModule,
     UsuariasModule,
     GuardioesModule,
     OcorrenciasModule,
-    EmergenciasModule
+    EmergenciasModule,
+    ConfirmacoesModule,
   ],
   controllers: [AppController],
   providers: [

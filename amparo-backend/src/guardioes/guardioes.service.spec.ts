@@ -28,7 +28,7 @@ describe('GuardioesService', () => {
   let service: GuardioesService;
 
   beforeEach(() => {
-    service = new GuardioesService();
+    service = new GuardioesService({ enviarConvite: jest.fn(), enviarPedidoDeAjuda: jest.fn() } as any);
   });
 
   describe('cadastrar', () => {
@@ -56,7 +56,7 @@ describe('GuardioesService', () => {
         telefone: '11999998888',
       });
 
-      expect(resultado).toEqual({ mensagem: 'Guardião cadastrado com sucesso!' });
+      expect(resultado).toMatchObject({ mensagem: 'Guardião cadastrado com sucesso!' });
     });
   });
 

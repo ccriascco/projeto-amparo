@@ -8,8 +8,7 @@ const base = {
   telefone: '11988887777',
   nome_completo: 'Ana Teste',
   data_nascimento: '1995-05-05',
-  senha: 'Amparo2026Seguro',
-  senha_app: 'calc12345',
+  senha: 'Amparo#2026Seguro',
   guardioes: [{ nome_completo: 'Guardiã', telefone: '11999998888' }],
 };
 
@@ -67,12 +66,22 @@ describe('CadastrarUsuariaDto', () => {
     expect(await erros({ senha: 'a'.repeat(73) })).toContain('senha');
   });
 
-  it('recusa senha_app acima de 72 bytes', async () => {
-    expect(await erros({ senha_app: 'a'.repeat(73) })).toContain('senha_app');
+  it('código do disfarce: obrigatório com o disfarce ligado e só 4 números', async () => {
+    expect(await erros({ modo_disfarcado: true })).toContain('codigo_disfarce');
+    expect(await erros({ modo_disfarcado: true, codigo_disfarce: '123' })).toContain('codigo_disfarce');
+    expect(await erros({ modo_disfarcado: true, codigo_disfarce: '12a4' })).toContain('codigo_disfarce');
+    expect(await erros({ modo_disfarcado: true, codigo_disfarce: '12345' })).toContain('codigo_disfarce');
+    expect(await erros({ modo_disfarcado: true, codigo_disfarce: '1207' })).toEqual([]);
+    expect(await erros({ modo_disfarcado: false })).toEqual([]);
   });
 
-  it('recusa senha_app igual à senha real (o disfarce não pode anular a proteção)', async () => {
-    expect(await erros({ senha: 'mesmaSenha1', senha_app: 'mesmaSenha1' })).toContain('senha_app');
+  it('o campo antigo senha_app não é mais aceito', async () => {
+    expect(await erros({ senha_app: 'calc12345' })).toContain('senha_app');
+  });
+
+  it('cadastro pelo Google dispensa a senha; sem Google ela é obrigatória', async () => {
+    expect(await erros({ senha: undefined })).toContain('senha');
+    expect(await erros({ senha: undefined, google_id_token: 'tok' })).toEqual([]);
   });
 
   it('recusa mais de 5 guardiãs', async () => {

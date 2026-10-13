@@ -1,4 +1,4 @@
-﻿import { Controller, Post, Get, Put, Delete, Body, Param } from '@nestjs/common';
+import { Controller, Post, Get, Put, Delete, Body, Param } from '@nestjs/common';
 import { GuardioesService } from './guardioes.service';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { CriarGuardiaoDto } from './dto/criar-guardiao.dto';
@@ -21,6 +21,11 @@ export class GuardioesController {
   @Put(':id')
   async atualizar(@Param('id') id: string, @Body() body: AtualizarGuardiaoDto, @CurrentUser() user: any) {
     return await this.guardioesService.atualizar(id, body, user.id);
+  }
+
+  @Post(':id/convite')
+  async reenviarConvite(@Param('id') id: string, @CurrentUser() user: any) {
+    return await this.guardioesService.reenviarConvite(id, user.id);
   }
 
   @Delete(':id')

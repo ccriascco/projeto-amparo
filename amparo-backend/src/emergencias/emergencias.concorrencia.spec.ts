@@ -44,7 +44,7 @@ function bancoEmMemoria() {
 
 describe('EmergenciasService.acionar sob concorrência (duplo clique)', () => {
   it('cria no máximo 1 emergência ATIVA quando a mesma usuária aciona várias vezes ao mesmo tempo', async () => {
-    const service = new EmergenciasService();
+    const service = new EmergenciasService({ enviarConvite: jest.fn(), enviarPedidoDeAjuda: jest.fn() } as any);
     const { builder, ativas } = bancoEmMemoria();
     (service as any).supabase = builder;
 
@@ -58,7 +58,7 @@ describe('EmergenciasService.acionar sob concorrência (duplo clique)', () => {
   });
 
   it('não bloqueia usuárias diferentes entre si', async () => {
-    const service = new EmergenciasService();
+    const service = new EmergenciasService({ enviarConvite: jest.fn(), enviarPedidoDeAjuda: jest.fn() } as any);
     const { builder, ativas } = bancoEmMemoria();
     (service as any).supabase = builder;
 

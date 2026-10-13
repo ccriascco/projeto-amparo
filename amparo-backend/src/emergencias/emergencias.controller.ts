@@ -1,4 +1,4 @@
-﻿import { Controller, Post, Body, Param, Get, UnauthorizedException } from '@nestjs/common';
+import { Controller, Post, Body, Param, Get, UnauthorizedException } from '@nestjs/common';
 import { EmergenciasService } from './emergencias.service';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { AcionarEmergenciaDto } from './dto/acionar-emergencia.dto';
@@ -14,6 +14,16 @@ export class EmergenciasController {
       throw new UnauthorizedException('Usuária não identificada no JWT');
     }
     return await this.emergenciasService.acionar(body, user.id);
+  }
+
+  @Get('ativa')
+  async ativa(@CurrentUser() user: any) {
+    return await this.emergenciasService.ativa(user.id);
+  }
+
+  @Get(':id')
+  async detalhe(@Param('id') id: string, @CurrentUser() user: any) {
+    return await this.emergenciasService.detalhe(id, user.id);
   }
 
   @Post(':id/localizacao')

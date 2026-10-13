@@ -5,13 +5,14 @@
  * quando IA_REAL=1). Qualquer outro destino falha o teste, para garantir que nada chegue
  * ao Supabase de produção.
  */
-import { INestApplication, Logger } from '@nestjs/common';
+import { HttpException, HttpStatus, INestApplication, Logger } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { ThrottlerStorage } from '@nestjs/throttler';
 import request from 'supertest';
 import { AppModule } from '../../src/app.module';
 import { configurarApp } from '../../src/configurar-app';
 import { bancoTeste } from './supabase-memoria';
+import { GoogleService, IdentidadeGoogle } from '../../src/auth/google.service';
 
 export type ModoIA = 'normal' | 'erro500' | 'erroRede' | 'lenta';
 
@@ -87,8 +88,25 @@ export function capturarLogs(): void {
   }
 }
 
+/**
+ * Google simulado: o id_token do teste é "google:<sub>:<email>:<nome>".
+ * Qualquer outro valor é recusado como um token inválido.
+ */
+export const googleFalso = {
+  async verificar(idToken: string): Promise<IdentidadeGoogle> {
+    const [prefixo, sub, email, nome] = idToken.split(':');
+    if (prefixo !== 'google' || !sub || !email) {
+      throw new HttpException({ erro: 'Não foi possível confirmar sua conta Google. Tente de novo.' }, HttpStatus.UNAUTHORIZED);
+    }
+    return { sub, email: email.toLowerCase(), nome: nome ?? '' };
+  },
+};
+
 export async function criarApp(): Promise<INestApplication> {
-  const modulo = await Test.createTestingModule({ imports: [AppModule] }).compile();
+  const modulo = await Test.createTestingModule({ imports: [AppModule] })
+    .overrideProvider(GoogleService)
+    .useValue(googleFalso)
+    .compile();
   const app = modulo.createNestApplication({ logger: false });
   configurarApp(app);
   await app.init();
@@ -123,8 +141,7 @@ export function dadosUsuaria(extra: Record<string, any> = {}) {
     telefone: '11988887777',
     nome_completo: `Usuária Teste ${sequencia}`,
     data_nascimento: '1990-03-15',
-    senha: 'SenhaForte123',
-    senha_app: 'calc98765',
+    senha: 'Senha#Forte123',
     guardioes: [{ nome_completo: 'Guardiã Principal', telefone: `1199999${String(1000 + sequencia).slice(-4)}` }],
     ...extra,
   };
@@ -136,7 +153,12 @@ export async function criarUsuaria(app: INestApplication, extra: Record<string, 
   const cad = await request(app.getHttpServer()).post('/usuarias').send(dados);
   if (cad.status !== 201) throw new Error(`cadastro falhou: ${cad.status} ${JSON.stringify(cad.body)}`);
   const login = await request(app.getHttpServer()).post('/usuarias/login').send({ email: dados.email, senha: dados.senha });
-  return { id: cad.body.usuaria_id as string, token: login.body.access_token as string, dados };
+  return {
+    id: cad.body.usuaria_id as string,
+    token: login.body.access_token as string,
+    refresh: login.body.refresh_token as string,
+    dados,
+  };
 }
 
 export async function esperar(condicao: () => boolean, limiteMs = 3000): Promise<boolean> {

@@ -1,9 +1,29 @@
-﻿import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
+import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { createClient } from '@supabase/supabase-js';
 import { erroDoBanco, tratarErro } from '../common/erro.util';
 import { normalizarTelefone } from '../common/validadores';
+import { gerarToken, hashToken } from '../common/token.util';
+import { MensagensService } from '../mensagens/mensagens.service';
 
 const GUARDIA_DUPLICADA = { erro: 'Esta guardiã (telefone) já está cadastrada.' };
+
+// Colunas devolvidas ao app: nunca o hash do token do convite
+export const COLUNAS_GUARDIA =
+  'id, usuaria_id, nome_completo, telefone, email, parentesco_relacao, status_convite, convidado_em, confirmado_em';
+
+/** Dados de um convite novo: o token vai só na mensagem, o banco guarda o hash. */
+function novoConvite() {
+  const token = gerarToken();
+  return {
+    token,
+    colunas: {
+      convite_token_hash: hashToken(token),
+      status_convite: 'PENDENTE',
+      convidado_em: new Date().toISOString(),
+      confirmado_em: null,
+    },
+  };
+}
 
 @Injectable()
 export class GuardioesService {
@@ -11,6 +31,8 @@ export class GuardioesService {
     process.env.SUPABASE_URL as string,
     process.env.SUPABASE_SERVICE_ROLE_KEY as string,
   );
+
+  constructor(private mensagens: MensagensService) {}
 
   async cadastrar(dados: any) {
     try {
@@ -32,21 +54,28 @@ export class GuardioesService {
         );
       }
 
-      const { error } = await this.supabase.from('guardioes').insert([
-        {
-          usuaria_id: dados.usuaria_id,
-          nome_completo: dados.nome_completo,
-          telefone: dados.telefone,
-          email: dados.email,
-          parentesco_relacao: dados.parentesco_relacao,
-        },
-      ]);
+      const convite = novoConvite();
+      const { data, error } = await this.supabase
+        .from('guardioes')
+        .insert([
+          {
+            usuaria_id: dados.usuaria_id,
+            nome_completo: dados.nome_completo,
+            telefone: dados.telefone,
+            email: dados.email,
+            parentesco_relacao: dados.parentesco_relacao,
+            ...convite.colunas,
+          },
+        ])
+        .select(COLUNAS_GUARDIA)
+        .single();
 
       if (error) {
         throw erroDoBanco(error);
       }
 
-      return { mensagem: 'Guardião cadastrado com sucesso!' };
+      this.mensagens.enviarConvite(dados.telefone, convite.token);
+      return { mensagem: 'Guardião cadastrado com sucesso!', guardiao: data };
     } catch (error) {
       throw tratarErro(error, 'Não foi possível cadastrar a guardiã.');
     }
@@ -56,7 +85,7 @@ export class GuardioesService {
     try {
       const { data, error } = await this.supabase
         .from('guardioes')
-        .select('*')
+        .select(COLUNAS_GUARDIA)
         .eq('usuaria_id', usuariaId);
 
       if (error) {
@@ -85,6 +114,7 @@ export class GuardioesService {
          throw new HttpException({ erro: 'Acesso Negado.' }, HttpStatus.FORBIDDEN);
       }
 
+      let convite: ReturnType<typeof novoConvite> | null = null;
       if (dados.telefone) {
         const { data: outras, error: erroOutras } = await this.supabase
           .from('guardioes')
@@ -94,6 +124,9 @@ export class GuardioesService {
         if ((outras ?? []).some((g) => g.id !== id && normalizarTelefone(g.telefone) === normalizarTelefone(dados.telefone))) {
           throw new HttpException(GUARDIA_DUPLICADA, HttpStatus.CONFLICT);
         }
+        // Telefone novo é outra pessoa (ou outro aparelho): o convite precisa ser confirmado de novo
+        const atual = (outras ?? []).find((g) => g.id === id);
+        if (atual && normalizarTelefone(atual.telefone) !== normalizarTelefone(dados.telefone)) convite = novoConvite();
       }
 
       const { data, error } = await this.supabase
@@ -103,13 +136,15 @@ export class GuardioesService {
           telefone: dados.telefone,
           email: dados.email,
           parentesco_relacao: dados.parentesco_relacao,
+          ...(convite ? convite.colunas : {}),
         })
         .eq('id', id)
-        .select();
+        .select(COLUNAS_GUARDIA);
 
       if (error) {
         throw erroDoBanco(error);
       }
+      if (convite) this.mensagens.enviarConvite(dados.telefone, convite.token);
 
       return {
         mensagem: 'Guardião atualizado com sucesso!',
@@ -167,5 +202,55 @@ export class GuardioesService {
     } catch (error) {
       throw tratarErro(error, 'Não foi possível remover a guardiã.');
     }
+  }
+
+  async reenviarConvite(id: string, usuariaIdAutenticada: string) {
+    try {
+      const { data: alvo, error: erroAlvo } = await this.supabase
+        .from('guardioes')
+        .select('usuaria_id, telefone, status_convite')
+        .eq('id', id)
+        .maybeSingle();
+      if (erroAlvo) throw erroDoBanco(erroAlvo);
+      if (!alvo) throw new HttpException({ erro: 'Guardião não encontrado' }, HttpStatus.NOT_FOUND);
+      if (alvo.usuaria_id !== usuariaIdAutenticada) throw new HttpException({ erro: 'Acesso Negado.' }, HttpStatus.FORBIDDEN);
+      if (alvo.status_convite === 'CONFIRMADO') {
+        throw new HttpException({ erro: 'Esta guardiã já confirmou o convite.' }, HttpStatus.BAD_REQUEST);
+      }
+      const convite = novoConvite();
+      const { data, error } = await this.supabase.from('guardioes').update(convite.colunas).eq('id', id).select(COLUNAS_GUARDIA);
+      if (error) throw erroDoBanco(error);
+      this.mensagens.enviarConvite(alvo.telefone, convite.token);
+      return { mensagem: 'Convite reenviado.', guardiao: data[0] };
+    } catch (error) {
+      throw tratarErro(error, 'Não foi possível reenviar o convite.');
+    }
+  }
+
+  /** Página pública do convite: busca pelo token recebido na mensagem. */
+  async buscarConvite(token: string) {
+    const { data, error } = await this.supabase
+      .from('guardioes')
+      .select('id, usuaria_id, status_convite')
+      .eq('convite_token_hash', hashToken(token))
+      .maybeSingle();
+    if (error) throw erroDoBanco(error);
+    if (!data) return null;
+    const { data: usuaria, error: erroU } = await this.supabase.from('usuarias').select('nome_completo').eq('id', data.usuaria_id).maybeSingle();
+    if (erroU) throw erroDoBanco(erroU);
+    return { id: data.id as string, status: data.status_convite as string, primeiroNome: String(usuaria?.nome_completo ?? '').split(' ')[0] };
+  }
+
+  async confirmarConvite(token: string) {
+    const convite = await this.buscarConvite(token);
+    if (!convite) return null;
+    if (convite.status !== 'CONFIRMADO') {
+      const { error } = await this.supabase
+        .from('guardioes')
+        .update({ status_convite: 'CONFIRMADO', confirmado_em: new Date().toISOString() })
+        .eq('id', convite.id);
+      if (error) throw erroDoBanco(error);
+    }
+    return { ...convite, status: 'CONFIRMADO' };
   }
 }

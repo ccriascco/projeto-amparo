@@ -71,14 +71,14 @@ describe('1. Cadastro e login', () => {
     expect(bancoTeste.tabelas.guardioes.filter((g) => g.usuaria_id === u?.id)).toHaveLength(1);
   });
 
-  it('[C-02] senha e senha de disfarce são salvas com bcrypt, nunca em texto puro', async () => {
-    const dados = dadosUsuaria();
+  it('[C-02] senha e código do disfarce são salvos com bcrypt, nunca em texto puro', async () => {
+    const dados = dadosUsuaria({ modo_disfarcado: true, codigo_disfarce: '4826' });
     const r = await http().post('/usuarias').send(dados);
     const u = bancoTeste.tabelas.usuarias.find((x) => x.id === r.body.usuaria_id)!;
     expect(u.senha_hash).toMatch(/^\$2[aby]\$10\$/);
-    expect(u.senha_app).toMatch(/^\$2[aby]\$10\$/);
+    expect(u.codigo_disfarce_hash).toMatch(/^\$2[aby]\$10\$/);
     expect(JSON.stringify(u)).not.toContain(dados.senha);
-    expect(JSON.stringify(u)).not.toContain(dados.senha_app);
+    expect(JSON.stringify(u)).not.toContain('"4826"');
   });
 
   it('[C-03] cadastro com corpo vazio é recusado (400)', async () => {
@@ -98,7 +98,8 @@ describe('1. Cadastro e login', () => {
     expect((await http().post('/usuarias').send(dadosUsuaria({ senha: '1234567' }))).status).toBe(400);
   });
 
-  it.each(['aaaaaaaa', '12345678', 'abcdefgh', 'senhaforte', '98765432', 'senha123', '11111111'])(
+  it.each(['aaaaaaaa', '12345678', 'abcdefgh', 'senhaforte', '98765432', 'senha123', '11111111',
+    'Amparo2026', 'amparo#2026', 'Amparo#Seguro', 'Senha@123'])(
     '[C-07] senha fraca %p é recusada (400)', async (senha) => {
       const r = await http().post('/usuarias').send(dadosUsuaria({ senha }));
       expect(r.status).toBe(400);
@@ -106,8 +107,16 @@ describe('1. Cadastro e login', () => {
     },
   );
 
-  it('[C-07b] senha com letras e números, sem sequência, é aceita', async () => {
-    expect((await http().post('/usuarias').send(dadosUsuaria({ senha: 'Amparo2026Seguro' }))).status).toBe(201);
+  it('[C-07b] senha com maiúscula, número e caractere especial é aceita', async () => {
+    expect((await http().post('/usuarias').send(dadosUsuaria({ senha: 'Amparo#2026Seguro' }))).status).toBe(201);
+  });
+
+  it('[C-07c] Modo Disfarce exige código de exatamente 4 números', async () => {
+    for (const codigo_disfarce of [undefined, '123', '12345', 'abcd']) {
+      const r = await http().post('/usuarias').send(dadosUsuaria({ modo_disfarcado: true, codigo_disfarce }));
+      expect(r.status).toBe(400);
+    }
+    expect((await http().post('/usuarias').send(dadosUsuaria({ modo_disfarcado: true, codigo_disfarce: '0420' }))).status).toBe(201);
   });
 
   it('[C-08] e-mail já cadastrado é recusado com 409 e mensagem genérica', async () => {
@@ -176,11 +185,10 @@ describe('1. Cadastro e login', () => {
     expect((await http().get('/guardioes').set(auth(semJti))).status).toBe(401);
   });
 
-  it('[L-09] login disfarçado aceita a senha de disfarce e recusa a senha real', async () => {
+  it('[L-09] o login antigo pela senha de disfarce foi removido (o código só destrava o disfarce)', async () => {
     const { dados } = await criarUsuaria(app);
-    const ok = await http().post('/usuarias/login-disfarcado').send({ email: dados.email, senha: dados.senha_app });
-    const errada = await http().post('/usuarias/login-disfarcado').send({ email: dados.email, senha: dados.senha });
-    expect([ok.status, errada.status]).toEqual([201, 401]);
+    const r = await http().post('/usuarias/login-disfarcado').send({ email: dados.email, senha: dados.senha });
+    expect(r.status).toBe(404);
   });
 
   it('[L-10] 11ª tentativa de login em 1 minuto é bloqueada (429)', async () => {
@@ -971,7 +979,228 @@ describe('9. Segurança', () => {
     await esperar(() => logs.some((l) => /risco alto/i.test(l)), 2000);
 
     const tudo = logs.join('\n');
-    const proibidos = [dados.cpf, dados.senha, dados.senha_app, dados.email, 'Guardiã Sigilosa', '11987650001', '-23.5617', token];
+    const proibidos = [dados.cpf, dados.senha, dados.email, 'Guardiã Sigilosa', '11987650001', '-23.5617', token, login.body.refresh_token, '/convites/', '/alertas/'];
     expect(proibidos.filter((p) => tudo.includes(p))).toEqual([]);
+  });
+});
+
+/* ===================================================================== */
+describe('10. Sessão do aparelho, Google, conta e confirmação das guardiãs', () => {
+  const linkDoLog = (tipo: 'convite' | 'pedido de ajuda') => {
+    const linha = [...logs].reverse().find((l) => l.includes(`link do ${tipo}:`));
+    return linha ? new URL(linha.split(': ').pop()!.trim()).pathname : null;
+  };
+
+  beforeAll(() => {
+    process.env.MOSTRAR_LINKS_SIMULADOS = '1';
+  });
+  afterAll(() => {
+    delete process.env.MOSTRAR_LINKS_SIMULADOS;
+  });
+
+  it('[SS-01] login devolve a sessão do aparelho; renovar troca o refresh token e o antigo deixa de valer', async () => {
+    const { refresh } = await criarUsuaria(app);
+    const r = await http().post('/usuarias/sessao/renovar').send({ refresh_token: refresh });
+    expect(r.status).toBe(201);
+    expect(r.body.refresh_token).not.toBe(refresh);
+    expect((await http().get('/guardioes').set(auth(r.body.access_token))).status).toBe(200);
+    expect((await http().post('/usuarias/sessao/renovar').send({ refresh_token: refresh })).status).toBe(401);
+  });
+
+  it('[SS-02] com o Modo Disfarce ligado, só o código de 4 números reabre a sessão', async () => {
+    const { refresh } = await criarUsuaria(app, { modo_disfarcado: true, codigo_disfarce: '1207' });
+    const sem = await http().post('/usuarias/sessao/renovar').send({ refresh_token: refresh });
+    expect(sem.status).toBe(401);
+    expect(sem.body.precisa_codigo).toBe(true);
+    const com = await http().post('/usuarias/sessao/renovar').send({ refresh_token: refresh, codigo: '1207' });
+    expect(com.status).toBe(201);
+  });
+
+  it('[SS-03] 5 códigos errados encerram a sessão do aparelho e derrubam o token de acesso dela', async () => {
+    const { refresh, token } = await criarUsuaria(app, { modo_disfarcado: true, codigo_disfarce: '1207' });
+    const respostas = [];
+    for (let i = 0; i < 5; i++) {
+      respostas.push((await http().post('/usuarias/sessao/renovar').send({ refresh_token: refresh, codigo: '9999' })).body);
+    }
+    expect(respostas[0].tentativas_restantes).toBe(4);
+    expect(respostas[4].sessao_encerrada).toBe(true);
+    expect((await http().post('/usuarias/sessao/renovar').send({ refresh_token: refresh, codigo: '1207' })).status).toBe(401);
+    expect((await http().get('/guardioes').set(auth(token))).status).toBe(401);
+  });
+
+  it('[SS-04] refresh token inválido ou malformado é recusado', async () => {
+    expect((await http().post('/usuarias/sessao/renovar').send({ refresh_token: 'x'.repeat(43) })).status).toBe(401);
+    expect((await http().post('/usuarias/sessao/renovar').send({ refresh_token: 'curto' })).status).toBe(400);
+    expect((await http().post('/usuarias/sessao/renovar').send({ refresh_token: 'x'.repeat(43), codigo: '12' })).status).toBe(400);
+  });
+
+  it('[SS-05] logout encerra a sessão do aparelho', async () => {
+    const { refresh, token } = await criarUsuaria(app);
+    expect((await http().post('/usuarias/logout').set(auth(token))).status).toBe(201);
+    expect((await http().post('/usuarias/sessao/renovar').send({ refresh_token: refresh })).status).toBe(401);
+  });
+
+  it('[GG-01] Google sem conta → 404 com dados para o cadastro; cadastro sem senha; depois entra pelo Google', async () => {
+    const email = `google${Date.now()}@gmail.com`;
+    const idToken = `google:sub-${Date.now()}:${email}:Maria Google`;
+    const sem = await http().post('/usuarias/login-google').send({ id_token: idToken });
+    expect(sem.status).toBe(404);
+    expect(sem.body).toMatchObject({ precisa_cadastro: true, email, nome_completo: 'Maria Google' });
+
+    const dados = dadosUsuaria({ email, google_id_token: idToken });
+    delete (dados as any).senha;
+    const cad = await http().post('/usuarias').send(dados);
+    expect(cad.status).toBe(201);
+    expect(cad.body.refresh_token).toBeTruthy();
+
+    expect((await http().post('/usuarias/login-google').send({ id_token: idToken })).status).toBe(201);
+    expect((await http().post('/usuarias/login').send({ email, senha: 'Qualquer#123' })).status).toBe(401);
+    const perfil = await http().get('/usuarias/me').set(auth(cad.body.access_token));
+    expect(perfil.body).toMatchObject({ tem_senha: false, login_google: true });
+  });
+
+  it('[GG-02] id_token do Google inválido é recusado (401)', async () => {
+    expect((await http().post('/usuarias/login-google').send({ id_token: 'forjado' })).status).toBe(401);
+  });
+
+  it('[ME-01] GET /usuarias/me mascara o CPF e não devolve hashes', async () => {
+    const { token, dados } = await criarUsuaria(app);
+    const r = await http().get('/usuarias/me').set(auth(token));
+    expect(r.status).toBe(200);
+    expect(r.body.cpf_mascarado).toBe(`${dados.cpf.slice(0, 3)}.***.***-${dados.cpf.slice(9)}`);
+    expect(JSON.stringify(r.body)).not.toMatch(new RegExp(`hash|\\$2[aby]\\$|${dados.cpf}`));
+    expect(r.body).toHaveProperty('nivel_risco');
+  });
+
+  it('[ME-02] PATCH /usuarias/me altera dados, exige código para ligar o disfarce e recusa campos proibidos', async () => {
+    const { token } = await criarUsuaria(app);
+    expect((await http().patch('/usuarias/me').set(auth(token)).send({ nome_completo: 'Nome Novo' })).body.usuaria.nome_completo).toBe('Nome Novo');
+    expect((await http().patch('/usuarias/me').set(auth(token)).send({ modo_disfarcado: true })).status).toBe(400);
+    const r = await http().patch('/usuarias/me').set(auth(token)).send({ modo_disfarcado: true, codigo_disfarce: '5566' });
+    expect(r.body.usuaria).toMatchObject({ modo_disfarcado: true, codigo_disfarce_definido: true });
+    for (const corpo of [{ cpf: '52998224725' }, { nivel_risco: 'Baixo' }, { senha_hash: 'x' }, {}]) {
+      expect((await http().patch('/usuarias/me').set(auth(token)).send(corpo)).status).toBe(400);
+    }
+  });
+
+  it('[ME-03] troca de senha: exige a atual e regra forte; mantém este aparelho e desconecta os outros', async () => {
+    const { token, dados } = await criarUsuaria(app);
+    const outroAparelho = (await http().post('/usuarias/login').send({ email: dados.email, senha: dados.senha })).body.access_token;
+    expect((await http().put('/usuarias/me/senha').set(auth(token)).send({ senha_atual: dados.senha, nova_senha: 'fraca123' })).status).toBe(400);
+    expect((await http().put('/usuarias/me/senha').set(auth(token)).send({ senha_atual: 'Errada#123', nova_senha: 'Nova#Senha2026' })).status).toBe(401);
+    expect((await http().put('/usuarias/me/senha').set(auth(token)).send({ senha_atual: dados.senha, nova_senha: 'Nova#Senha2026' })).status).toBe(200);
+    expect((await http().get('/guardioes').set(auth(token))).status).toBe(200);
+    expect((await http().get('/guardioes').set(auth(outroAparelho))).status).toBe(401);
+    expect((await http().post('/usuarias/login').send({ email: dados.email, senha: 'Nova#Senha2026' })).status).toBe(201);
+    expect((await http().get('/usuarias/me').set(auth(token))).body.senha_alterada_em).toBeTruthy();
+  });
+
+  it('[ME-04] troca do código do disfarce confere o código atual', async () => {
+    const { token } = await criarUsuaria(app, { modo_disfarcado: true, codigo_disfarce: '1111' });
+    expect((await http().put('/usuarias/me/codigo').set(auth(token)).send({ codigo_atual: '2222', codigo_novo: '3333' })).status).toBe(401);
+    expect((await http().put('/usuarias/me/codigo').set(auth(token)).send({ codigo_atual: '1111', codigo_novo: '33' })).status).toBe(400);
+    expect((await http().put('/usuarias/me/codigo').set(auth(token)).send({ codigo_atual: '1111', codigo_novo: '3333' })).status).toBe(200);
+  });
+
+  it('[GC-01] convite: guardiã nasce PENDENTE, abre a página neutra pelo link e confirma', async () => {
+    logs.length = 0;
+    const { token, dados } = await criarUsuaria(app);
+    const caminho = linkDoLog('convite')!;
+    expect(caminho).toMatch(/^\/convites\/[\w-]{43}$/);
+
+    const lista = await http().get('/guardioes').set(auth(token));
+    expect(lista.body.guardioes[0]).toMatchObject({ status_convite: 'PENDENTE', confirmado_em: null });
+    expect(JSON.stringify(lista.body)).not.toMatch(/token/);
+
+    const pagina = await http().get(caminho);
+    expect(pagina.status).toBe(200);
+    expect(pagina.headers['content-type']).toMatch(/text\/html/);
+    expect(pagina.text).toContain(dados.nome_completo.split(' ')[0]);
+    expect(pagina.text).not.toMatch(/amparo|violência|CPF/i);
+
+    expect((await http().post(`${caminho}/confirmar`)).status).toBe(200);
+    const depois = await http().get('/guardioes').set(auth(token));
+    expect(depois.body.guardioes[0].status_convite).toBe('CONFIRMADO');
+    expect(depois.body.guardioes[0].confirmado_em).toBeTruthy();
+  });
+
+  it('[GC-02] link de convite inexistente mostra página de link inválido (404)', async () => {
+    const r = await http().get(`/convites/${'a'.repeat(43)}`);
+    expect(r.status).toBe(404);
+    expect(r.text).toContain('Link inválido');
+  });
+
+  it('[GC-03] reenviar convite invalida o link anterior; convite já confirmado não é reenviado', async () => {
+    logs.length = 0;
+    const { token } = await criarUsuaria(app);
+    const antigo = linkDoLog('convite')!;
+    const id = (await http().get('/guardioes').set(auth(token))).body.guardioes[0].id;
+    expect((await http().post(`/guardioes/${id}/convite`).set(auth(token))).status).toBe(201);
+    const novo = linkDoLog('convite')!;
+    expect(novo).not.toBe(antigo);
+    expect((await http().get(antigo)).status).toBe(404);
+    await http().post(`${novo}/confirmar`);
+    expect((await http().post(`/guardioes/${id}/convite`).set(auth(token))).status).toBe(400);
+  });
+
+  it('[GC-04] trocar o telefone da guardiã volta o convite para PENDENTE', async () => {
+    logs.length = 0;
+    const { token } = await criarUsuaria(app);
+    await http().post(`${linkDoLog('convite')}/confirmar`);
+    const g = (await http().get('/guardioes').set(auth(token))).body.guardioes[0];
+    const r = await http().put(`/guardioes/${g.id}`).set(auth(token)).send({ telefone: '11955554444' });
+    expect(r.body.guardiao).toMatchObject({ status_convite: 'PENDENTE', confirmado_em: null });
+    const soNome = await http().put(`/guardioes/${g.id}`).set(auth(token)).send({ nome_completo: 'Outro Nome' });
+    expect(soNome.body.guardiao.status_convite).toBe('PENDENTE');
+  });
+
+  it('[EA-01] SOS: aviso por guardiã, página com localização, confirmação e "Quem foi avisada"', async () => {
+    logs.length = 0;
+    const { token, dados } = await criarUsuaria(app);
+    const sos = await http().post('/emergencias/acionar').set(auth(token)).send({ latitude: -23.55, longitude: -46.63 });
+    expect(sos.body.avisos).toEqual([expect.objectContaining({ nome_completo: dados.guardioes[0].nome_completo, status: 'AGUARDANDO' })]);
+
+    const ativa = await http().get('/emergencias/ativa').set(auth(token));
+    expect(ativa.body.emergencia.id).toBe(sos.body.emergencia_id);
+
+    const caminho = linkDoLog('pedido de ajuda')!;
+    const pagina = await http().get(caminho);
+    expect(pagina.text).toContain('pediu ajuda');
+    expect(pagina.text).toContain('-23.55,-46.63');
+
+    await http().post(`${caminho}/confirmar`);
+    const detalhe = await http().get(`/emergencias/${sos.body.emergencia_id}`).set(auth(token));
+    expect(detalhe.body.avisos[0]).toMatchObject({ status: 'CONFIRMADO', confirmado_em: expect.any(String) });
+
+    await http().post(`/emergencias/${sos.body.emergencia_id}/encerrar`).set(auth(token));
+    const encerrada = await http().get(caminho);
+    expect(encerrada.text).toContain('encerrado');
+    expect(encerrada.text).not.toContain('-23.55');
+    expect((await http().get('/emergencias/ativa').set(auth(token))).body.emergencia).toBeNull();
+  });
+
+  it('[EA-02] outra usuária não vê os avisos de uma emergência que não é dela', async () => {
+    const a = await criarUsuaria(app);
+    const b = await criarUsuaria(app);
+    const sos = await http().post('/emergencias/acionar').set(auth(a.token)).send({});
+    expect((await http().get(`/emergencias/${sos.body.emergencia_id}`).set(auth(b.token))).status).toBe(403);
+  });
+
+  it('[EA-03] excluir a conta apaga sessões e avisos da usuária', async () => {
+    const { token, id, dados } = await criarUsuaria(app);
+    await http().post('/emergencias/acionar').set(auth(token)).send({});
+    await http().delete('/usuarias/me').set(auth(token)).send({ senha: dados.senha });
+    expect(bancoTeste.tabelas.sessoes_aparelho.some((s) => s.usuaria_id === id)).toBe(false);
+    expect(bancoTeste.tabelas.avisos_emergencia.some((a) => a.usuaria_id === id)).toBe(false);
+  });
+
+  it('[S-07] sem MOSTRAR_LINKS_SIMULADOS, os links não aparecem no log', async () => {
+    delete process.env.MOSTRAR_LINKS_SIMULADOS;
+    logs.length = 0;
+    const { token } = await criarUsuaria(app);
+    await http().post('/emergencias/acionar').set(auth(token)).send({});
+    expect(logs.join('\n')).not.toMatch(/\/convites\/|\/alertas\//);
+    expect(logs.join('\n')).toMatch(/envio simulado/);
+    process.env.MOSTRAR_LINKS_SIMULADOS = '1';
   });
 });
