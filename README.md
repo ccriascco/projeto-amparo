@@ -10,7 +10,7 @@ O **Amparo** é um sistema de apoio a mulheres em situação de violência. Ele 
 
 O problema que ele resolve: provas de violência costumam se perder ou ficar acessíveis ao agressor, e o pedido de ajuda precisa ser rápido. O Amparo guarda as provas fora do alcance do agressor, avisa a rede de apoio e ajuda a identificar quando a situação está se agravando.
 
-> **Estado atual:** o backend e o serviço de IA estão funcionando. O aplicativo mobile (`amparo-mobile/`) ainda não foi desenvolvido, e o envio de mensagens às guardiãs é **simulado** (registrado no log do servidor).
+> **Estado atual:** backend, serviço de IA e app mobile (`amparo-mobile/`, React Native + Expo) estão funcionando. O envio de mensagens às guardiãs ainda é **simulado** (registrado no log do servidor); a confirmação delas já funciona pelos links. Detalhes do app, diferenças em relação ao design e pendências em [amparo-mobile/README.md](amparo-mobile/README.md).
 
 ## Sumário
 
@@ -68,7 +68,7 @@ O problema que ele resolve: provas de violência costumam se perder ou ficar ace
 
 ```mermaid
 flowchart LR
-    App["App mobile<br/>(ainda não desenvolvido)"] -->|HTTPS + JWT| API
+    App["App mobile<br/>(React Native + Expo)"] -->|HTTPS + JWT| API
 
     subgraph Backend["amparo-backend (NestJS, porta 3000)"]
         API["Controllers<br/>usuarias · guardioes · ocorrencias · emergencias"]
@@ -110,7 +110,7 @@ projeto-amparo/
 │   ├── modelos_anteriores/    versões anteriores (v1, v2) para voltar se precisar
 │   └── pipeline_v2/           geração de dados, treino, testes e relatórios
 ├── Relatorios/                relatórios técnicos, gráficos e PDFs
-├── amparo-mobile/             reservado para o app (vazio)
+├── amparo-mobile/             app mobile (React Native + Expo), ver amparo-mobile/README.md
 ├── amparo-obsidian/           notas pessoais (não faz parte do sistema)
 └── _backup_organizacao/       arquivos antigos guardados na reorganização
 ```
@@ -143,6 +143,7 @@ No SQL Editor do Supabase, com as tabelas `usuarias`, `guardioes`, `ocorrencias`
 4. `emergencia_unica_ativa.sql` (antes, rode a consulta de verificação que está no próprio arquivo)
 5. `logout_e_exclusao_conta.sql`
 6. `janela_30_dias_e_lgpd.sql` (inclui uma consulta de verificação; rode antes de subir o backend)
+7. `app_mobile_sessoes_google_convites.sql` (sessão do aparelho, código do disfarce, Google e confirmação das guardiãs)
 
 Crie também o bucket de Storage **`evidencias_amparo`**, como **privado** e sem políticas para `anon` ou `public`.
 
@@ -234,6 +235,25 @@ curl -i http://localhost:3000/
 
 A resposta esperada é `401`: a rota existe e exige login.
 
+**Backend de demonstração (sem banco real)**
+
+Para desenvolver ou testar o app sem tocar no Supabase: o backend de verdade, com o banco em memória dos testes, IA simulada e uma conta fictícia (dados em `amparo-backend/test/servidor-memoria.ts`). Os dados somem quando o processo termina.
+
+```bash
+cd amparo-backend
+npm run demo
+```
+
+**App mobile**
+
+```bash
+cd amparo-mobile
+npm install
+npm start
+```
+
+Veja [amparo-mobile/README.md](amparo-mobile/README.md) para o `.env`, o development build e o deploy.
+
 ## Testes
 
 ```bash
@@ -246,9 +266,11 @@ npm run lint        # análise estática (oxlint)
 
 | Tipo | O que cobre | Usa o banco? |
 |---|---|---|
-| Unitários (110 testes) | Regras de negócio dos services, CPF, senha forte, janela de 30 dias do risco, guard JWT e revogação, tratamento de erros, verificação de arquivos, concorrência do botão de emergência | Não: o Supabase é simulado |
+| Unitários (141 testes) | Regras de negócio dos services, CPF, senha forte, janela de 30 dias do risco, guard JWT e revogação, tratamento de erros, verificação de arquivos, concorrência do botão de emergência | Não: o Supabase é simulado |
 | E2E básico (6 testes) | Autenticação obrigatória, token forjado, validação de entrada e campos não permitidos | Não grava dados |
-| E2E de fluxo completo (125 testes) | A aplicação inteira, do cadastro à exclusão de conta, sobre um banco em memória com as regras do banco. Rede bloqueada: nunca acessa o Supabase. Com `IA_REAL=1`, a seção de risco usa a IA real | Não: banco em memória |
+| E2E de fluxo completo (149 testes) | A aplicação inteira, do cadastro à exclusão de conta, sobre um banco em memória com as regras do banco. Rede bloqueada: nunca acessa o Supabase. Com `IA_REAL=1`, a seção de risco usa a IA real | Não: banco em memória |
+
+No app (`amparo-mobile`): `npm test` (63 testes) e `npm run test:e2e` (fluxo principal pelas telas reais, contra o backend de demonstração).
 
 O serviço de IA não tem testes automatizados (`amparo-ia/test_local.py` é só um script manual que carrega o modelo e faz uma previsão). A avaliação do modelo é feita pelo pipeline descrito abaixo.
 

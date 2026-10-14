@@ -2,7 +2,6 @@ import { useQueryClient } from '@tanstack/react-query';
 import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
 import { router, useLocalSearchParams } from 'expo-router';
-import { usePreventScreenCapture } from 'expo-screen-capture';
 import { useEffect, useState } from 'react';
 import { Pressable, TextInput, View } from 'react-native';
 
@@ -25,6 +24,7 @@ import { fixas, fontes, raios } from '@/theme/tokens';
 import { hojeIso } from '@/utils/datas';
 import { localizacaoAtual } from '@/utils/permissoes';
 import { dataNoFuturo, dataParaIso, isoParaData, mascararData } from '@/validacao/regras';
+import { useTelaPrivada } from '@/hooks/privacidade';
 
 const OPCOES_ANEXO: { id: string; rotulo: string; icone: NomeIcone }[] = [
   { id: 'foto', rotulo: 'Tirar foto', icone: 'camera' },
@@ -39,7 +39,7 @@ const nomeGaleria = () => `galeria-${Date.now()}`;
 type Envio = { id: string; estado: 'enviando' | 'ok' | 'erro'; mensagem?: string };
 
 export default function TelaNovaOcorrencia() {
-  usePreventScreenCapture();
+  useTelaPrivada();
   const { id } = useLocalSearchParams<{ id?: string }>();
   const existente = useOcorrencia(id ?? '');
   if (id && !existente.data) {

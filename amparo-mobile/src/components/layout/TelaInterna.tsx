@@ -11,6 +11,7 @@ import { chaves } from '@/hooks/dados';
 import { useSessao } from '@/store/sessao';
 import { useTema } from '@/theme/tema';
 import { layout } from '@/theme/tokens';
+import { iniciais } from '@/utils/texto';
 
 import { AppHeader, type AppHeaderProps } from './AppHeader';
 import { type Aba, AppNav } from './AppNav';
@@ -62,6 +63,7 @@ export function TelaInterna({ aba, cabecalho, children, semNav = false, gap = 24
   const { cores } = useTema();
   const insets = useSafeAreaInsets();
   const acoesCabecalho = useAcoesCabecalho();
+  const nomeUsuaria = useSessao((s) => s.usuaria?.nome_completo);
   const [compacto, setCompacto] = useState(false);
   const temporizador = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -73,7 +75,7 @@ export function TelaInterna({ aba, cabecalho, children, semNav = false, gap = 24
 
   return (
     <View style={{ flex: 1, backgroundColor: cores.tela }}>
-      <AppHeader {...acoesCabecalho} {...cabecalho} />
+      <AppHeader {...acoesCabecalho} iniciais={iniciais(nomeUsuaria)} nome={nomeUsuaria} {...cabecalho} />
       <ScrollView
         onScroll={aoRolar}
         scrollEventThrottle={64}

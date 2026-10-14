@@ -1,5 +1,4 @@
 import { router } from 'expo-router';
-import { usePreventScreenCapture } from 'expo-screen-capture';
 import { useMemo, useState } from 'react';
 import { Pressable, View } from 'react-native';
 
@@ -12,12 +11,13 @@ import { useOcorrencias } from '@/hooks/dados';
 import { useTema } from '@/theme/tema';
 import { raios } from '@/theme/tokens';
 import { diaDaOcorrencia, periodoDe } from '@/utils/datas';
+import { useTelaPrivada } from '@/hooks/privacidade';
 
 const FILTROS = ['Todos', 'Esta semana', 'Este mês', 'Mais antigas'] as const;
 type Filtro = (typeof FILTROS)[number];
 
 export default function TelaTodosRegistros() {
-  usePreventScreenCapture();
+  useTelaPrivada();
   const { cores } = useTema();
   const ocorrencias = useOcorrencias();
   const [filtro, setFiltro] = useState<Filtro>('Todos');

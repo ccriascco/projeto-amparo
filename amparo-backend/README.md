@@ -135,9 +135,12 @@ Além dos scripts, o bucket de Storage `evidencias_amparo` deve existir e ser **
 npm test          # testes unitários
 npm run test:e2e  # testes de rotas (sem gravar dados no banco)
 npm run lint      # análise estática
+npm run demo      # servidor de demonstração: banco em memória, IA simulada, conta fictícia
 ```
 
-Os testes unitários usam um banco simulado. Os testes e2e exercitam apenas validação e autenticação, sem gravar nada no Supabase.
+Os testes unitários (141) usam um banco simulado. Os testes e2e (155) sobem a aplicação inteira sobre um banco em memória que reproduz as regras do banco, com a rede bloqueada: nunca gravam nada no Supabase.
+
+O `npm run demo` sobe a mesma aplicação sobre esse banco em memória, para desenvolver e testar o app mobile sem usar o banco de produção. A conta fictícia criada ao iniciar está em `test/servidor-memoria.ts`; os dados somem quando o processo termina. Com `IA_REAL=1`, a IA real é usada no lugar da simulada.
 
 ## Estrutura
 

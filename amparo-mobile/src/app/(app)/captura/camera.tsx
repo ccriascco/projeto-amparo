@@ -1,7 +1,6 @@
 import { CameraView, useCameraPermissions, useMicrophonePermissions } from 'expo-camera';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
-import { usePreventScreenCapture } from 'expo-screen-capture';
 import { useRef, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -13,13 +12,14 @@ import { Texto } from '@/components/ui/Texto';
 import { LIMITE_MB, problemaDoArquivo, useAnexos } from '@/store/anexos';
 import { fixas } from '@/theme/tokens';
 import { abrirAjustesDoSistema } from '@/utils/permissoes';
+import { useTelaPrivada } from '@/hooks/privacidade';
 
 const BRANCO_70 = 'rgba(255,255,255,0.7)';
 
 // Captura de foto ou vídeo (tela escura do protótipo). O arquivo fica no cache do app,
 // nunca na galeria, e entra como anexo da ocorrência que está sendo registrada.
 export default function TelaCamera() {
-  usePreventScreenCapture();
+  useTelaPrivada();
   const { modo } = useLocalSearchParams<{ modo?: 'foto' | 'video' }>();
   const video = modo === 'video';
   const insets = useSafeAreaInsets();

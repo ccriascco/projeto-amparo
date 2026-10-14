@@ -58,6 +58,7 @@ import {
   Wallet,
   X,
 } from 'lucide-react-native';
+import { View } from 'react-native';
 
 // Ícones Lucide usados pelo design (traço 2 px, arredondado). Só os usados entram no bundle.
 const ICONES = {
@@ -126,5 +127,10 @@ type Props = { nome: NomeIcone; tamanho?: number; cor: string };
 
 export function Icone({ nome, tamanho = 24, cor }: Props) {
   const Componente = ICONES[nome];
-  return <Componente size={tamanho} color={cor} strokeWidth={2} accessibilityElementsHidden importantForAccessibility="no" />;
+  // Ícones são decorativos: o texto ou o rótulo do botão é que é lido pelo leitor de tela
+  return (
+    <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+      <Componente size={tamanho} color={cor} strokeWidth={2} />
+    </View>
+  );
 }

@@ -1,7 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
-import { usePreventScreenCapture } from 'expo-screen-capture';
 import * as WebBrowser from 'expo-web-browser';
 import { useEffect, useState } from 'react';
 import { Modal, Pressable, View } from 'react-native';
@@ -21,12 +20,13 @@ import { useTema } from '@/theme/tema';
 import { fixas, raios } from '@/theme/tokens';
 import { diaMesHora } from '@/utils/datas';
 import { baixarEConferir, hashResumido, limparCacheEvidencias } from '@/utils/integridade';
+import { useTelaPrivada } from '@/hooks/privacidade';
 
 const EXTENSAO = { IMAGE: 'jpg', VIDEO: 'mp4', AUDIO: 'm4a', DOCUMENTO: 'pdf' } as const;
 
 // "Detalhe da prova": abre o arquivo e mostra se ele é o mesmo que foi guardado.
 export default function TelaEvidencia() {
-  usePreventScreenCapture();
+  useTelaPrivada();
   const { ocorrenciaId, evidenciaId, titulo } = useLocalSearchParams<{ ocorrenciaId: string; evidenciaId: string; titulo?: string }>();
   const { cores } = useTema();
   const ocorrencia = useOcorrencia(ocorrenciaId);

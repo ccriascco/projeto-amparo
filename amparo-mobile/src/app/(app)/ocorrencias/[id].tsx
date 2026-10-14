@@ -1,5 +1,4 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { usePreventScreenCapture } from 'expo-screen-capture';
 import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 
@@ -16,6 +15,7 @@ import { useOcorrencia, useRemoverOcorrencia } from '@/hooks/dados';
 import { useTema } from '@/theme/tema';
 import { fixas, raios } from '@/theme/tokens';
 import { diaMes, diaMesDeData, diaMesHora, hora } from '@/utils/datas';
+import { useTelaPrivada } from '@/hooks/privacidade';
 
 const ROTULO_RISCO: Record<NivelRisco, string> = { Baixo: 'baixo', Medio: 'médio', Alto: 'alto' };
 const MIDIA: Record<TipoEvidencia, { rotulo: string; icone: NomeIcone }> = {
@@ -26,7 +26,7 @@ const MIDIA: Record<TipoEvidencia, { rotulo: string; icone: NomeIcone }> = {
 };
 
 export default function TelaResumoOcorrencia() {
-  usePreventScreenCapture();
+  useTelaPrivada();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { cores, sombraCard } = useTema();
   const ocorrencia = useOcorrencia(id);

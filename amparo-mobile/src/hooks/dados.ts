@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiEmergencias, apiGuardioes, apiOcorrencias, apiUsuarias } from '@/api/endpoints';
 import type { GuardiaoCadastro, NovaOcorrencia, Perfil } from '@/api/tipos';
 import { useSessao } from '@/store/sessao';
+import { diaDaOcorrencia } from '@/utils/datas';
 
 // Chaves de cache por recurso. Toda alteração invalida o que depende dela.
 export const chaves = {
@@ -66,6 +67,13 @@ export function useOcorrencias() {
   return useQuery({
     queryKey: chaves.ocorrencias,
     queryFn: ({ signal }) => apiOcorrencias.listar(100, 0, signal),
+    // "da mais recente para a mais antiga": pela data em que aconteceu, depois pela hora do registro
+    select: (r) => ({
+      ...r,
+      ocorrencias: [...r.ocorrencias].sort(
+        (a, b) => diaDaOcorrencia(b).localeCompare(diaDaOcorrencia(a)) || b.criado_em.localeCompare(a.criado_em),
+      ),
+    }),
   });
 }
 

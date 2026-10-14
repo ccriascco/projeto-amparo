@@ -1,5 +1,4 @@
 import { router } from 'expo-router';
-import { usePreventScreenCapture } from 'expo-screen-capture';
 import { useState } from 'react';
 import { Pressable, RefreshControl, View } from 'react-native';
 
@@ -15,9 +14,10 @@ import { FAQ_DOC, POR_QUE_REGISTRAR } from '@/conteudo/textos';
 import { useOcorrencias } from '@/hooks/dados';
 import { useTema } from '@/theme/tema';
 import { fontes } from '@/theme/tokens';
+import { useTelaPrivada } from '@/hooks/privacidade';
 
 export default function TelaOcorrencias() {
-  usePreventScreenCapture();
+  useTelaPrivada();
   const { cores } = useTema();
   const ocorrencias = useOcorrencias();
   const [info, setInfo] = useState<{ titulo: string; texto: string } | null>(null);
