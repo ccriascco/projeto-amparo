@@ -159,6 +159,13 @@ describe('UsuariasService', () => {
       await expect(service.renovarSessao(refresh_token, '1207')).resolves.toBeDefined();
     });
 
+    it('com o disfarce desligado, um código enviado também é conferido (calculadora do cabeçalho)', async () => {
+      const { refresh_token } = await service.cadastrar(dadosCadastro({ codigo_disfarce: '1207' }));
+      await expect(service.renovarSessao(refresh_token, '0000')).rejects.toMatchObject({ response: { erro: 'Código incorreto.' } });
+      const r = await service.renovarSessao(refresh_token, '1207');
+      await expect(service.renovarSessao(r.refresh_token)).resolves.toBeDefined();
+    });
+
     it('acerto do código zera as tentativas', async () => {
       const { refresh_token } = await service.cadastrar(dadosCadastro({ modo_disfarcado: true, codigo_disfarce: '1207' }));
       await expect(service.renovarSessao(refresh_token, '0000')).rejects.toBeDefined();

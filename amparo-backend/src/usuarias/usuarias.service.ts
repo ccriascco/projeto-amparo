@@ -177,7 +177,9 @@ export class UsuariasService {
         throw new HttpException({ erro: 'Sua sessão expirou. Entre de novo.', sessao_encerrada: true }, HttpStatus.UNAUTHORIZED);
       }
 
-      if (usuaria.modo_disfarcado && usuaria.codigo_disfarce_hash) {
+      // O código é exigido com o disfarce ligado, e conferido sempre que o app o enviar
+      // (a calculadora do cabeçalho também esconde o app com o disfarce desligado)
+      if (usuaria.codigo_disfarce_hash && (usuaria.modo_disfarcado || codigo !== undefined)) {
         if (!codigo) {
           throw new HttpException({ erro: 'Digite o código do Modo Disfarce.', precisa_codigo: true }, HttpStatus.UNAUTHORIZED);
         }
