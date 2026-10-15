@@ -51,7 +51,7 @@ async function iniciar() {
 
   const { NestFactory } = require('@nestjs/core');
   const { AppModule } = require('../src/app.module');
-  const { configurarApp } = require('../src/configurar-app');
+  const { configurarApp } = require('../src/config/configurar-app');
   const app = await NestFactory.create(AppModule);
   configurarApp(app);
   // Só para a versão web do app em desenvolvimento (Expo web)

@@ -1,18 +1,18 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
-import { UsuariaThrottlerGuard } from './common/usuaria-throttler.guard';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
-import { UsuariasModule } from './usuarias/usuarias.module';
-import { GuardioesModule } from './guardioes/guardioes.module';
-import { OcorrenciasModule } from './ocorrencias/ocorrencias.module';
-import { EmergenciasModule } from './emergencias/emergencias.module';
-import { AuthModule } from './auth/auth.module';
-import { MensagensModule } from './mensagens/mensagens.module';
-import { ConfirmacoesModule } from './confirmacoes/confirmacoes.module';
+import { UsuariaThrottlerGuard } from './guards/usuaria-throttler.guard';
+import { AppController } from './controllers/app.controller';
+import { AppService } from './services/app.service';
+import { UsuariasModule } from './modules/usuarias.module';
+import { GuardioesModule } from './modules/guardioes.module';
+import { OcorrenciasModule } from './modules/ocorrencias.module';
+import { EmergenciasModule } from './modules/emergencias.module';
+import { AuthModule } from './modules/auth.module';
+import { MensagensModule } from './modules/mensagens.module';
+import { ConfirmacoesModule } from './modules/confirmacoes.module';
 import { APP_GUARD } from '@nestjs/core';
-import { JwtAuthGuard } from './auth/jwt-auth.guard';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
 @Module({
   imports: [

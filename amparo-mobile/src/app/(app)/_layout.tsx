@@ -1,7 +1,7 @@
 import { Stack } from 'expo-router';
 
-import { RastreadorEmergencia } from '@/components/dominio/RastreadorEmergencia';
-import { useTema } from '@/theme/tema';
+import { RastreadorEmergencia } from '@/controllers/RastreadorEmergencia';
+import { useTema } from '@/views/theme/tema';
 
 export const unstable_settings = { initialRouteName: 'index' };
 

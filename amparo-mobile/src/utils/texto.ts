@@ -8,7 +8,3 @@ export function iniciais(nome: string | undefined): string {
     .join('')
     .toUpperCase();
 }
-
-export function primeiroNome(nome: string | undefined): string {
-  return (nome ?? '').trim().split(' ')[0] ?? '';
-}
