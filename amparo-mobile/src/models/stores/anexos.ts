@@ -1,7 +1,6 @@
 import { File } from 'expo-file-system';
 import { create } from 'zustand';
 
-import type { NomeIcone } from '@/views/components/ui/Icone';
 import { diaMesHora } from '@/utils/datas';
 
 // Anexos escolhidos na "Nova ocorrência" (ainda não enviados). Ficam só em memória
@@ -36,7 +35,6 @@ export const MIMES_ACEITOS = [
 ];
 
 export const ROTULO_ANEXO: Record<TipoAnexo, string> = { foto: 'Foto', video: 'Vídeo', audio: 'Áudio', documento: 'Documento' };
-export const ICONE_ANEXO: Record<TipoAnexo, NomeIcone> = { foto: 'camera', video: 'video', audio: 'mic', documento: 'file-text' };
 
 export function tipoPorMime(mime: string): TipoAnexo | null {
   if (mime.startsWith('image/')) return 'foto';
