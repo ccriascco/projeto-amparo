@@ -20,7 +20,7 @@ describe('EmergenciasService', () => {
   let service: EmergenciasService;
 
   beforeEach(() => {
-    service = new EmergenciasService();
+    service = new EmergenciasService({ enviarConvite: jest.fn(), enviarPedidoDeAjuda: jest.fn() } as any);
   });
 
   describe('acionar', () => {
@@ -59,13 +59,17 @@ describe('EmergenciasService', () => {
       (service as any).supabase = criarSupabaseFake([
         { data: [], error: null },
         { data: { id: 'nova-emergencia' }, error: null },
-        { data: [{ nome_completo: 'Guardiã 1', telefone: '11999998888' }], error: null },
+        { data: [{ id: 'g1', nome_completo: 'Guardiã 1', telefone: '11999998888' }], error: null },
+        { data: [{ guardiao_id: 'g1', nome_guardia: 'Guardiã 1', enviado_em: '2026-10-13T12:00:00Z', confirmado_em: null }], error: null },
       ]);
 
       const resultado = await service.acionar({ usuaria_id: 'u1' }, 'u1');
 
       expect(resultado.status_notificacao).toBe('SUCESSO');
       expect(resultado.guardioes_notificados).toBe(1);
+      expect(resultado.avisos).toEqual([
+        { guardiao_id: 'g1', nome_completo: 'Guardiã 1', enviado_em: '2026-10-13T12:00:00Z', confirmado_em: null, status: 'AGUARDANDO' },
+      ]);
     });
   });
 

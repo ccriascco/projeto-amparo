@@ -8,6 +8,8 @@
  *  - emergencias: índice único de emergência ATIVA por usuária (23505)
  *  - ocorrencias -> evidencias: exclusão em cascata
  *  - rpc cadastrar_usuaria_com_guardioes (transacional) e apagar_conta_usuaria
+ *  - sessoes_aparelho e avisos_emergencia (token_hash único), google_sub único,
+ *    convite das guardiãs (status PENDENTE por padrão) — ver app_mobile_sessoes_google_convites.sql
  *  - Storage com buckets e caminhos
  * Qualquer tabela, método ou filtro desconhecido lança erro, para o teste não
  * passar por acaso.
@@ -20,7 +22,7 @@ type Resposta = { data: any; error: Erro | null; count?: number | null };
 
 const TABELAS = [
   'usuarias', 'guardioes', 'ocorrencias', 'evidencias', 'emergencias',
-  'rastreamento_gps', 'alertas_risco', 'tokens_revogados',
+  'rastreamento_gps', 'alertas_risco', 'tokens_revogados', 'sessoes_aparelho', 'avisos_emergencia',
 ] as const;
 
 export class BancoMemoria {
@@ -60,6 +62,26 @@ export class BancoMemoria {
       base.modo_disfarcado = base.modo_disfarcado ?? false;
     }
     if (nome === 'emergencias') base.encerrado_em = base.encerrado_em ?? null;
+    if (nome === 'usuarias') {
+      base.codigo_disfarce_hash = base.codigo_disfarce_hash ?? null;
+      base.google_sub = base.google_sub ?? null;
+      base.senha_alterada_em = base.senha_alterada_em ?? null;
+    }
+    if (nome === 'guardioes') {
+      base.status_convite = base.status_convite ?? 'PENDENTE';
+      base.convidado_em = base.convidado_em ?? this.agora();
+      base.confirmado_em = base.confirmado_em ?? null;
+      base.convite_token_hash = base.convite_token_hash ?? null;
+    }
+    if (nome === 'sessoes_aparelho') {
+      base.criado_em = base.criado_em ?? this.agora();
+      base.ultimo_uso_em = base.ultimo_uso_em ?? this.agora();
+      base.tentativas_codigo = base.tentativas_codigo ?? 0;
+    }
+    if (nome === 'avisos_emergencia') {
+      base.enviado_em = base.enviado_em ?? this.agora();
+      base.confirmado_em = base.confirmado_em ?? null;
+    }
     if (nome === 'rastreamento_gps') base.registrado_em = base.registrado_em ?? this.agora();
     if (nome === 'tokens_revogados') {
       delete base.id;
@@ -82,6 +104,18 @@ export class BancoMemoria {
       if (outras.some((l) => l.usuaria_id === linha.usuaria_id && l.status === 'ATIVA')) {
         return { code: '23505', message: 'duplicate key value violates unique constraint "emergencias_uma_ativa_por_usuaria"' };
       }
+    }
+    if (nome === 'usuarias' && linha.google_sub && outras.some((l) => l.google_sub === linha.google_sub)) {
+      return { code: '23505', message: 'duplicate key value violates unique constraint "usuarias_google_sub_unico"' };
+    }
+    if (nome === 'guardioes' && linha.convite_token_hash && outras.some((l) => l.convite_token_hash === linha.convite_token_hash)) {
+      return { code: '23505', message: 'duplicate key value violates unique constraint "guardioes_convite_token_unico"' };
+    }
+    if (nome === 'guardioes' && !['PENDENTE', 'CONFIRMADO'].includes(linha.status_convite)) {
+      return { code: '23514', message: 'new row violates check constraint "guardioes_status_convite_valido"' };
+    }
+    if (['sessoes_aparelho', 'avisos_emergencia'].includes(nome) && outras.some((l) => l.token_hash === linha.token_hash)) {
+      return { code: '23505', message: `duplicate key value violates unique constraint "${nome}_token_hash_key"` };
     }
     if (nome === 'tokens_revogados' && outras.some((l) => l.jti === linha.jti)) {
       return { code: '23505', message: 'duplicate key value violates unique constraint "tokens_revogados_pkey"' };
@@ -112,6 +146,11 @@ export class BancoMemoria {
         }
       }
     }
+    if (nome === 'guardioes') {
+      // avisos_emergencia.guardiao_id: ON DELETE SET NULL
+      const ids = new Set(alvo.map((g) => g.id));
+      for (const a of this.tabela('avisos_emergencia')) if (ids.has(a.guardiao_id)) a.guardiao_id = null;
+    }
     if (nome === 'ocorrencias') {
       const ids = new Set(alvo.map((o) => o.id));
       this.tabelas.evidencias = this.tabela('evidencias').filter((e) => !ids.has(e.ocorrencia_id));
@@ -124,13 +163,20 @@ export class BancoMemoria {
     if (funcao === 'cadastrar_usuaria_com_guardioes') {
       const usuaria = {
         cpf: p.p_cpf, email: p.p_email, telefone: p.p_telefone, nome_completo: p.p_nome_completo,
-        data_nascimento: p.p_data_nascimento, senha_hash: p.p_senha_hash, senha_app: p.p_senha_app,
-        modo_disfarcado: p.p_modo_disfarcado,
+        data_nascimento: p.p_data_nascimento, senha_hash: p.p_senha_hash,
+        codigo_disfarce_hash: p.p_codigo_disfarce_hash, modo_disfarcado: p.p_modo_disfarcado,
+        google_sub: p.p_google_sub, senha_alterada_em: p.p_senha_hash ? this.agora() : null,
       };
+      const esperados = ['p_cpf', 'p_email', 'p_telefone', 'p_nome_completo', 'p_data_nascimento', 'p_senha_hash',
+        'p_codigo_disfarce_hash', 'p_modo_disfarcado', 'p_google_sub', 'p_guardioes'];
+      const recebidos = Object.keys(p).sort().join(',');
+      if (recebidos !== [...esperados].sort().join(',')) {
+        return { data: null, error: { code: 'PGRST202', message: `assinatura da função não confere: ${recebidos}` } };
+      }
       const r = this.inserir('usuarias', [usuaria]);
       if (r.error) return r;
       const id = r.data[0].id;
-      this.inserir('guardioes', (p.p_guardioes ?? []).map((g: Linha) => ({ usuaria_id: id, ...g })));
+      this.inserir('guardioes', (p.p_guardioes ?? []).map((g: Linha) => ({ usuaria_id: id, ...g, status_convite: 'PENDENTE' })));
       return { data: id, error: null };
     }
     if (funcao === 'apagar_conta_usuaria') {
@@ -139,7 +185,7 @@ export class BancoMemoria {
       const ocorrencias = this.tabela('ocorrencias').filter((o) => o.usuaria_id === u).map((o) => o.id);
       this.tabelas.rastreamento_gps = this.tabela('rastreamento_gps').filter((g) => !emergencias.includes(g.emergencia_id));
       this.tabelas.evidencias = this.tabela('evidencias').filter((e) => !ocorrencias.includes(e.ocorrencia_id));
-      for (const t of ['alertas_risco', 'emergencias', 'ocorrencias', 'guardioes', 'tokens_revogados']) {
+      for (const t of ['avisos_emergencia', 'sessoes_aparelho', 'alertas_risco', 'emergencias', 'ocorrencias', 'guardioes', 'tokens_revogados']) {
         this.tabelas[t] = this.tabela(t).filter((l) => l.usuaria_id !== u);
       }
       this.tabelas.usuarias = this.tabela('usuarias').filter((l) => l.id !== u);

@@ -4,13 +4,15 @@ import { UsuariasService } from './usuarias.service';
 
 describe('UsuariasController', () => {
   let controller: UsuariasController;
-  let service: { cadastrar: jest.Mock; login: jest.Mock; loginDisfarcado: jest.Mock };
+  let service: Record<string, jest.Mock>;
 
   beforeEach(async () => {
     service = {
       cadastrar: jest.fn(),
       login: jest.fn(),
-      loginDisfarcado: jest.fn(),
+      renovarSessao: jest.fn(),
+      logout: jest.fn(),
+      trocarSenha: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -21,24 +23,27 @@ describe('UsuariasController', () => {
     controller = module.get<UsuariasController>(UsuariasController);
   });
 
-  it('should be defined', () => {
-    expect(controller).toBeDefined();
-  });
-
   it('cadastrar delega pro service', async () => {
     service.cadastrar.mockResolvedValue({ mensagem: 'ok' });
     const body: any = { email: 'a@a.com' };
-
     await expect(controller.cadastrar(body)).resolves.toEqual({ mensagem: 'ok' });
     expect(service.cadastrar).toHaveBeenCalledWith(body);
   });
 
-  it('login-disfarcado delega pro método correto do service (P14)', async () => {
-    service.loginDisfarcado.mockResolvedValue({ mensagem: 'ok disfarcado' });
-    const body: any = { email: 'a@a.com', senha: 'calc1234' };
+  it('o login antigo pela senha de disfarce não existe mais', () => {
+    expect((controller as any).loginDisfarcado).toBeUndefined();
+  });
 
-    await expect(controller.loginDisfarcado(body)).resolves.toEqual({ mensagem: 'ok disfarcado' });
-    expect(service.loginDisfarcado).toHaveBeenCalledWith(body);
-    expect(service.login).not.toHaveBeenCalled();
+  it('renovar sessão repassa o refresh token e o código', async () => {
+    await controller.renovarSessao({ refresh_token: 'r'.repeat(43), codigo: '1207' });
+    expect(service.renovarSessao).toHaveBeenCalledWith('r'.repeat(43), '1207');
+  });
+
+  it('logout e troca de senha usam a sessão (sid) do token atual', async () => {
+    const user = { id: 'u1', jti: 'j1', exp: 1, sid: 's1' };
+    await controller.logout({}, user);
+    expect(service.logout).toHaveBeenCalledWith('u1', 'j1', 1, 's1', undefined);
+    await controller.trocarSenha({ senha_atual: 'a', nova_senha: 'b' }, user);
+    expect(service.trocarSenha).toHaveBeenCalledWith('u1', 's1', 'a', 'b');
   });
 });

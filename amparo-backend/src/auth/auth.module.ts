@@ -1,7 +1,9 @@
-﻿import { Module, Global } from '@nestjs/common';
+import { Module, Global } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TokensService } from './tokens.service';
+import { SessoesService } from './sessoes.service';
+import { GoogleService } from './google.service';
 
 @Global()
 @Module({
@@ -16,7 +18,7 @@ import { TokensService } from './tokens.service';
       }),
     }),
   ],
-  providers: [TokensService],
-  exports: [JwtModule, TokensService],
+  providers: [TokensService, SessoesService, GoogleService],
+  exports: [JwtModule, TokensService, SessoesService, GoogleService],
 })
 export class AuthModule {}

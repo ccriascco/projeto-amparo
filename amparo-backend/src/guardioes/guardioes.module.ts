@@ -5,5 +5,6 @@ import { GuardioesController } from './guardioes.controller';
 @Module({
   controllers: [GuardioesController],
   providers: [GuardioesService],
+  exports: [GuardioesService],
 })
 export class GuardioesModule {}

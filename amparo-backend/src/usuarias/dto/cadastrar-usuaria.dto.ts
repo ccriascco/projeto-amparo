@@ -12,10 +12,11 @@ import {
   MaxLength,
   MinLength,
   ValidateBy,
+  ValidateIf,
   ValidateNested,
   buildMessage,
 } from 'class-validator';
-import { NaoPodeSerFutura, SenhaForte, TelefonesSemRepeticao } from '../../common/validadores';
+import { CodigoDisfarce, NaoPodeSerFutura, SenhaForte, TelefonesSemRepeticao } from '../../common/validadores';
 
 function cpfEhValido(cpf: unknown): boolean {
   if (typeof cpf !== 'string' || !/^\d{11}$/.test(cpf) || /^(\d)\1{10}$/.test(cpf)) return false;
@@ -33,16 +34,6 @@ function CpfValido() {
     validator: {
       validate: (valor) => cpfEhValido(valor),
       defaultMessage: buildMessage(() => 'CPF inválido. Confira os números informados (com ou sem pontos e traço).'),
-    },
-  });
-}
-
-function SenhaDisfarceDiferente() {
-  return ValidateBy({
-    name: 'senhaDisfarceDiferente',
-    validator: {
-      validate: (valor, args) => valor !== (args?.object as { senha?: string })?.senha,
-      defaultMessage: buildMessage(() => 'senha_app não pode ser igual à senha'),
     },
   });
 }
@@ -86,21 +77,27 @@ export class CadastrarUsuariaDto {
   @NaoPodeSerFutura()
   data_nascimento: string;
 
+  // Obrigatória, exceto no cadastro pelo Google (a conta entra sempre pelo Google)
+  @ValidateIf((o) => !o.google_id_token || o.senha !== undefined)
   @IsString()
   @MinLength(8)
   @MaxLength(72)
   @SenhaForte()
-  senha: string;
+  senha?: string;
 
+  @IsOptional()
   @IsString()
-  @MinLength(8)
-  @MaxLength(72)
-  @SenhaDisfarceDiferente()
-  senha_app: string;
+  @MaxLength(4096)
+  google_id_token?: string;
 
   @IsOptional()
   @IsBoolean()
   modo_disfarcado?: boolean;
+
+  // Código de 4 números do Modo Disfarce: obrigatório quando o disfarce é ativado
+  @ValidateIf((o) => o.modo_disfarcado === true || o.codigo_disfarce !== undefined)
+  @CodigoDisfarce()
+  codigo_disfarce?: string;
 
   @IsArray()
   @ArrayMinSize(1)
