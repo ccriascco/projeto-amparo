@@ -1,0 +1,23 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "backend-demo",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "amparo-backend", "run", "demo"],
+      "port": 3000
+    },
+    {
+      "name": "app-web",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "amparo-mobile", "run", "web", "--", "--port", "8081", "--clear"],
+      "port": 8081
+    },
+    {
+      "name": "app-metro",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "amparo-mobile", "run", "start", "--", "--dev-client", "--port", "8081"],
+      "port": 8081
+    }
+  ]
+}
