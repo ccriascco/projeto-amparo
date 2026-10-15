@@ -1,68 +1,22 @@
-import { CameraView, useCameraPermissions, useMicrophonePermissions } from 'expo-camera';
+import { CameraView } from 'expo-camera';
 import { LinearGradient } from 'expo-linear-gradient';
-import { router, useLocalSearchParams } from 'expo-router';
-import { useRef, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useTelaCamera } from '@/controllers/telas/autenticada/captura/useTelaCamera';
 import { BotaoFechar, BotaoVoltar } from '@/views/components/ui/Basicos';
 import { Botao } from '@/views/components/ui/Botao';
 import { Icone } from '@/views/components/ui/Icone';
 import { Texto } from '@/views/components/ui/Texto';
-import { LIMITE_MB, problemaDoArquivo, useAnexos } from '@/models/stores/anexos';
 import { fixas } from '@/views/theme/tokens';
-import { abrirAjustesDoSistema } from '@/utils/permissoes';
-import { useTelaPrivada } from '@/controllers/privacidade';
 
 const BRANCO_70 = 'rgba(255,255,255,0.7)';
 
 // Captura de foto ou vídeo (tela escura do protótipo). O arquivo fica no cache do app,
 // nunca na galeria, e entra como anexo da ocorrência que está sendo registrada.
 export default function TelaCamera() {
-  useTelaPrivada();
-  const { modo } = useLocalSearchParams<{ modo?: 'foto' | 'video' }>();
-  const video = modo === 'video';
+  const { camera, video, temPermissao, pronta, gravando, erro, capturados, aoCameraPronta, pedirPermissao, capturar, voltar } = useTelaCamera();
   const insets = useSafeAreaInsets();
-  const camera = useRef<CameraView>(null);
-  const [permCamera, pedirCamera] = useCameraPermissions();
-  const [permMicrofone, pedirMicrofone] = useMicrophonePermissions();
-  const [pronta, setPronta] = useState(false);
-  const [gravando, setGravando] = useState(false);
-  const [erro, setErro] = useState<string | null>(null);
-  const adicionar = useAnexos((s) => s.adicionar);
-  const capturados = useAnexos((s) => s.anexos.filter((a) => a.tipo === (video ? 'video' : 'foto')).length);
-
-  const temPermissao = permCamera?.granted && (!video || permMicrofone?.granted);
-
-  const capturar = async () => {
-    if (!camera.current || !pronta) return;
-    setErro(null);
-    try {
-      if (!video) {
-        const foto = await camera.current.takePictureAsync({ quality: 0.7 });
-        const problema = problemaDoArquivo(foto.uri, 'image/jpeg');
-        if (problema) return setErro(problema);
-        adicionar({ uri: foto.uri, nome: `foto-${Date.now()}.jpg`, mime: 'image/jpeg', tipo: 'foto' });
-        return;
-      }
-      if (gravando) {
-        camera.current.stopRecording();
-        return;
-      }
-      setGravando(true);
-      const r = await camera.current.recordAsync({ maxDuration: 120, maxFileSize: LIMITE_MB.video * 1024 * 1024 });
-      setGravando(false);
-      if (r?.uri) {
-        const mime = r.uri.toLowerCase().endsWith('.mov') ? 'video/quicktime' : 'video/mp4';
-        adicionar({ uri: r.uri, nome: `video-${Date.now()}.${mime === 'video/quicktime' ? 'mov' : 'mp4'}`, mime, tipo: 'video' });
-      }
-    } catch {
-      setGravando(false);
-      setErro('Não foi possível usar a câmera agora. Tente de novo.');
-    }
-  };
-
-  const voltar = () => router.back();
 
   return (
     <View style={{ flex: 1, backgroundColor: fixas.midiaFundo }}>
@@ -72,7 +26,7 @@ export default function TelaCamera() {
           style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
           facing="back"
           mode={video ? 'video' : 'picture'}
-          onCameraReady={() => setPronta(true)}
+          onCameraReady={aoCameraPronta}
         />
       ) : (
         <LinearGradient colors={['#3A2B33', fixas.midiaFundo]} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} />
@@ -95,11 +49,7 @@ export default function TelaCamera() {
               </Texto>
               <Botao
                 variante="secundario"
-                onPress={async () => {
-                  const c = await pedirCamera();
-                  const m = video ? await pedirMicrofone() : { granted: true, canAskAgain: true };
-                  if ((!c.granted && !c.canAskAgain) || (!m.granted && !m.canAskAgain)) abrirAjustesDoSistema();
-                }}
+                onPress={pedirPermissao}
                 estilo={{ borderColor: '#FFFFFF' }}
               >
                 Permitir
