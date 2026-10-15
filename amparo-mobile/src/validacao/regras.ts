@@ -71,5 +71,3 @@ export const REGRAS_SENHA = [
 ] as const;
 
 export const senhaAtendeRegras = (s: string) => s.length <= 72 && REGRAS_SENHA.every((r) => r.ok(s));
-
-export const codigoValido = (v: string) => /^\d{4}$/.test(v);

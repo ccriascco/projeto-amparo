@@ -112,7 +112,7 @@ projeto-amparo/
 ├── Relatorios/                relatórios técnicos, gráficos e PDFs
 ├── amparo-mobile/             app mobile (React Native + Expo), ver amparo-mobile/README.md
 ├── amparo-obsidian/           notas pessoais (não faz parte do sistema)
-└── _backup_organizacao/       arquivos antigos guardados na reorganização
+└── historico-qa-treinamentos/ scripts antigos de QA e de treino, guardados como registro
 ```
 
 ## Pré-requisitos

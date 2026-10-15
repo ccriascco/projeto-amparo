@@ -116,21 +116,6 @@ export const tamanhos = {
 export const alturaLinha = { justa: 1.2, corpo: 1.4, leitura: 1.5, longa: 1.6 } as const;
 export const trackingNota = -0.24;
 
-export const espaco = {
-  4: 4,
-  6: 6,
-  8: 8,
-  12: 12,
-  16: 16,
-  20: 20,
-  24: 24,
-  32: 32,
-  40: 40,
-  48: 48,
-  64: 64,
-  80: 80,
-} as const;
-
 export const layout = {
   margemTela: 32,
   toqueMinimo: 44,
@@ -150,11 +135,3 @@ export const raios = {
 } as const;
 
 export const tamanhoIcone = { circulo: 40, circuloGrande: 72, padrao: 24 } as const;
-
-export const duracoes = { rapida: 120, base: 200, nav: 240, sheet: 320, pulso: 2000, onda: 1100 } as const;
-
-// cubic-bezier do design: padrão (0.4,0,0.2,1) e saída suave (0.16,1,0.3,1)
-export const curvas = {
-  padrao: [0.4, 0, 0.2, 1] as const,
-  saidaSuave: [0.16, 1, 0.3, 1] as const,
-};

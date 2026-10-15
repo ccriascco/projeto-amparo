@@ -5,8 +5,6 @@ import { ErroApi } from '@/api/erros';
 const webClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
 const iosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
 
-export const googleConfigurado = () => !!webClientId;
-
 let configurado = false;
 
 /** Abre a escolha de conta do Google. Devolve o id_token, ou null se a pessoa cancelar. */
