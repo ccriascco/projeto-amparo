@@ -1,18 +1,15 @@
-import { router, useFocusEffect } from 'expo-router';
-import { useCallback, useState } from 'react';
 import { Pressable, View } from 'react-native';
 
-import { ErroApi } from '@/services/api/erros';
+import { voltar } from '@/controllers/navegacao';
+import { type IdPermissao, useTelaSeguranca } from '@/controllers/telas/autenticada/mais/useTelaSeguranca';
 import { TelaInterna } from '@/views/components/layout/TelaInterna';
 import { Interruptor } from '@/views/components/ui/Basicos';
 import { Cartao, CirculoIcone } from '@/views/components/ui/Cartao';
 import type { NomeIcone } from '@/views/components/ui/Icone';
 import { Texto } from '@/views/components/ui/Texto';
-import { useAtualizarPerfil, usePerfil } from '@/controllers/dados';
 import { fixas } from '@/views/theme/tokens';
-import { abrirAjustesDoSistema, pedirCameraEMicrofone, pedirLocalizacao, situacaoPermissoes } from '@/utils/permissoes';
 
-type Permissao = { id: 'local' | 'camera'; icone: NomeIcone; titulo: string; corpo: string };
+type Permissao = { id: IdPermissao; icone: NomeIcone; titulo: string; corpo: string };
 
 // "Notificações" do design não aparece: o app ainda não envia notificações (pendência registrada).
 const PERMISSOES: Permissao[] = [
@@ -21,41 +18,15 @@ const PERMISSOES: Permissao[] = [
 ];
 
 export default function TelaSeguranca() {
-  const perfil = usePerfil();
-  const atualizar = useAtualizarPerfil();
-  const [perms, setPerms] = useState({ local: false, camera: false });
-  const disfarce = perfil.data?.modo_disfarcado ?? false;
-
-  // As permissões são do sistema: o app mostra a situação real e leva aos ajustes para desligar
-  useFocusEffect(
-    useCallback(() => {
-      situacaoPermissoes().then(setPerms).catch(() => undefined);
-    }, []),
-  );
-
-  const alternarPermissao = async (id: Permissao['id']) => {
-    if (perms[id]) return abrirAjustesDoSistema();
-    const ok = id === 'local' ? await pedirLocalizacao() : await pedirCameraEMicrofone();
-    if (!ok) abrirAjustesDoSistema();
-    setPerms(await situacaoPermissoes());
-  };
-
-  const alternarDisfarce = () => {
-    if (!perfil.data) return;
-    if (!disfarce && !perfil.data.codigo_disfarce_definido) {
-      router.push({ pathname: '/mais/codigo', params: { motivo: 'disfarce' } });
-      return;
-    }
-    atualizar.mutate({ modo_disfarcado: !disfarce });
-  };
+  const { disfarce, perms, ...c } = useTelaSeguranca();
 
   return (
     <TelaInterna
       aba="mais"
-      cabecalho={{ titulo: 'Configurações de segurança', sub: 'Disfarce, privacidade e o que sai do seu aparelho tudo no seu controle.', aoFecharTopo: () => router.back() }}
+      cabecalho={{ titulo: 'Configurações de segurança', sub: 'Disfarce, privacidade e o que sai do seu aparelho tudo no seu controle.', aoFecharTopo: voltar }}
     >
       <Cartao
-        onPress={alternarDisfarce}
+        onPress={c.alternarDisfarce}
         rotuloAcessivel={`Modo Disfarce, ${disfarce ? 'ligado' : 'desligado'}`}
         estilo={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 16 }}
       >
@@ -65,9 +36,9 @@ export default function TelaSeguranca() {
         </View>
         <Interruptor ligado={disfarce} />
       </Cartao>
-      {atualizar.isError ? (
+      {c.erroDisfarce !== null ? (
         <Texto variante="nota" corLivre={fixas.sos}>
-          {atualizar.error instanceof ErroApi ? atualizar.error.mensagem : 'Não foi possível mudar o Modo Disfarce.'}
+          {c.erroDisfarce}
         </Texto>
       ) : null}
 
@@ -76,15 +47,15 @@ export default function TelaSeguranca() {
           <Texto variante="cardTitulo">Código de desbloqueio</Texto>
           <Texto variante="cardCorpo">{'Digite seu código de 4 números e toque em "=" na calculadora para abrir o Amparo.'}</Texto>
         </View>
-        <Pressable onPress={() => router.push('/mais/codigo')} accessibilityRole="button" style={{ alignSelf: 'flex-start' }}>
-          <Texto variante="link">{perfil.data?.codigo_disfarce_definido ? 'Alterar código' : 'Criar código'}</Texto>
+        <Pressable onPress={c.abrirCodigo} accessibilityRole="button" style={{ alignSelf: 'flex-start' }}>
+          <Texto variante="link">{c.codigoDefinido ? 'Alterar código' : 'Criar código'}</Texto>
         </Pressable>
       </Cartao>
 
       {PERMISSOES.map((p) => (
         <Cartao
           key={p.id}
-          onPress={() => alternarPermissao(p.id)}
+          onPress={() => c.alternarPermissao(p.id)}
           rotuloAcessivel={`${p.titulo}, ${perms[p.id] ? 'permitida' : 'não permitida'}. ${perms[p.id] ? 'Abre os ajustes do sistema para desligar.' : ''}`}
           estilo={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 16 }}
         >

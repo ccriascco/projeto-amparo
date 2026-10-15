@@ -1,10 +1,6 @@
-import { useMutation } from '@tanstack/react-query';
-import { router } from 'expo-router';
-import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 
-import { apiUsuarias } from '@/services/api/endpoints';
-import { ErroApi, MENSAGEM_CARREGAR, mensagemDeErro } from '@/services/api/erros';
+import { useFormularioConta, useTelaConta } from '@/controllers/telas/autenticada/mais/useTelaConta';
 import type { Perfil } from '@/models/tipos';
 import { TelaInterna } from '@/views/components/layout/TelaInterna';
 import { Botao } from '@/views/components/ui/Botao';
@@ -14,14 +10,11 @@ import { Confirmacao } from '@/views/components/ui/Confirmacao';
 import { Carregando, ErroCarregar } from '@/views/components/ui/Estados';
 import { Icone, type NomeIcone } from '@/views/components/ui/Icone';
 import { Texto } from '@/views/components/ui/Texto';
-import { useAtualizarPerfil, usePerfil } from '@/controllers/dados';
-import { type EscolhaTema, usePreferencias } from '@/models/stores/preferencias';
-import { useSessao } from '@/models/stores/sessao';
+import type { EscolhaTema } from '@/models/stores/preferencias';
 import { useTema } from '@/views/theme/tema';
 import { fixas, raios } from '@/views/theme/tokens';
 import { diaMesDeData } from '@/utils/datas';
-import { obterIdTokenGoogle } from '@/services/google';
-import { emailValido, isoParaData, mascararTelefone, somenteDigitos, telefoneValido } from '@/utils/validacao/regras';
+import { isoParaData } from '@/utils/validacao/regras';
 
 const TEMAS: { id: EscolhaTema; rotulo: string; icone: NomeIcone }[] = [
   { id: 'claro', rotulo: 'Claro', icone: 'sun' },
@@ -30,66 +23,20 @@ const TEMAS: { id: EscolhaTema; rotulo: string; icone: NomeIcone }[] = [
 ];
 
 export default function TelaConta() {
-  const perfil = usePerfil();
-  if (perfil.isLoading || perfil.isError || !perfil.data) {
+  const c = useTelaConta();
+  if (c.carregando || c.erroCarregar !== null || !c.perfil) {
     return (
       <TelaInterna aba="mais" cabecalho={{ titulo: 'Minha Conta', sub: 'Seus dados, sua senha e a aparência do app.' }}>
-        {perfil.isError ? <ErroCarregar mensagem={mensagemDeErro(perfil.error, MENSAGEM_CARREGAR)} aoTentar={() => perfil.refetch()} /> : <Carregando />}
+        {c.erroCarregar !== null ? <ErroCarregar mensagem={c.erroCarregar} aoTentar={c.tentarDeNovo} /> : <Carregando />}
       </TelaInterna>
     );
   }
-  return <FormularioConta p={perfil.data} />;
+  return <FormularioConta p={c.perfil} />;
 }
 
 function FormularioConta({ p }: { p: Perfil }) {
   const { cores } = useTema();
-  const atualizar = useAtualizarPerfil();
-  const { tema, definirTema } = usePreferencias();
-  const sair = useSessao((s) => s.sair);
-
-  const [nome, setNome] = useState(p.nome_completo);
-  const [telefone, setTelefone] = useState(mascararTelefone(p.telefone));
-  const [email, setEmail] = useState(p.email);
-  const [erros, setErros] = useState<{ nome?: string; telefone?: string; email?: string }>({});
-  const [mensagem, setMensagem] = useState<{ texto: string; erro: boolean } | null>(null);
-  const [confirmarSaida, setConfirmarSaida] = useState(false);
-  const [excluindo, setExcluindo] = useState(false);
-  const [senhaExclusao, setSenhaExclusao] = useState('');
-
-  const salvar = () => {
-    setMensagem(null);
-    const e = {
-      nome: nome.trim().length < 2 ? 'Digite seu nome completo.' : undefined,
-      telefone: telefoneValido(telefone) ? undefined : 'Digite o telefone com DDD.',
-      email: emailValido(email) ? undefined : 'Esse e-mail não parece válido.',
-    };
-    setErros(e);
-    if (e.nome || e.telefone || e.email) return;
-    const alteracoes = {
-      ...(nome.trim() !== p.nome_completo ? { nome_completo: nome.trim() } : {}),
-      ...(somenteDigitos(telefone) !== p.telefone ? { telefone: somenteDigitos(telefone) } : {}),
-      ...(email.trim().toLowerCase() !== p.email ? { email: email.trim().toLowerCase() } : {}),
-    };
-    if (Object.keys(alteracoes).length === 0) return setMensagem({ texto: 'Nada mudou.', erro: false });
-    atualizar.mutate(alteracoes, {
-      onSuccess: () => setMensagem({ texto: 'Dados salvos.', erro: false }),
-      onError: (err) =>
-        setMensagem({
-          texto: err instanceof ErroApi && err.status === 409 ? 'Esse e-mail já é usado por outra conta.' : err instanceof ErroApi ? err.mensagem : 'Não foi possível salvar.',
-          erro: true,
-        }),
-    });
-  };
-
-  const exclusao = useMutation({
-    mutationFn: async () => {
-      if (p.tem_senha) return apiUsuarias.excluirConta({ senha: senhaExclusao });
-      const idToken = await obterIdTokenGoogle();
-      if (!idToken) throw new ErroApi('cancelado', 0, 'Confirmação cancelada.');
-      return apiUsuarias.excluirConta({ google_id_token: idToken });
-    },
-    onSuccess: () => sair({ avisarServidor: false }),
-  });
+  const { nome, telefone, email, erros, mensagem, tema, ...c } = useFormularioConta(p);
 
   return (
     <TelaInterna
@@ -98,29 +45,25 @@ function FormularioConta({ p }: { p: Perfil }) {
       sobreposicao={
         <>
           <Confirmacao
-            visivel={confirmarSaida}
+            visivel={c.confirmarSaida}
             titulo="Sair da conta?"
             texto="Para entrar de novo, você vai precisar do seu e-mail e senha (ou do Google)."
             rotuloConfirmar="Sair da conta"
-            aoConfirmar={() => sair()}
-            aoFechar={() => setConfirmarSaida(false)}
+            aoConfirmar={c.sair}
+            aoFechar={c.fecharSaida}
           />
           <Confirmacao
-            visivel={excluindo}
+            visivel={c.excluindo}
             titulo="Excluir sua conta?"
             texto="Sua conta, suas ocorrências, seus arquivos e sua rede de apoio são apagados para sempre. Isso não pode ser desfeito."
             rotuloConfirmar="Excluir minha conta"
-            carregando={exclusao.isPending}
-            erro={exclusao.isError ? (exclusao.error instanceof ErroApi ? exclusao.error.mensagem : 'Não foi possível excluir.') : null}
-            aoConfirmar={() => exclusao.mutate()}
-            aoFechar={() => {
-              setExcluindo(false);
-              setSenhaExclusao('');
-              exclusao.reset();
-            }}
+            carregando={c.exclusaoPendente}
+            erro={c.erroExclusao}
+            aoConfirmar={c.excluir}
+            aoFechar={c.fecharExclusao}
           >
             {p.tem_senha ? (
-              <Campo rotulo="Confirme com sua senha" value={senhaExclusao} onChangeText={setSenhaExclusao} secureTextEntry autoComplete="current-password" />
+              <Campo rotulo="Confirme com sua senha" value={c.senhaExclusao} onChangeText={c.alterarSenhaExclusao} secureTextEntry autoComplete="current-password" />
             ) : (
               <Texto variante="nota">Para confirmar, você vai escolher sua conta Google de novo.</Texto>
             )}
@@ -129,13 +72,13 @@ function FormularioConta({ p }: { p: Perfil }) {
       }
     >
       <View style={{ gap: 16 }}>
-        <Campo rotulo="Nome completo" value={nome} onChangeText={setNome} erro={erros.nome} autoComplete="name" />
+        <Campo rotulo="Nome completo" value={nome} onChangeText={c.alterarNome} erro={erros.nome} autoComplete="name" />
         <Campo rotulo="Data de nascimento" value={isoParaData(p.data_nascimento)} desabilitado />
-        <Campo rotulo="Telefone" value={telefone} onChangeText={(t) => setTelefone(mascararTelefone(t))} erro={erros.telefone} keyboardType="phone-pad" />
+        <Campo rotulo="Telefone" value={telefone} onChangeText={c.alterarTelefone} erro={erros.telefone} keyboardType="phone-pad" />
         <Campo
           rotulo="Email"
           value={email}
-          onChangeText={setEmail}
+          onChangeText={c.alterarEmail}
           erro={erros.email}
           keyboardType="email-address"
           autoCapitalize="none"
@@ -171,7 +114,7 @@ function FormularioConta({ p }: { p: Perfil }) {
         </View>
       </View>
 
-      <Cartao onPress={() => router.push('/mais/senha')} rotuloAcessivel="Alterar senha" estilo={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 20 }}>
+      <Cartao onPress={c.abrirSenha} rotuloAcessivel="Alterar senha" estilo={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 20 }}>
         <View style={{ gap: 4, flex: 1 }}>
           <Texto variante="cardTitulo">{p.tem_senha ? 'Alterar senha' : 'Criar senha'}</Texto>
           <Texto variante="cardCorpo">
@@ -186,7 +129,7 @@ function FormularioConta({ p }: { p: Perfil }) {
           {mensagem.texto}
         </Texto>
       ) : null}
-      <Botao onPress={salvar} carregando={atualizar.isPending}>
+      <Botao onPress={c.salvar} carregando={c.salvando}>
         Salvar alterações
       </Botao>
 
@@ -199,7 +142,7 @@ function FormularioConta({ p }: { p: Perfil }) {
             return (
               <Pressable
                 key={t.id}
-                onPress={() => definirTema(t.id)}
+                onPress={() => c.definirTema(t.id)}
                 accessibilityRole="radio"
                 accessibilityState={{ checked: on }}
                 accessibilityLabel={`Tema ${t.rotulo}`}
@@ -226,10 +169,10 @@ function FormularioConta({ p }: { p: Perfil }) {
         <Texto variante="nota">No automático, o app segue o tema do seu celular.</Texto>
       </View>
 
-      <Botao variante="perigo" onPress={() => setConfirmarSaida(true)}>
+      <Botao variante="perigo" onPress={c.pedirSaida}>
         Sair da conta
       </Botao>
-      <Pressable onPress={() => setExcluindo(true)} accessibilityRole="button" style={{ alignSelf: 'center', paddingVertical: 8 }}>
+      <Pressable onPress={c.pedirExclusao} accessibilityRole="button" style={{ alignSelf: 'center', paddingVertical: 8 }}>
         <Texto peso={700} tamanho={14} corLivre={cores.sair}>
           Excluir minha conta
         </Texto>
