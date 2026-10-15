@@ -106,7 +106,9 @@ projeto-amparo/
 │   ├── supabase/              scripts SQL (RLS, funções, índices, tabelas)
 │   └── test/                  testes e2e e configuração do Jest
 ├── amparo-ia/                 serviço de IA
-│   ├── main.py                API FastAPI (POST /classificar)
+│   ├── main.py                entrada da API FastAPI (uvicorn main:app)
+│   ├── app/                   config (.env e segredo), models (dados de entrada), services (regra e modelo), routes (POST /classificar)
+│   ├── scripts/               scripts manuais antigos (v1) e o teste manual test_local.py
 │   ├── modelo_risco.pkl       modelo em produção (v3)
 │   ├── colunas_modelo.pkl     ordem das variáveis do modelo
 │   ├── modelos_anteriores/    versões anteriores (v1, v2) para voltar se precisar
@@ -272,9 +274,9 @@ npm run lint        # análise estática (oxlint)
 | E2E básico (6 testes) | Autenticação obrigatória, token forjado, validação de entrada e campos não permitidos | Não grava dados |
 | E2E de fluxo completo (149 testes) | A aplicação inteira, do cadastro à exclusão de conta, sobre um banco em memória com as regras do banco. Rede bloqueada: nunca acessa o Supabase. Com `IA_REAL=1`, a seção de risco usa a IA real | Não: banco em memória |
 
-No app (`amparo-mobile`): `npm test` (63 testes) e `npm run test:e2e` (fluxo principal pelas telas reais, contra o backend de demonstração).
+No app (`amparo-mobile`): `npm test` (63 testes) e `npm run test:e2e` (2 testes pelas telas reais, contra o backend de demonstração).
 
-O serviço de IA não tem testes automatizados (`amparo-ia/test_local.py` é só um script manual que carrega o modelo e faz uma previsão). A avaliação do modelo é feita pelo pipeline descrito abaixo.
+O serviço de IA não tem testes automatizados (`amparo-ia/scripts/test_local.py` é só um script manual que carrega o modelo e faz uma previsão). A avaliação do modelo é feita pelo pipeline descrito abaixo.
 
 ## Treinamento do modelo de IA
 
@@ -349,7 +351,7 @@ Scripts de análise:
 
 Para voltar, copie os arquivos de `modelos_anteriores/` de volta para `amparo-ia/` e reinicie.
 
-> Não use `amparo-ia/treinar_final.py`, `gerador_dados.py` e `avaliador_modelos.py` na raiz da IA. São do pipeline antigo (v1): `treinar_final.py` **sobrescreve o modelo em produção** por um de 8 variáveis, que ignora os tipos psicológica, moral e patrimonial.
+> Não use `amparo-ia/scripts/treinar_final.py`, `gerador_dados.py` e `avaliador_modelos.py`. São do pipeline antigo (v1): `treinar_final.py` **sobrescreve o modelo em produção** por um de 8 variáveis, que ignora os tipos psicológica, moral e patrimonial.
 
 ### Onde ficam os resultados
 
