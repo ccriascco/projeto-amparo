@@ -72,13 +72,18 @@ npx eas-cli@latest build --profile development --platform android
 
 ```bash
 npm test             # 63 testes: componentes, cliente HTTP, sessão, validações, datas, calculadora, integridade
-npm run test:e2e     # fluxo principal de ponta a ponta (sobe o backend de demonstração sozinho)
+npm run test:e2e     # 2 testes de ponta a ponta (sobem o backend de demonstração sozinhos)
 npm run lint
 npm run typecheck
 npx expo-doctor
 ```
 
-O teste de ponta a ponta usa as telas reais do app (expo-router) contra o backend real com o banco em memória. Ele entra pela tela de login, vê a leitura de risco vinda da IA, registra uma ocorrência de violência física e confere que a IA reclassificou o risco para alto. A rede fica restrita ao backend local e nunca chega a um banco real. Com `IA_REAL=1` no backend de demonstração, a IA real (`amparo-ia`) é usada no lugar da simulada.
+Os testes de ponta a ponta usam as telas reais do app (expo-router) contra o backend real com o banco em memória:
+
+- `fluxo-principal`: entra pela tela de login, vê a leitura de risco vinda da IA, registra uma ocorrência de violência física e confere que a IA reclassificou o risco para alto.
+- `telas`: cadastro nas 8 etapas, nova guardiã na rede de apoio, troca de nome em Minha Conta, criação do código e Modo Disfarce ligado, app travado na calculadora e destravado com o código.
+
+A rede fica restrita ao backend local e nunca chega a um banco real; os dados são fictícios e as mensagens às guardiãs são simuladas. Com `IA_REAL=1` no backend de demonstração, a IA real (`amparo-ia`) é usada no lugar da simulada.
 
 ## Deploy
 
@@ -103,28 +108,34 @@ Organizado por tipo técnico (MVC):
 ```text
 src/
   app/                 rotas (expo-router; o nome da pasta é exigido por ele)
-    _layout.tsx        navegação raiz: fontes, React Query, rotas protegidas pela sessão, capa de privacidade
+    _layout.tsx        navegação raiz: pilhas protegidas pela sessão (a inicialização fica em controllers/app)
     (publico)/         boas-vindas, login, cadastro
     (app)/             área autenticada: Início, ocorrências, rede, mais, captura, emergência
     disfarce.tsx       calculadora do Modo Disfarce
                        (cada arquivo de rota só reexporta a tela de views/screens)
-  views/               interface
+  views/               só a interface: o que aparece na tela e estado puramente visual (animação, rolagem, menus)
     screens/           as telas: publico/, autenticada/ e TelaDisfarce
     components/        ui/ (design system), layout/ (header, nav, telas), dominio/ (SOS, calculadora, players…)
     theme/             tokens do design (claro e escuro) e useTema
-  controllers/         ligam telas e dados: hooks do React Query, privacidade da tela,
-                       lógica da calculadora, reenvio da localização na emergência
+  controllers/         ligam telas e dados
+    telas/             um hook por tela (useTelaLogin, useTelaCadastro…): estado, validação, chamadas e navegação
+    app.ts             abertura do app (fontes, cache, sessão, splash, trava ao ir para o fundo)
+    cabecalho.ts       atalhos do cabeçalho e troca de aba
+    navegacao.ts       abrir, voltar e trocar de tela
+    dados.ts           hooks do React Query (perfil, guardiãs, ocorrências, emergência)
+    privacidade.ts     bloqueio de print e capa da calculadora
+    logicaCalculadora.ts, RastreadorEmergencia.tsx
   models/              tipos da API e stores/ (sessão, preferências, anexos, rascunho do cadastro; Zustand)
   services/            api/ (cliente HTTP único, rotas tipadas, erros em português), login com Google,
                        download e conferência de integridade das provas
   utils/               armazenamento seguro, código local, permissões, mapas, datas, texto,
                        validacao/ (CPF, telefone, datas e senha, iguais às do backend)
-  config/              conteudo/ (textos fixos do design: guias, FAQs, artigos, tipos de violência)
+  config/              conteudo/ (textos fixos do design: guias, FAQs, artigos, tipos de violência, anexos)
 assets/                imagens (na raiz, como o Expo espera)
 e2e/                   teste de ponta a ponta
 ```
 
-Os testes unitários ficam em `__tests__/` ao lado do código que testam. Nomes: pastas e módulos em camelCase; componentes e telas em PascalCase, como o nome do componente.
+As views não importam `services/` nem as stores: tudo passa pelos controllers (a exceção é `useTema`, que lê a preferência de tema). Os testes unitários ficam em `__tests__/` ao lado do código que testam. Nomes: pastas e módulos em camelCase; componentes e telas em PascalCase, como o nome do componente.
 
 ## Diferenças em relação ao design
 

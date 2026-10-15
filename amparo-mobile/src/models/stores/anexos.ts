@@ -1,6 +1,7 @@
 import { File } from 'expo-file-system';
 import { create } from 'zustand';
 
+import { ROTULO_ANEXO } from '@/config/conteudo/anexos';
 import { diaMesHora } from '@/utils/datas';
 
 // Anexos escolhidos na "Nova ocorrência" (ainda não enviados). Ficam só em memória
@@ -34,7 +35,6 @@ export const MIMES_ACEITOS = [
   'application/pdf',
 ];
 
-export const ROTULO_ANEXO: Record<TipoAnexo, string> = { foto: 'Foto', video: 'Vídeo', audio: 'Áudio', documento: 'Documento' };
 
 export function tipoPorMime(mime: string): TipoAnexo | null {
   if (mime.startsWith('image/')) return 'foto';
