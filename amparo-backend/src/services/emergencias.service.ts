@@ -1,5 +1,5 @@
 import { Injectable, Logger, HttpException, HttpStatus } from '@nestjs/common';
-import { createClient } from '@supabase/supabase-js';
+import { criarClienteSupabase } from '../config/supabase';
 import { erroDoBanco, tratarErro } from '../utils/erro.util';
 import { mascararTelefone } from '../utils/mascara.util';
 import { gerarToken, hashToken } from '../utils/token.util';
@@ -22,10 +22,7 @@ function formatarAviso(a: AvisoBanco) {
 export class EmergenciasService {
   private readonly logger = new Logger(EmergenciasService.name);
 
-  private supabase = createClient(
-    process.env.SUPABASE_URL as string,
-    process.env.SUPABASE_SERVICE_ROLE_KEY as string,
-  );
+  private supabase = criarClienteSupabase();
 
   private readonly filasPorUsuaria = new Map<string, Promise<unknown>>();
 

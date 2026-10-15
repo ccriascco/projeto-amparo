@@ -1,5 +1,5 @@
 import { Injectable, HttpException, HttpStatus, Logger } from '@nestjs/common';
-import { createClient } from '@supabase/supabase-js';
+import { criarClienteSupabase } from '../config/supabase';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { randomUUID } from 'crypto';
@@ -31,10 +31,7 @@ export function mascararCpf(cpf: string | null | undefined): string {
 
 @Injectable()
 export class UsuariasService {
-  private supabase = createClient(
-    process.env.SUPABASE_URL as string,
-    process.env.SUPABASE_SERVICE_ROLE_KEY as string,
-  );
+  private supabase = criarClienteSupabase();
 
   private readonly logger = new Logger(UsuariasService.name);
 

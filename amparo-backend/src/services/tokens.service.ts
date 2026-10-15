@@ -1,13 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { createClient } from '@supabase/supabase-js';
+import { criarClienteSupabase } from '../config/supabase';
 import { erroDoBanco } from '../utils/erro.util';
 
 @Injectable()
 export class TokensService {
-  private supabase = createClient(
-    process.env.SUPABASE_URL as string,
-    process.env.SUPABASE_SERVICE_ROLE_KEY as string,
-  );
+  private supabase = criarClienteSupabase();
 
   async revogar(jti: string, usuariaId: string, expiraEm: Date): Promise<void> {
     const { error } = await this.supabase

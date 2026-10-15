@@ -1,5 +1,5 @@
 ﻿import { Injectable, Logger, HttpException, HttpStatus } from '@nestjs/common';
-import { createClient } from '@supabase/supabase-js';
+import { criarClienteSupabase } from '../config/supabase';
 import * as crypto from 'crypto';
 import { erroDoBanco, tratarErro } from '../utils/erro.util';
 import { mascararTelefone } from '../utils/mascara.util';
@@ -14,10 +14,7 @@ const CAMPOS_EDITAVEIS = ['tipos_violencia', 'mensagem', 'data_ocorrencia', 'lat
 export class OcorrenciasService {
   private readonly logger = new Logger(OcorrenciasService.name);
 
-  private supabase = createClient(
-    process.env.SUPABASE_URL as string,
-    process.env.SUPABASE_SERVICE_ROLE_KEY as string,
-  );
+  private supabase = criarClienteSupabase();
 
   async criar(dados: any) {
     try {

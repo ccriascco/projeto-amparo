@@ -94,13 +94,15 @@ Como as partes conversam:
 ```text
 projeto-amparo/
 ├── amparo-backend/            API NestJS
-│   ├── src/
-│   │   ├── auth/              guard JWT, revogação de tokens, decoradores
-│   │   ├── common/            tratamento de erros, verificação de arquivos, limite por usuária
-│   │   ├── usuarias/          cadastro, login, logout, exclusão de conta
-│   │   ├── guardioes/         rede de apoio
-│   │   ├── ocorrencias/       ocorrências, evidências e chamada da IA
-│   │   └── emergencias/       botão de emergência e rastreamento
+│   ├── src/                   organizado por tipo técnico
+│   │   ├── controllers/       rotas HTTP
+│   │   ├── services/          regras de negócio, banco e chamada da IA
+│   │   ├── models/dto/        validação do que chega em cada rota
+│   │   ├── modules/           módulos do Nest
+│   │   ├── guards/, decorators/  JWT, limite por usuária, @Public, @CurrentUser
+│   │   ├── utils/             erros, máscaras, arquivos, validadores, variáveis de risco
+│   │   ├── views/             páginas de confirmação das guardiãs
+│   │   └── config/            configuração do app e cliente do Supabase
 │   ├── supabase/              scripts SQL (RLS, funções, índices, tabelas)
 │   └── test/                  testes e2e e configuração do Jest
 ├── amparo-ia/                 serviço de IA

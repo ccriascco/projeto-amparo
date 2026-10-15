@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { createClient } from '@supabase/supabase-js';
+import { criarClienteSupabase } from '../config/supabase';
 
 @Injectable()
 export class AppService {
@@ -11,7 +11,7 @@ export class AppService {
       return { erro: 'Chaves do Supabase não encontradas no arquivo .env' };
     }
 
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabase = criarClienteSupabase();
 
     // Só checa que o banco responde: nunca devolver linhas de usuárias aqui.
     const { count, error } = await supabase

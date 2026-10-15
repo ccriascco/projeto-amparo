@@ -145,15 +145,20 @@ O `npm run demo` sobe a mesma aplicação sobre esse banco em memória, para des
 ## Estrutura
 
 ```text
-src/
-  auth/            guard de JWT, revogação de tokens e decoradores
-  common/          tratamento de erros, validação de arquivos e limite por usuária
-  usuarias/        cadastro, login, logout e exclusão de conta
-  guardioes/       CRUD das guardiãs
-  ocorrencias/     ocorrências, evidências e análise de risco
-  emergencias/     botão de emergência e rastreamento
+src/                   organizado por tipo técnico
+  main.ts, app.module.ts  entrada e módulo raiz (guards globais: JWT e limite por usuária)
+  config/          configurar-app (helmet, validação, CORS) e o cliente do Supabase
+  controllers/     rotas HTTP: usuarias, guardioes, ocorrencias, emergencias, confirmacoes, app
+  services/        regras de negócio e acesso ao banco: usuarias, guardioes, ocorrencias (e a chamada da IA),
+                   emergencias, sessoes do aparelho, tokens revogados, google, mensagens simuladas
+  models/dto/      formato e validação do que chega em cada rota, por assunto
+  modules/         módulos do Nest (ligam controllers e services; registram as rotas)
+  guards/          JWT e limite de requisições por usuária
+  decorators/      @Public e @CurrentUser
+  utils/           erros, máscaras, tipo real do arquivo, tokens, validadores, variáveis de risco para a IA
+  views/           páginas HTML públicas de confirmação das guardiãs
 supabase/          scripts SQL do banco
-test/              testes e2e
+test/              testes e2e, banco em memória e servidor de demonstração
 ```
 
 ## Segurança
