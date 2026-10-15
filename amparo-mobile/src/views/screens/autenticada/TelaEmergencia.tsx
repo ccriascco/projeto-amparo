@@ -1,17 +1,13 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Image } from 'expo-image';
-import { router, useLocalSearchParams } from 'expo-router';
 import { Pressable, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { apiEmergencias } from '@/services/api/endpoints';
-import { ErroApi } from '@/services/api/erros';
+import { useTelaEmergencia } from '@/controllers/telas/autenticada/useTelaEmergencia';
 import { Botao } from '@/views/components/ui/Botao';
 import { Cartao, CartaoInfo } from '@/views/components/ui/Cartao';
 import { Carregando } from '@/views/components/ui/Estados';
 import { Icone } from '@/views/components/ui/Icone';
 import { Texto } from '@/views/components/ui/Texto';
-import { chaves, useEmergencia } from '@/controllers/dados';
 import { useTema } from '@/views/theme/tema';
 import { fixas, raios } from '@/views/theme/tokens';
 import { hora } from '@/utils/datas';
@@ -19,30 +15,16 @@ import { hora } from '@/utils/datas';
 // "Alerta enviado": confirmação, prévia do mapa, quem foi avisada (atualiza a cada 10 s)
 // e "Cancelar aviso" (encerra a emergência).
 export default function TelaEmergencia() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { avisos, encerrada, ...c } = useTelaEmergencia();
   const { cores, sombraCard } = useTema();
   const insets = useSafeAreaInsets();
-  const qc = useQueryClient();
-  const situacao = useEmergencia(id);
-
-  const encerrar = useMutation({
-    mutationFn: () => apiEmergencias.encerrar(id),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: chaves.emergenciaAtiva });
-      qc.invalidateQueries({ queryKey: chaves.perfil });
-      router.navigate('/');
-    },
-  });
-
-  const avisos = situacao.data?.avisos ?? [];
-  const encerrada = situacao.data?.emergencia?.status === 'ENCERRADA';
 
   return (
     <View style={{ flex: 1, backgroundColor: cores.tela }}>
       <ScrollView contentContainerStyle={{ flexGrow: 1, paddingTop: Math.max(insets.top + 16, 48), paddingHorizontal: 32, paddingBottom: 48 + insets.bottom, gap: 24 }}>
         <View style={{ flexDirection: 'row', justifyContent: 'flex-end' }}>
           <Pressable
-            onPress={() => router.navigate('/')}
+            onPress={c.irParaInicio}
             accessibilityRole="button"
             accessibilityLabel="Sair rápido. O pedido de ajuda continua ativo."
             style={{ flexDirection: 'row', alignItems: 'center', gap: 6, height: 36, paddingHorizontal: 16, borderRadius: raios.pilula, borderWidth: 1, borderColor: cores.borda20 }}
@@ -56,7 +38,7 @@ export default function TelaEmergencia() {
 
         {encerrada ? (
           <CartaoInfo icone="check" titulo="Aviso encerrado" corpo="Este pedido de ajuda já foi encerrado." />
-        ) : avisos.length === 0 && situacao.isSuccess ? (
+        ) : avisos.length === 0 && c.carregou ? (
           <CartaoInfo
             icone="triangle-alert"
             titulo="Ninguém foi avisada"
@@ -84,10 +66,8 @@ export default function TelaEmergencia() {
 
         <Cartao estilo={{ gap: 12 }}>
           <Texto variante="cardTitulo">Quem foi avisada</Texto>
-          {situacao.isLoading ? <Carregando rotulo="Carregando…" /> : null}
-          {situacao.isError ? (
-            <Texto variante="cardCorpo">{situacao.error instanceof ErroApi ? situacao.error.mensagem : 'Não foi possível atualizar agora.'}</Texto>
-          ) : null}
+          {c.carregando ? <Carregando rotulo="Carregando…" /> : null}
+          {c.erroSituacao !== null ? <Texto variante="cardCorpo">{c.erroSituacao}</Texto> : null}
           <View style={{ gap: 12 }} accessibilityLiveRegion="polite">
             {avisos.map((a, i) => (
               <View key={`${a.guardiao_id ?? 'g'}-${i}`} style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
@@ -113,18 +93,18 @@ export default function TelaEmergencia() {
           </Texto>
         </View>
 
-        {encerrar.isError ? (
+        {c.erroCancelar !== null ? (
           <Texto variante="nota" corLivre={fixas.sos} centro>
-            {encerrar.error instanceof ErroApi ? encerrar.error.mensagem : 'Não foi possível cancelar o aviso.'}
+            {c.erroCancelar}
           </Texto>
         ) : null}
         <View style={{ marginTop: 'auto' }}>
           {encerrada ? (
-            <Botao variante="secundario" onPress={() => router.navigate('/')}>
+            <Botao variante="secundario" onPress={c.irParaInicio}>
               Voltar ao Início
             </Botao>
           ) : (
-            <Botao variante="secundario" onPress={() => encerrar.mutate()} carregando={encerrar.isPending}>
+            <Botao variante="secundario" onPress={c.cancelarAviso} carregando={c.cancelando}>
               Cancelar aviso
             </Botao>
           )}

@@ -1,10 +1,6 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { router } from 'expo-router';
-import { useMemo, useState } from 'react';
 import { Pressable, RefreshControl, View } from 'react-native';
 
-import { apiEmergencias } from '@/services/api/endpoints';
-import { ErroApi } from '@/services/api/erros';
+import { useTelaInicio } from '@/controllers/telas/autenticada/useTelaInicio';
 import type { NivelRisco, Ocorrencia, Perfil } from '@/models/tipos';
 import { BotaoSOS } from '@/views/components/dominio/BotaoSOS';
 import { TelaInterna } from '@/views/components/layout/TelaInterna';
@@ -14,95 +10,35 @@ import { Icone, type NomeIcone } from '@/views/components/ui/Icone';
 import { Sheet } from '@/views/components/ui/Sheet';
 import { Texto } from '@/views/components/ui/Texto';
 import { GUIA, textoClassificacao } from '@/config/conteudo/textos';
-import { chaves, useAtualizarPerfil, useEmergenciaAtiva, useOcorrencias, usePerfil } from '@/controllers/dados';
-import { useSessao } from '@/models/stores/sessao';
 import { useTema } from '@/views/theme/tema';
 import { fixas, raios } from '@/views/theme/tokens';
-import { diaDaOcorrencia, diasDesde, semanaAtual } from '@/utils/datas';
-import { abrirDelegaciasProximas } from '@/utils/mapas';
-import { localizacaoAtual } from '@/utils/permissoes';
+import { diaDaOcorrencia, diasDesde } from '@/utils/datas';
 import { iniciais } from '@/utils/texto';
 
 const ROTULO_RISCO: Record<NivelRisco, string> = { Baixo: 'Risco baixo', Medio: 'Risco médio', Alto: 'Risco alto' };
 
 export default function TelaInicio() {
   const { cores, sombraCard } = useTema();
-  const qc = useQueryClient();
-  const usuaria = useSessao((s) => s.usuaria);
-  const perfil = usePerfil();
-  const ocorrencias = useOcorrencias();
-  const emergenciaAtiva = useEmergenciaAtiva();
-  const atualizarPerfil = useAtualizarPerfil();
-  const [info, setInfo] = useState<{ titulo: string; texto: string } | null>(null);
-  const [erroSos, setErroSos] = useState<string | null>(null);
-
-  const nome = perfil.data?.nome_completo ?? usuaria?.nome_completo ?? '';
-  const disfarceLigado = perfil.data?.modo_disfarcado ?? usuaria?.modo_disfarcado ?? false;
-
-  const sos = useMutation({
-    mutationFn: async () => {
-      // A localização não pode atrasar o pedido: espera no máximo 3 s
-      const local = await Promise.race([localizacaoAtual(), new Promise<null>((r) => setTimeout(() => r(null), 3000))]);
-      try {
-        return (await apiEmergencias.acionar(local ?? undefined)).emergencia_id;
-      } catch (e) {
-        const ativa = e instanceof ErroApi && e.status === 409 ? (e.dados.emergencia_ativa as { id?: string } | undefined) : undefined;
-        if (ativa?.id) return ativa.id;
-        throw e;
-      }
-    },
-    onSuccess: (id) => {
-      setErroSos(null);
-      qc.invalidateQueries({ queryKey: chaves.emergenciaAtiva });
-      router.push({ pathname: '/emergencia', params: { id } });
-    },
-    onError: (e) =>
-      setErroSos(
-        e instanceof ErroApi
-          ? `${e.mensagem} Se puder, ligue 190.`
-          : 'Não foi possível enviar o pedido de ajuda. Se puder, ligue 190.',
-      ),
-  });
-
-  const semana = useMemo(() => {
-    const dias = new Set((ocorrencias.data?.ocorrencias ?? []).map(diaDaOcorrencia));
-    return semanaAtual().map((s) => ({ ...s, registrou: dias.has(s.dia) }));
-  }, [ocorrencias.data]);
-
-  const alternarDisfarce = () => {
-    const p = perfil.data;
-    if (!p) return;
-    if (!p.modo_disfarcado && !p.codigo_disfarce_definido) {
-      router.push({ pathname: '/mais/codigo', params: { motivo: 'disfarce' } });
-      return;
-    }
-    atualizarPerfil.mutate({ modo_disfarcado: !p.modo_disfarcado });
-  };
+  const { nome, disfarceLigado, semana, info, ...c } = useTelaInicio();
 
   const acoes: { rotulo: string; icone: NomeIcone; ir: () => void }[] = [
-    { rotulo: 'Registrar prova', icone: 'camera', ir: () => router.push('/ocorrencias/nova') },
-    { rotulo: 'Adicionar guardião', icone: 'user-round-plus', ir: () => router.push('/rede/guardia') },
-    { rotulo: 'Ver minhas ocorrências', icone: 'folder-lock', ir: () => router.navigate('/ocorrencias') },
-    { rotulo: 'Delegacias próximas', icone: 'map-pin', ir: () => abrirDelegaciasProximas() },
-    { rotulo: disfarceLigado ? 'Desativar Modo Disfarce' : 'Ativar Modo Disfarce', icone: 'calculator', ir: alternarDisfarce },
+    { rotulo: 'Registrar prova', icone: 'camera', ir: c.registrarProva },
+    { rotulo: 'Adicionar guardião', icone: 'user-round-plus', ir: c.adicionarGuardiao },
+    { rotulo: 'Ver minhas ocorrências', icone: 'folder-lock', ir: c.verOcorrencias },
+    { rotulo: 'Delegacias próximas', icone: 'map-pin', ir: c.abrirDelegacias },
+    { rotulo: disfarceLigado ? 'Desativar Modo Disfarce' : 'Ativar Modo Disfarce', icone: 'calculator', ir: c.alternarDisfarce },
   ];
-
-  const atualizar = () => {
-    perfil.refetch();
-    ocorrencias.refetch();
-    emergenciaAtiva.refetch();
-  };
 
   return (
     <TelaInterna
       aba="inicio"
       cabecalho={{ modo: 'home', nome: nome.split(' ')[0], iniciais: iniciais(nome) }}
-      controleAtualizar={<RefreshControl refreshing={perfil.isRefetching} onRefresh={atualizar} tintColor={cores.acento} />}
-      sobreposicao={<Sheet visivel={!!info} aoFechar={() => setInfo(null)} titulo={info?.titulo} texto={info?.texto} />}
+      controleAtualizar={<RefreshControl refreshing={c.atualizando} onRefresh={c.atualizar} tintColor={cores.acento} />}
+      sobreposicao={<Sheet visivel={!!info} aoFechar={c.fecharInfo} titulo={info?.titulo} texto={info?.texto} />}
     >
-      {emergenciaAtiva.data?.emergencia ? (
+      {c.emergenciaAtiva ? (
         <Cartao
-          onPress={() => router.push({ pathname: '/emergencia', params: { id: emergenciaAtiva.data!.emergencia!.id } })}
+          onPress={c.abrirEmergenciaAtiva}
           borda={cores.verde30}
           estilo={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 16 }}
           rotuloAcessivel="Seu pedido de ajuda está ativo. Ver detalhes."
@@ -146,15 +82,15 @@ export default function TelaInicio() {
         </Texto>
       </View>
 
-      <BotaoSOS aoAcionar={() => sos.mutate()} desabilitado={sos.isPending} testID="sos" />
-      {sos.isPending ? (
+      <BotaoSOS aoAcionar={c.acionarSos} desabilitado={c.enviandoSos} testID="sos" />
+      {c.enviandoSos ? (
         <Texto variante="nota" centro accessibilityLiveRegion="assertive">
           Enviando o pedido de ajuda…
         </Texto>
       ) : null}
-      {erroSos ? (
+      {c.erroSos ? (
         <Texto variante="nota" corLivre={fixas.sos} centro accessibilityLiveRegion="assertive">
-          {erroSos}
+          {c.erroSos}
         </Texto>
       ) : null}
 
@@ -174,13 +110,22 @@ export default function TelaInicio() {
         </Carrossel>
       </View>
 
-      <CartaoRisco perfil={perfil.data} carregando={perfil.isLoading} erro={perfil.isError} aoTentar={() => perfil.refetch()} ocorrencias={ocorrencias.data?.ocorrencias} aoExplicar={(t) => setInfo(t)} />
+      <CartaoRisco
+        perfil={c.perfil}
+        carregando={c.carregandoPerfil}
+        erro={c.erroPerfil}
+        aoTentar={c.recarregarPerfil}
+        ocorrencias={c.ocorrencias}
+        aoExplicar={(t) => c.mostrarInfo(t)}
+        aoDelegacias={c.abrirDelegacias}
+        aoRecursos={c.abrirRecursos}
+      />
 
       <Carrossel rotulo="Guias" gap={12} larguraAtiva={20}>
         {GUIA.map((g) => (
           <Pressable
             key={g.rotulo}
-            onPress={() => setInfo({ titulo: g.rotulo, texto: g.texto })}
+            onPress={() => c.mostrarInfo({ titulo: g.rotulo, texto: g.texto })}
             accessibilityRole="button"
             accessibilityLabel={g.rotulo}
             style={{
@@ -218,6 +163,8 @@ function CartaoRisco({
   aoTentar,
   ocorrencias,
   aoExplicar,
+  aoDelegacias,
+  aoRecursos,
 }: {
   perfil?: Perfil;
   carregando: boolean;
@@ -225,6 +172,8 @@ function CartaoRisco({
   aoTentar: () => void;
   ocorrencias?: Ocorrencia[];
   aoExplicar: (t: { titulo: string; texto: string }) => void;
+  aoDelegacias: () => void;
+  aoRecursos: () => void;
 }) {
   const { cores } = useTema();
   if (carregando) {
@@ -267,14 +216,14 @@ function CartaoRisco({
           icone="life-buoy"
           titulo="Ajuda mais perto de você"
           corpo="Ligue 180 (Central da Mulher) ou 190 (Polícia). Toque para buscar a delegacia da mulher mais próxima."
-          onPress={() => abrirDelegaciasProximas()}
+          onPress={aoDelegacias}
         />
       ) : (
         <CartaoInfo
           icone="life-buoy"
           titulo="Recursos de apoio"
           corpo="Como registrar uma prova e quem procurar na sua região."
-          onPress={() => router.push('/mais/conteudo')}
+          onPress={aoRecursos}
         />
       )}
       {risco === 'Alto' ? (
