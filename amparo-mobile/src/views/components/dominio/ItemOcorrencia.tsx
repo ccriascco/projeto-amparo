@@ -1,6 +1,6 @@
-import { router } from 'expo-router';
 import { View } from 'react-native';
 
+import { abrir } from '@/controllers/navegacao';
 import type { Ocorrencia } from '@/models/tipos';
 import { Cartao, CirculoIcone } from '@/views/components/ui/Cartao';
 import { Icone } from '@/views/components/ui/Icone';
@@ -15,7 +15,7 @@ export function ItemOcorrencia({ ocorrencia, tamanhoTitulo = 16 }: { ocorrencia:
   const horario = hora(ocorrencia.criado_em);
   return (
     <Cartao
-      onPress={() => router.push({ pathname: '/ocorrencias/[id]', params: { id: ocorrencia.id } })}
+      onPress={() => abrir({ pathname: '/ocorrencias/[id]', params: { id: ocorrencia.id } })}
       rotuloAcessivel={`Ocorrência de ${data}, ${horario}: ${ocorrencia.tipos_violencia.join(', ')}. Abrir resumo.`}
       estilo={{ flexDirection: 'row', alignItems: 'center', gap: 16, paddingVertical: 20 }}
     >

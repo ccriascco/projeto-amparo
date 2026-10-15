@@ -1,38 +1,25 @@
-import { router } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 
-import { MENSAGEM_CARREGAR, mensagemDeErro } from '@/services/api/erros';
+import { voltar } from '@/controllers/navegacao';
+import { FILTROS, useTelaTodosRegistros } from '@/controllers/telas/autenticada/ocorrencias/useTelaTodosRegistros';
 import { ItemOcorrencia } from '@/views/components/dominio/ItemOcorrencia';
 import { TelaInterna } from '@/views/components/layout/TelaInterna';
 import { Carregando, ErroCarregar, Vazio } from '@/views/components/ui/Estados';
 import { Icone } from '@/views/components/ui/Icone';
 import { Texto } from '@/views/components/ui/Texto';
-import { useOcorrencias } from '@/controllers/dados';
 import { useTema } from '@/views/theme/tema';
 import { raios } from '@/views/theme/tokens';
-import { diaDaOcorrencia, periodoDe } from '@/utils/datas';
-import { useTelaPrivada } from '@/controllers/privacidade';
-
-const FILTROS = ['Todos', 'Esta semana', 'Este mês', 'Mais antigas'] as const;
-type Filtro = (typeof FILTROS)[number];
 
 export default function TelaTodosRegistros() {
-  useTelaPrivada();
+  const { filtro, lista, ...c } = useTelaTodosRegistros();
   const { cores } = useTema();
-  const ocorrencias = useOcorrencias();
-  const [filtro, setFiltro] = useState<Filtro>('Todos');
   const [menuAberto, setMenuAberto] = useState(false);
-
-  const lista = useMemo(
-    () => (ocorrencias.data?.ocorrencias ?? []).filter((o) => filtro === 'Todos' || periodoDe(diaDaOcorrencia(o)) === filtro),
-    [ocorrencias.data, filtro],
-  );
 
   return (
     <TelaInterna
       aba="documentacao"
-      cabecalho={{ titulo: 'Todos os registros', sub: 'Suas ocorrências em ordem, da mais recente para a mais antiga.', aoFecharTopo: () => router.back() }}
+      cabecalho={{ titulo: 'Todos os registros', sub: 'Suas ocorrências em ordem, da mais recente para a mais antiga.', aoFecharTopo: voltar }}
       gap={16}
     >
       <View style={{ alignSelf: 'flex-start', zIndex: 20 }}>
@@ -81,7 +68,7 @@ export default function TelaTodosRegistros() {
                 <Pressable
                   key={f}
                   onPress={() => {
-                    setFiltro(f);
+                    c.escolherFiltro(f);
                     setMenuAberto(false);
                   }}
                   accessibilityRole="menuitem"
@@ -108,16 +95,16 @@ export default function TelaTodosRegistros() {
         ) : null}
       </View>
 
-      {ocorrencias.isLoading ? <Carregando rotulo="Carregando seus registros…" /> : null}
-      {ocorrencias.isError ? <ErroCarregar mensagem={mensagemDeErro(ocorrencias.error, MENSAGEM_CARREGAR)} aoTentar={() => ocorrencias.refetch()} /> : null}
-      {ocorrencias.isSuccess && lista.length === 0 ? (
+      {c.carregando ? <Carregando rotulo="Carregando seus registros…" /> : null}
+      {c.erroCarregar !== null ? <ErroCarregar mensagem={c.erroCarregar} aoTentar={c.tentarDeNovo} /> : null}
+      {c.carregou && lista.length === 0 ? (
         <Vazio icone="calendar" titulo="Nada neste período" texto="Escolha outro período no filtro." />
       ) : null}
       {lista.map((o) => (
         <ItemOcorrencia key={o.id} ocorrencia={o} tamanhoTitulo={20} />
       ))}
-      {ocorrencias.data && ocorrencias.data.total > ocorrencias.data.ocorrencias.length ? (
-        <Texto variante="nota" centro>{`Mostrando os ${ocorrencias.data.ocorrencias.length} registros mais recentes.`}</Texto>
+      {c.mostrandoParcial !== null ? (
+        <Texto variante="nota" centro>{`Mostrando os ${c.mostrandoParcial} registros mais recentes.`}</Texto>
       ) : null}
     </TelaInterna>
   );

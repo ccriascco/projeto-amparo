@@ -1,8 +1,7 @@
-import { router, useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 
-import { ErroApi, MENSAGEM_CARREGAR, mensagemDeErro } from '@/services/api/erros';
+import { voltar } from '@/controllers/navegacao';
+import { useTelaResumoOcorrencia } from '@/controllers/telas/autenticada/ocorrencias/useTelaResumoOcorrencia';
 import type { Evidencia, NivelRisco, TipoEvidencia } from '@/models/tipos';
 import { TelaInterna } from '@/views/components/layout/TelaInterna';
 import { Botao } from '@/views/components/ui/Botao';
@@ -11,11 +10,9 @@ import { Carregando, ErroCarregar } from '@/views/components/ui/Estados';
 import { Icone, type NomeIcone } from '@/views/components/ui/Icone';
 import { Texto } from '@/views/components/ui/Texto';
 import { ICONE_VIOLENCIA } from '@/config/conteudo/violencia';
-import { useOcorrencia, useRemoverOcorrencia } from '@/controllers/dados';
 import { useTema } from '@/views/theme/tema';
 import { fixas, raios } from '@/views/theme/tokens';
 import { diaMes, diaMesDeData, diaMesHora, hora } from '@/utils/datas';
-import { useTelaPrivada } from '@/controllers/privacidade';
 
 const ROTULO_RISCO: Record<NivelRisco, string> = { Baixo: 'baixo', Medio: 'médio', Alto: 'alto' };
 const MIDIA: Record<TipoEvidencia, { rotulo: string; icone: NomeIcone }> = {
@@ -26,16 +23,10 @@ const MIDIA: Record<TipoEvidencia, { rotulo: string; icone: NomeIcone }> = {
 };
 
 export default function TelaResumoOcorrencia() {
-  useTelaPrivada();
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { ocorrencia: o, ...c } = useTelaResumoOcorrencia();
   const { cores, sombraCard } = useTema();
-  const ocorrencia = useOcorrencia(id);
-  const remover = useRemoverOcorrencia();
-  const [confirmando, setConfirmando] = useState(false);
 
-  const o = ocorrencia.data;
-  const abrirEvidencia = (e: Evidencia, n: number) =>
-    router.push({ pathname: '/ocorrencias/evidencia', params: { ocorrenciaId: id, evidenciaId: e.id, titulo: `${MIDIA[e.tipo].rotulo} ${n}` } });
+  const abrirEvidencia = (e: Evidencia, n: number) => c.abrirEvidencia(e.id, `${MIDIA[e.tipo].rotulo} ${n}`);
 
   const contagem: Record<string, number> = {};
   const numerar = (e: Evidencia) => (contagem[e.tipo] = (contagem[e.tipo] ?? 0) + 1);
@@ -43,27 +34,24 @@ export default function TelaResumoOcorrencia() {
   return (
     <TelaInterna
       aba="documentacao"
-      cabecalho={{ titulo: 'Resumo da ocorrência', sub: 'Detalhes do que você registrou.', aoFecharTopo: () => router.back() }}
+      cabecalho={{ titulo: 'Resumo da ocorrência', sub: 'Detalhes do que você registrou.', aoFecharTopo: voltar }}
       gap={32}
       paddingTopo={32}
       sobreposicao={
         <Confirmacao
-          visivel={confirmando}
+          visivel={c.confirmando}
           titulo="Apagar esta ocorrência?"
           texto="O registro e os arquivos anexados saem do seu cofre e não têm como ser recuperados depois."
           rotuloConfirmar="Apagar ocorrência"
-          carregando={remover.isPending}
-          erro={remover.isError ? (remover.error instanceof ErroApi ? remover.error.mensagem : 'Não foi possível apagar.') : null}
-          aoFechar={() => {
-            setConfirmando(false);
-            remover.reset();
-          }}
-          aoConfirmar={() => remover.mutate(id, { onSuccess: () => router.navigate('/ocorrencias') })}
+          carregando={c.apagando}
+          erro={c.erroApagar}
+          aoFechar={c.fecharExclusao}
+          aoConfirmar={c.apagar}
         />
       }
     >
-      {ocorrencia.isLoading ? <Carregando /> : null}
-      {ocorrencia.isError ? <ErroCarregar mensagem={mensagemDeErro(ocorrencia.error, MENSAGEM_CARREGAR)} aoTentar={() => ocorrencia.refetch()} /> : null}
+      {c.carregando ? <Carregando /> : null}
+      {c.erroCarregar !== null ? <ErroCarregar mensagem={c.erroCarregar} aoTentar={c.tentarDeNovo} /> : null}
       {o ? (
         <>
           <View style={{ gap: 12 }}>
@@ -177,10 +165,10 @@ export default function TelaResumoOcorrencia() {
           </View>
 
           <View style={{ gap: 8 }}>
-            <Botao variante="secundario" onPress={() => router.push({ pathname: '/ocorrencias/nova', params: { id } })}>
+            <Botao variante="secundario" onPress={c.editar}>
               Editar ocorrência
             </Botao>
-            <Botao variante="perigo" onPress={() => setConfirmando(true)}>
+            <Botao variante="perigo" onPress={c.pedirExclusao}>
               Apagar ocorrência
             </Botao>
           </View>

@@ -1,12 +1,9 @@
-import { useQuery } from '@tanstack/react-query';
 import { Image } from 'expo-image';
-import { router, useLocalSearchParams } from 'expo-router';
-import * as WebBrowser from 'expo-web-browser';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Modal, Pressable, View } from 'react-native';
 
-import { apiOcorrencias } from '@/services/api/endpoints';
-import { mensagemDeErro } from '@/services/api/erros';
+import { voltar } from '@/controllers/navegacao';
+import { useTelaEvidencia } from '@/controllers/telas/autenticada/ocorrencias/useTelaEvidencia';
 import { PlayerAudio, PlayerVideo } from '@/views/components/dominio/Players';
 import { ScreenTitle } from '@/views/components/layout/ScreenTitle';
 import { TelaInterna } from '@/views/components/layout/TelaInterna';
@@ -15,53 +12,22 @@ import { Cartao, CartaoInfo, CirculoIcone } from '@/views/components/ui/Cartao';
 import { Carregando, ErroCarregar } from '@/views/components/ui/Estados';
 import { Icone } from '@/views/components/ui/Icone';
 import { Texto } from '@/views/components/ui/Texto';
-import { useOcorrencia } from '@/controllers/dados';
 import { useTema } from '@/views/theme/tema';
 import { fixas, raios } from '@/views/theme/tokens';
 import { diaMesHora } from '@/utils/datas';
-import { baixarEConferir, hashResumido, limparCacheEvidencias } from '@/services/integridade';
-import { useTelaPrivada } from '@/controllers/privacidade';
-
-const EXTENSAO = { IMAGE: 'jpg', VIDEO: 'mp4', AUDIO: 'm4a', DOCUMENTO: 'pdf' } as const;
 
 // "Detalhe da prova": abre o arquivo e mostra se ele é o mesmo que foi guardado.
 export default function TelaEvidencia() {
-  useTelaPrivada();
-  const { ocorrenciaId, evidenciaId, titulo } = useLocalSearchParams<{ ocorrenciaId: string; evidenciaId: string; titulo?: string }>();
+  const { titulo, registradoEm, dados, ...c } = useTelaEvidencia();
   const { cores } = useTema();
-  const ocorrencia = useOcorrencia(ocorrenciaId);
-  const evidencia = ocorrencia.data?.evidencias?.find((e) => e.id === evidenciaId);
   const [telaCheia, setTelaCheia] = useState(false);
-
-  // Link temporário (5 min) + download para o cache do app + conferência do SHA-256
-  const arquivo = useQuery({
-    queryKey: ['evidencia', evidenciaId],
-    queryFn: async () => {
-      const link = await apiOcorrencias.linkEvidencia(ocorrenciaId, evidenciaId);
-      const verificado = await baixarEConferir(link.url, link.hash_integridade, `${evidenciaId}.${EXTENSAO[link.tipo]}`);
-      return { ...verificado, link };
-    },
-    staleTime: 0,
-    gcTime: 0,
-    retry: false,
-  });
-
-  useEffect(() => () => limparCacheEvidencias(), []);
-
-  const dados = arquivo.data;
-  const registradoEm = evidencia?.criado_em ?? ocorrencia.data?.criado_em;
 
   return (
     <TelaInterna aba="documentacao" cabecalho={{}}>
-      <ScreenTitle titulo={titulo ?? 'Prova'} sub={registradoEm ? diaMesHora(registradoEm) : undefined} acao={() => router.back()} />
+      <ScreenTitle titulo={titulo ?? 'Prova'} sub={registradoEm ? diaMesHora(registradoEm) : undefined} acao={voltar} />
 
-      {arquivo.isLoading ? <Carregando rotulo="Abrindo e conferindo o arquivo…" /> : null}
-      {arquivo.isError ? (
-        <ErroCarregar
-          mensagem={mensagemDeErro(arquivo.error, 'Não foi possível baixar o arquivo. Confira sua internet.')}
-          aoTentar={() => arquivo.refetch()}
-        />
-      ) : null}
+      {c.carregando ? <Carregando rotulo="Abrindo e conferindo o arquivo…" /> : null}
+      {c.erroCarregar !== null ? <ErroCarregar mensagem={c.erroCarregar} aoTentar={c.tentarDeNovo} /> : null}
 
       {dados ? (
         <>
@@ -73,7 +39,7 @@ export default function TelaEvidencia() {
           {dados.link.tipo === 'VIDEO' ? <PlayerVideo uri={dados.uri} /> : null}
           {dados.link.tipo === 'AUDIO' ? <PlayerAudio uri={dados.uri} /> : null}
           {dados.link.tipo === 'DOCUMENTO' ? (
-            <Botao variante="secundario" icone={<Icone nome="file-text" tamanho={20} cor={cores.acento} />} onPress={() => WebBrowser.openBrowserAsync(dados.link.url)}>
+            <Botao variante="secundario" icone={<Icone nome="file-text" tamanho={20} cor={cores.acento} />} onPress={() => c.abrirDocumento(dados.link.url)}>
               Abrir documento
             </Botao>
           ) : null}
@@ -96,7 +62,7 @@ export default function TelaEvidencia() {
                 <View style={{ gap: 4, paddingVertical: 12, paddingHorizontal: 16, borderRadius: raios.card, backgroundColor: cores.borda04 }}>
                   <Texto variante="nota">Hash de integridade</Texto>
                   <Texto variante="cardCorpo" cor="texto" accessibilityLabel={`Hash ${dados.link.hash_integridade}`}>
-                    {hashResumido(dados.link.hash_integridade)}
+                    {c.hashCurto}
                   </Texto>
                   {registradoEm ? <Texto variante="nota">{`Registrado em ${diaMesHora(registradoEm)}`}</Texto> : null}
                 </View>
@@ -109,7 +75,7 @@ export default function TelaEvidencia() {
               corpo="O arquivo recebido é diferente do que foi guardado. Ele pode ter sido corrompido no caminho. Tente abrir de novo."
               corIcone={fixas.sos}
               fundoIcone="rgba(198,40,40,0.10)"
-              onPress={() => arquivo.refetch()}
+              onPress={c.tentarDeNovo}
             />
           )}
         </>
