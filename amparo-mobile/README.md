@@ -98,22 +98,33 @@ O teste de ponta a ponta usa as telas reais do app (expo-router) contra o backen
 
 ## Estrutura
 
+Organizado por tipo técnico (MVC):
+
 ```text
 src/
-  app/                 rotas (expo-router)
+  app/                 rotas (expo-router; o nome da pasta é exigido por ele)
+    _layout.tsx        navegação raiz: fontes, React Query, rotas protegidas pela sessão, capa de privacidade
     (publico)/         boas-vindas, login, cadastro
     (app)/             área autenticada: Início, ocorrências, rede, mais, captura, emergência
     disfarce.tsx       calculadora do Modo Disfarce
-  api/                 cliente HTTP único, rotas tipadas, erros em português
-  hooks/               React Query (dados) e privacidade da tela
-  store/               sessão, preferências, anexos, rascunho do cadastro (Zustand)
-  components/          ui/ (design system), layout/ (header, nav, telas), dominio/ (SOS, calculadora, players…)
-  theme/               tokens do design (claro e escuro)
-  validacao/           CPF, telefone, datas e senha (iguais às do backend)
-  conteudo/            textos fixos do design (guias, FAQs, artigos)
-  utils/               armazenamento seguro, permissões, mapas, integridade, datas
+                       (cada arquivo de rota só reexporta a tela de views/screens)
+  views/               interface
+    screens/           as telas: publico/, autenticada/ e TelaDisfarce
+    components/        ui/ (design system), layout/ (header, nav, telas), dominio/ (SOS, calculadora, players…)
+    theme/             tokens do design (claro e escuro) e useTema
+  controllers/         ligam telas e dados: hooks do React Query, privacidade da tela,
+                       lógica da calculadora, reenvio da localização na emergência
+  models/              tipos da API e stores/ (sessão, preferências, anexos, rascunho do cadastro; Zustand)
+  services/            api/ (cliente HTTP único, rotas tipadas, erros em português), login com Google,
+                       download e conferência de integridade das provas
+  utils/               armazenamento seguro, código local, permissões, mapas, datas, texto,
+                       validacao/ (CPF, telefone, datas e senha, iguais às do backend)
+  config/              conteudo/ (textos fixos do design: guias, FAQs, artigos, tipos de violência)
+assets/                imagens (na raiz, como o Expo espera)
 e2e/                   teste de ponta a ponta
 ```
+
+Os testes unitários ficam em `__tests__/` ao lado do código que testam. Nomes: pastas e módulos em camelCase; componentes e telas em PascalCase, como o nome do componente.
 
 ## Diferenças em relação ao design
 

@@ -16,10 +16,10 @@ import { AppState } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-import { ErroApi } from '@/api/erros';
-import { CapaPrivacidade } from '@/components/dominio/CapaPrivacidade';
-import { useSessao } from '@/store/sessao';
-import { useTema } from '@/theme/tema';
+import { ErroApi } from '@/services/api/erros';
+import { CapaPrivacidade } from '@/views/components/dominio/CapaPrivacidade';
+import { useSessao } from '@/models/stores/sessao';
+import { useTema } from '@/views/theme/tema';
 
 SplashScreen.preventAutoHideAsync();
 

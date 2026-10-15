@@ -1,0 +1,153 @@
+import { CameraView, useCameraPermissions, useMicrophonePermissions } from 'expo-camera';
+import { LinearGradient } from 'expo-linear-gradient';
+import { router, useLocalSearchParams } from 'expo-router';
+import { useRef, useState } from 'react';
+import { Pressable, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import { BotaoFechar, BotaoVoltar } from '@/views/components/ui/Basicos';
+import { Botao } from '@/views/components/ui/Botao';
+import { Icone } from '@/views/components/ui/Icone';
+import { Texto } from '@/views/components/ui/Texto';
+import { LIMITE_MB, problemaDoArquivo, useAnexos } from '@/models/stores/anexos';
+import { fixas } from '@/views/theme/tokens';
+import { abrirAjustesDoSistema } from '@/utils/permissoes';
+import { useTelaPrivada } from '@/controllers/privacidade';
+
+const BRANCO_70 = 'rgba(255,255,255,0.7)';
+
+// Captura de foto ou vídeo (tela escura do protótipo). O arquivo fica no cache do app,
+// nunca na galeria, e entra como anexo da ocorrência que está sendo registrada.
+export default function TelaCamera() {
+  useTelaPrivada();
+  const { modo } = useLocalSearchParams<{ modo?: 'foto' | 'video' }>();
+  const video = modo === 'video';
+  const insets = useSafeAreaInsets();
+  const camera = useRef<CameraView>(null);
+  const [permCamera, pedirCamera] = useCameraPermissions();
+  const [permMicrofone, pedirMicrofone] = useMicrophonePermissions();
+  const [pronta, setPronta] = useState(false);
+  const [gravando, setGravando] = useState(false);
+  const [erro, setErro] = useState<string | null>(null);
+  const adicionar = useAnexos((s) => s.adicionar);
+  const capturados = useAnexos((s) => s.anexos.filter((a) => a.tipo === (video ? 'video' : 'foto')).length);
+
+  const temPermissao = permCamera?.granted && (!video || permMicrofone?.granted);
+
+  const capturar = async () => {
+    if (!camera.current || !pronta) return;
+    setErro(null);
+    try {
+      if (!video) {
+        const foto = await camera.current.takePictureAsync({ quality: 0.7 });
+        const problema = problemaDoArquivo(foto.uri, 'image/jpeg');
+        if (problema) return setErro(problema);
+        adicionar({ uri: foto.uri, nome: `foto-${Date.now()}.jpg`, mime: 'image/jpeg', tipo: 'foto' });
+        return;
+      }
+      if (gravando) {
+        camera.current.stopRecording();
+        return;
+      }
+      setGravando(true);
+      const r = await camera.current.recordAsync({ maxDuration: 120, maxFileSize: LIMITE_MB.video * 1024 * 1024 });
+      setGravando(false);
+      if (r?.uri) {
+        const mime = r.uri.toLowerCase().endsWith('.mov') ? 'video/quicktime' : 'video/mp4';
+        adicionar({ uri: r.uri, nome: `video-${Date.now()}.${mime === 'video/quicktime' ? 'mov' : 'mp4'}`, mime, tipo: 'video' });
+      }
+    } catch {
+      setGravando(false);
+      setErro('Não foi possível usar a câmera agora. Tente de novo.');
+    }
+  };
+
+  const voltar = () => router.back();
+
+  return (
+    <View style={{ flex: 1, backgroundColor: fixas.midiaFundo }}>
+      {temPermissao ? (
+        <CameraView
+          ref={camera}
+          style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
+          facing="back"
+          mode={video ? 'video' : 'picture'}
+          onCameraReady={() => setPronta(true)}
+        />
+      ) : (
+        <LinearGradient colors={['#3A2B33', fixas.midiaFundo]} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} />
+      )}
+
+      <View style={{ flex: 1, paddingTop: Math.max(insets.top + 16, 48), paddingHorizontal: 24, paddingBottom: 32 + insets.bottom, gap: 24 }}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <BotaoVoltar onPress={voltar} cor="#FFFFFF" />
+          <BotaoFechar onPress={voltar} cor="#FFFFFF" borda="rgba(255,255,255,0.3)" />
+        </View>
+
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16 }}>
+          {!temPermissao ? (
+            <>
+              <View style={{ width: 64, height: 64, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' }}>
+                <Icone nome={video ? 'video' : 'camera'} tamanho={32} cor={BRANCO_70} />
+              </View>
+              <Texto centro corLivre={BRANCO_70}>
+                Para registrar, o app precisa usar a câmera{video ? ' e o microfone' : ''}.
+              </Texto>
+              <Botao
+                variante="secundario"
+                onPress={async () => {
+                  const c = await pedirCamera();
+                  const m = video ? await pedirMicrofone() : { granted: true, canAskAgain: true };
+                  if ((!c.granted && !c.canAskAgain) || (!m.granted && !m.canAskAgain)) abrirAjustesDoSistema();
+                }}
+                estilo={{ borderColor: '#FFFFFF' }}
+              >
+                Permitir
+              </Botao>
+            </>
+          ) : !pronta ? (
+            <Texto centro corLivre={BRANCO_70}>
+              {video ? 'Aponte a câmera e toque no círculo para gravar.' : 'Aponte a câmera e toque no círculo para fotografar.'}
+            </Texto>
+          ) : null}
+          {erro ? (
+            <Texto variante="nota" centro corLivre="#FFFFFF" accessibilityLiveRegion="polite">
+              {erro}
+            </Texto>
+          ) : null}
+        </View>
+
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 16 }}>
+          <View style={{ width: 96, flexDirection: 'row', gap: 8 }} accessibilityLabel={`${capturados} ${video ? 'vídeo(s)' : 'foto(s)'} nesta ocorrência`}>
+            {Array.from({ length: Math.min(capturados, 2) }, (_, i) => (
+              <View
+                key={i}
+                style={{ width: 44, height: 44, borderRadius: 8, borderWidth: 1, borderColor: 'rgba(255,255,255,0.25)', backgroundColor: 'rgba(255,255,255,0.10)', alignItems: 'center', justifyContent: 'center' }}
+              >
+                <Texto peso={700} tamanho={12} corLivre="rgba(255,255,255,0.75)">
+                  {i === 1 && capturados > 2 ? `+${capturados - 1}` : String(i + 1)}
+                </Texto>
+              </View>
+            ))}
+          </View>
+
+          <Pressable
+            onPress={capturar}
+            disabled={!temPermissao || !pronta}
+            accessibilityRole="button"
+            accessibilityLabel={video ? (gravando ? 'Parar gravação' : 'Gravar vídeo') : 'Tirar foto'}
+            style={{ width: 76, height: 76, borderRadius: 999, borderWidth: 4, borderColor: 'rgba(255,255,255,0.85)', alignItems: 'center', justifyContent: 'center', opacity: temPermissao && pronta ? 1 : 0.5 }}
+          >
+            <View style={{ width: gravando ? 26 : 58, height: gravando ? 26 : 58, borderRadius: gravando ? 4 : 999, backgroundColor: fixas.sos }} />
+          </Pressable>
+
+          <Pressable onPress={voltar} accessibilityRole="button" style={{ width: 96, alignItems: 'flex-end' }} disabled={gravando}>
+            <Texto peso={700} corLivre="#FFFFFF">
+              Pronto
+            </Texto>
+          </Pressable>
+        </View>
+      </View>
+    </View>
+  );
+}
