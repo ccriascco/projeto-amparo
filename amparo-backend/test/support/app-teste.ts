@@ -10,9 +10,9 @@ import { Test } from '@nestjs/testing';
 import { ThrottlerStorage } from '@nestjs/throttler';
 import request from 'supertest';
 import { AppModule } from '../../src/app.module';
-import { configurarApp } from '../../src/configurar-app';
+import { configurarApp } from '../../src/config/configurar-app';
 import { bancoTeste } from './supabase-memoria';
-import { GoogleService, IdentidadeGoogle } from '../../src/auth/google.service';
+import { GoogleService, IdentidadeGoogle } from '../../src/services/google.service';
 
 export type ModoIA = 'normal' | 'erro500' | 'erroRede' | 'lenta';
 
