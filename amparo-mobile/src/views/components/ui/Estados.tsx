@@ -1,6 +1,5 @@
 import { ActivityIndicator, View } from 'react-native';
 
-import { ErroApi } from '@/services/api/erros';
 import { useTema } from '@/views/theme/tema';
 
 import { Botao } from './Botao';
@@ -20,8 +19,7 @@ export function Carregando({ rotulo = 'Carregando…' }: { rotulo?: string }) {
   );
 }
 
-export function ErroCarregar({ erro, aoTentar }: { erro: unknown; aoTentar: () => void }) {
-  const mensagem = erro instanceof ErroApi ? erro.mensagem : 'Não foi possível carregar agora.';
+export function ErroCarregar({ mensagem, aoTentar }: { mensagem: string; aoTentar: () => void }) {
   return (
     <Cartao estilo={{ gap: 12 }}>
       <CirculoIcone nome="refresh-cw" />

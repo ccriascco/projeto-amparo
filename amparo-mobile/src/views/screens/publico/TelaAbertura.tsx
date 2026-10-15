@@ -1,9 +1,9 @@
 import { Image } from 'expo-image';
-import { router } from 'expo-router';
 import { useRef, useState } from 'react';
 import { type NativeScrollEvent, type NativeSyntheticEvent, Pressable, ScrollView, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { abrir } from '@/controllers/navegacao';
 import { Pontos } from '@/views/components/ui/Basicos';
 import { Botao } from '@/views/components/ui/Botao';
 import { Texto } from '@/views/components/ui/Texto';
@@ -90,8 +90,8 @@ export default function TelaAbertura() {
             <Texto variante="subtitulo">{atual.sub}</Texto>
           </View>
           <View style={{ gap: 8 }}>
-            <Botao onPress={() => router.push('/cadastro')}>Criar Conta</Botao>
-            <Botao variante="secundario" onPress={() => router.push('/login')}>
+            <Botao onPress={() => abrir('/cadastro')}>Criar Conta</Botao>
+            <Botao variante="secundario" onPress={() => abrir('/login')}>
               Já tenho Conta
             </Botao>
           </View>

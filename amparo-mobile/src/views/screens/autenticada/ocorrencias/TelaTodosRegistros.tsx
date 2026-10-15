@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Pressable, View } from 'react-native';
 
+import { MENSAGEM_CARREGAR, mensagemDeErro } from '@/services/api/erros';
 import { ItemOcorrencia } from '@/views/components/dominio/ItemOcorrencia';
 import { TelaInterna } from '@/views/components/layout/TelaInterna';
 import { Carregando, ErroCarregar, Vazio } from '@/views/components/ui/Estados';
@@ -108,7 +109,7 @@ export default function TelaTodosRegistros() {
       </View>
 
       {ocorrencias.isLoading ? <Carregando rotulo="Carregando seus registros…" /> : null}
-      {ocorrencias.isError ? <ErroCarregar erro={ocorrencias.error} aoTentar={() => ocorrencias.refetch()} /> : null}
+      {ocorrencias.isError ? <ErroCarregar mensagem={mensagemDeErro(ocorrencias.error, MENSAGEM_CARREGAR)} aoTentar={() => ocorrencias.refetch()} /> : null}
       {ocorrencias.isSuccess && lista.length === 0 ? (
         <Vazio icone="calendar" titulo="Nada neste período" texto="Escolha outro período no filtro." />
       ) : null}

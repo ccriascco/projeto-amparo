@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 
 import { apiUsuarias } from '@/services/api/endpoints';
-import { ErroApi } from '@/services/api/erros';
+import { ErroApi, MENSAGEM_CARREGAR, mensagemDeErro } from '@/services/api/erros';
 import type { Perfil } from '@/models/tipos';
 import { TelaInterna } from '@/views/components/layout/TelaInterna';
 import { Botao } from '@/views/components/ui/Botao';
@@ -34,7 +34,7 @@ export default function TelaConta() {
   if (perfil.isLoading || perfil.isError || !perfil.data) {
     return (
       <TelaInterna aba="mais" cabecalho={{ titulo: 'Minha Conta', sub: 'Seus dados, sua senha e a aparência do app.' }}>
-        {perfil.isError ? <ErroCarregar erro={perfil.error} aoTentar={() => perfil.refetch()} /> : <Carregando />}
+        {perfil.isError ? <ErroCarregar mensagem={mensagemDeErro(perfil.error, MENSAGEM_CARREGAR)} aoTentar={() => perfil.refetch()} /> : <Carregando />}
       </TelaInterna>
     );
   }

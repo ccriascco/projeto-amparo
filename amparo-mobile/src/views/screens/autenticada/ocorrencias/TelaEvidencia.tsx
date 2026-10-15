@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import { Modal, Pressable, View } from 'react-native';
 
 import { apiOcorrencias } from '@/services/api/endpoints';
-import { ErroApi } from '@/services/api/erros';
+import { mensagemDeErro } from '@/services/api/erros';
 import { PlayerAudio, PlayerVideo } from '@/views/components/dominio/Players';
 import { ScreenTitle } from '@/views/components/layout/ScreenTitle';
 import { TelaInterna } from '@/views/components/layout/TelaInterna';
@@ -58,7 +58,7 @@ export default function TelaEvidencia() {
       {arquivo.isLoading ? <Carregando rotulo="Abrindo e conferindo o arquivo…" /> : null}
       {arquivo.isError ? (
         <ErroCarregar
-          erro={arquivo.error instanceof ErroApi ? arquivo.error : new ErroApi('rede', 0, 'Não foi possível baixar o arquivo. Confira sua internet.')}
+          mensagem={mensagemDeErro(arquivo.error, 'Não foi possível baixar o arquivo. Confira sua internet.')}
           aoTentar={() => arquivo.refetch()}
         />
       ) : null}

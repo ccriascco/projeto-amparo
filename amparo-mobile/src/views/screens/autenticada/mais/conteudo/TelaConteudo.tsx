@@ -1,6 +1,6 @@
-import { router } from 'expo-router';
 import { View } from 'react-native';
 
+import { abrir, voltar } from '@/controllers/navegacao';
 import { TelaInterna } from '@/views/components/layout/TelaInterna';
 import { Cartao, CirculoIcone } from '@/views/components/ui/Cartao';
 import { Texto } from '@/views/components/ui/Texto';
@@ -10,13 +10,13 @@ export default function TelaConteudo() {
   return (
     <TelaInterna
       aba="mais"
-      cabecalho={{ titulo: 'Conteúdo e direitos', sub: 'O que a lei garante para você, em linguagem simples.', aoFecharTopo: () => router.back() }}
+      cabecalho={{ titulo: 'Conteúdo e direitos', sub: 'O que a lei garante para você, em linguagem simples.', aoFecharTopo: voltar }}
       gap={12}
     >
       {ARTIGOS.map((a, i) => (
         <Cartao
           key={a.titulo}
-          onPress={() => router.push({ pathname: '/mais/conteudo/[artigo]', params: { artigo: String(i) } })}
+          onPress={() => abrir({ pathname: '/mais/conteudo/[artigo]', params: { artigo: String(i) } })}
           rotuloAcessivel={`${a.titulo}. ${a.resumo} Ler mais.`}
           estilo={{ gap: 8 }}
         >

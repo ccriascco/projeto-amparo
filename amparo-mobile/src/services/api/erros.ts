@@ -31,6 +31,12 @@ const PADRAO_POR_STATUS: Record<number, string> = {
 export const MENSAGEM_SEM_REDE = 'Sem conexão com o servidor. Confira sua internet e tente de novo.';
 export const MENSAGEM_TEMPO = 'O servidor demorou para responder. Tente de novo.';
 export const MENSAGEM_INDISPONIVEL = 'O serviço está indisponível agora. Tente de novo em instantes.';
+export const MENSAGEM_CARREGAR = 'Não foi possível carregar agora.';
+
+/** Mensagem para mostrar na tela: a do ErroApi (já em português) ou o texto padrão de quem chamou. */
+export function mensagemDeErro(erro: unknown, padrao: string): string {
+  return erro instanceof ErroApi ? erro.mensagem : padrao;
+}
 
 /** Traduz o corpo de erro do backend ({ erro } ou o formato do ValidationPipe) numa mensagem amigável. */
 export function mensagemDoCorpo(status: number, corpo: unknown): string {

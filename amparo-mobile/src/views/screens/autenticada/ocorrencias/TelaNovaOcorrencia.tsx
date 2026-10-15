@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import { Pressable, TextInput, View } from 'react-native';
 
 import { apiOcorrencias } from '@/services/api/endpoints';
-import { ErroApi } from '@/services/api/erros';
+import { ErroApi, MENSAGEM_CARREGAR, mensagemDeErro } from '@/services/api/erros';
 import { type Ocorrencia, TIPOS_VIOLENCIA, type TipoViolencia } from '@/models/tipos';
 import { ICONE_VIOLENCIA } from '@/config/conteudo/violencia';
 import { TelaInterna } from '@/views/components/layout/TelaInterna';
@@ -45,7 +45,7 @@ export default function TelaNovaOcorrencia() {
   if (id && !existente.data) {
     return (
       <TelaInterna cabecalho={{ titulo: 'Editar ocorrência', aoFecharTopo: () => router.back() }} semNav>
-        {existente.isError ? <ErroCarregar erro={existente.error} aoTentar={() => existente.refetch()} /> : <Carregando />}
+        {existente.isError ? <ErroCarregar mensagem={mensagemDeErro(existente.error, MENSAGEM_CARREGAR)} aoTentar={() => existente.refetch()} /> : <Carregando />}
       </TelaInterna>
     );
   }

@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Pressable, RefreshControl, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
+import { MENSAGEM_CARREGAR, mensagemDeErro } from '@/services/api/erros';
 import type { Guardia } from '@/models/tipos';
 import { TelaInterna } from '@/views/components/layout/TelaInterna';
 import { Botao } from '@/views/components/ui/Botao';
@@ -42,7 +43,7 @@ export default function TelaRede() {
     >
       <View style={{ gap: 12 }}>
         {guardioes.isLoading ? <Carregando rotulo="Carregando sua rede…" /> : null}
-        {guardioes.isError ? <ErroCarregar erro={guardioes.error} aoTentar={() => guardioes.refetch()} /> : null}
+        {guardioes.isError ? <ErroCarregar mensagem={mensagemDeErro(guardioes.error, MENSAGEM_CARREGAR)} aoTentar={() => guardioes.refetch()} /> : null}
         {guardioes.isSuccess && lista.length === 0 ? (
           <Vazio icone="users-round" titulo="Nenhuma guardiã ainda" texto="Adicione pelo menos uma pessoa de confiança." />
         ) : null}

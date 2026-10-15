@@ -1,6 +1,6 @@
-import { router } from 'expo-router';
 import { View } from 'react-native';
 
+import { abrir } from '@/controllers/navegacao';
 import { TelaInterna } from '@/views/components/layout/TelaInterna';
 import { Cartao, CirculoIcone } from '@/views/components/ui/Cartao';
 import type { NomeIcone } from '@/views/components/ui/Icone';
@@ -17,7 +17,7 @@ export default function TelaMais() {
     <TelaInterna aba="mais" cabecalho={{ titulo: 'Mais', sub: 'Sua conta, conteúdo de apoio e as configurações de segurança.' }}>
       <View style={{ gap: 12 }}>
         {CARTOES.map((c) => (
-          <Cartao key={c.titulo} onPress={() => router.push(c.rota)} rotuloAcessivel={`${c.titulo}. ${c.corpo}`} estilo={{ flexDirection: 'row', gap: 16, alignItems: 'flex-start' }}>
+          <Cartao key={c.titulo} onPress={() => abrir(c.rota)} rotuloAcessivel={`${c.titulo}. ${c.corpo}`} estilo={{ flexDirection: 'row', gap: 16, alignItems: 'flex-start' }}>
             <CirculoIcone nome={c.icone} />
             <View style={{ flex: 1, gap: 4 }}>
               <Texto variante="cardTitulo">{c.titulo}</Texto>

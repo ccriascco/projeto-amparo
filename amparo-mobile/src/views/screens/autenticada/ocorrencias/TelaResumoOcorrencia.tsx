@@ -2,7 +2,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 
-import { ErroApi } from '@/services/api/erros';
+import { ErroApi, MENSAGEM_CARREGAR, mensagemDeErro } from '@/services/api/erros';
 import type { Evidencia, NivelRisco, TipoEvidencia } from '@/models/tipos';
 import { TelaInterna } from '@/views/components/layout/TelaInterna';
 import { Botao } from '@/views/components/ui/Botao';
@@ -63,7 +63,7 @@ export default function TelaResumoOcorrencia() {
       }
     >
       {ocorrencia.isLoading ? <Carregando /> : null}
-      {ocorrencia.isError ? <ErroCarregar erro={ocorrencia.error} aoTentar={() => ocorrencia.refetch()} /> : null}
+      {ocorrencia.isError ? <ErroCarregar mensagem={mensagemDeErro(ocorrencia.error, MENSAGEM_CARREGAR)} aoTentar={() => ocorrencia.refetch()} /> : null}
       {o ? (
         <>
           <View style={{ gap: 12 }}>
