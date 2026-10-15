@@ -1,73 +1,22 @@
-import { useMutation } from '@tanstack/react-query';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { router } from 'expo-router';
-import { useRef, useState } from 'react';
+import { useRef } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, type TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { apiUsuarias } from '@/services/api/endpoints';
-import { ErroApi } from '@/services/api/erros';
+import { useTelaLogin } from '@/controllers/telas/publico/useTelaLogin';
 import { BotaoGoogle } from '@/views/components/dominio/BotaoGoogle';
 import { Botao } from '@/views/components/ui/Botao';
 import { Campo } from '@/views/components/ui/Campo';
 import { Texto } from '@/views/components/ui/Texto';
-import { useRascunhoCadastro } from '@/models/stores/rascunhoCadastro';
-import { useSessao } from '@/models/stores/sessao';
 import { useTema } from '@/views/theme/tema';
 import { fixas, fontes, raios } from '@/views/theme/tokens';
-import { obterIdTokenGoogle } from '@/services/google';
-import { emailValido } from '@/utils/validacao/regras';
 
 export default function TelaLogin() {
   const { cores } = useTema();
   const insets = useSafeAreaInsets();
-  const entrar = useSessao((s) => s.entrar);
-  const definirGoogle = useRascunhoCadastro((s) => s.definirGoogle);
-  const [email, setEmail] = useState('');
-  const [senha, setSenha] = useState('');
-  const [erroEmail, setErroEmail] = useState<string | null>(null);
-  const [erroSenha, setErroSenha] = useState<string | null>(null);
-  const [erroGeral, setErroGeral] = useState<string | null>(null);
+  const c = useTelaLogin();
   const campoSenha = useRef<TextInput>(null);
-
-  const login = useMutation({
-    mutationFn: () => apiUsuarias.login(email.trim(), senha),
-    onSuccess: (r) => entrar(r),
-    onError: (e) => {
-      if (e instanceof ErroApi && e.status === 401) setErroSenha('E-mail ou senha incorretos. Confira e tente de novo.');
-      else setErroGeral(e instanceof ErroApi ? e.mensagem : 'Algo deu errado. Tente de novo.');
-    },
-  });
-
-  const google = useMutation({
-    mutationFn: async () => {
-      const idToken = await obterIdTokenGoogle();
-      if (!idToken) return null;
-      try {
-        return await apiUsuarias.loginGoogle(idToken);
-      } catch (e) {
-        if (e instanceof ErroApi && e.status === 404 && e.dados.precisa_cadastro) {
-          definirGoogle({ idToken, nome: String(e.dados.nome_completo ?? ''), email: String(e.dados.email ?? '') });
-          router.push('/cadastro');
-          return null;
-        }
-        throw e;
-      }
-    },
-    onSuccess: (r) => {
-      if (r) entrar(r);
-    },
-    onError: (e) => setErroGeral(e instanceof ErroApi ? e.mensagem : 'Não foi possível entrar com o Google.'),
-  });
-
-  const enviar = () => {
-    setErroGeral(null);
-    const eOk = emailValido(email);
-    setErroEmail(eOk ? null : 'Esse e-mail não parece válido. Confira e tente de novo.');
-    setErroSenha(senha ? null : 'Digite sua senha.');
-    if (eOk && senha) login.mutate();
-  };
 
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -105,12 +54,9 @@ export default function TelaLogin() {
                 <Campo
                   rotulo="Email"
                   placeholder="teste@gmail.com"
-                  value={email}
-                  onChangeText={(t) => {
-                    setEmail(t);
-                    setErroEmail(null);
-                  }}
-                  erro={erroEmail}
+                  value={c.email}
+                  onChangeText={c.alterarEmail}
+                  erro={c.erroEmail}
                   keyboardType="email-address"
                   autoCapitalize="none"
                   autoComplete="email"
@@ -123,30 +69,27 @@ export default function TelaLogin() {
                   ref={campoSenha}
                   rotulo="Senha"
                   placeholder="Sua senha"
-                  value={senha}
-                  onChangeText={(t) => {
-                    setSenha(t);
-                    setErroSenha(null);
-                  }}
-                  erro={erroSenha}
+                  value={c.senha}
+                  onChangeText={c.alterarSenha}
+                  erro={c.erroSenha}
                   secureTextEntry
                   autoComplete="current-password"
                   textContentType="password"
                   returnKeyType="go"
-                  onSubmitEditing={enviar}
+                  onSubmitEditing={c.enviar}
                   testID="login-senha"
                 />
               </View>
               <View style={{ gap: 16, alignItems: 'center' }}>
-                <Botao onPress={enviar} carregando={login.isPending} estilo={{ alignSelf: 'stretch' }} testID="login-enviar">
+                <Botao onPress={c.enviar} carregando={c.entrando} estilo={{ alignSelf: 'stretch' }} testID="login-enviar">
                   Fazer Login
                 </Botao>
-                {erroGeral ? (
+                {c.erroGeral ? (
                   <Texto variante="nota" corLivre={fixas.sos} centro accessibilityLiveRegion="polite">
-                    {erroGeral}
+                    {c.erroGeral}
                   </Texto>
                 ) : null}
-                <Pressable onPress={() => router.replace('/cadastro')} accessibilityRole="link" hitSlop={8}>
+                <Pressable onPress={c.irParaCadastro} accessibilityRole="link" hitSlop={8}>
                   <Texto corLivre={cores.nota} style={{ lineHeight: 18 }}>
                     Ainda não tem conta? Clique aqui
                   </Texto>
@@ -162,7 +105,7 @@ export default function TelaLogin() {
                 </Texto>
                 <View style={{ flex: 1, height: 1, backgroundColor: cores.borda20 }} />
               </View>
-              <BotaoGoogle onPress={() => google.mutate()} carregando={google.isPending} />
+              <BotaoGoogle onPress={c.entrarComGoogle} carregando={c.entrandoComGoogle} />
             </View>
           </View>
         </ScrollView>

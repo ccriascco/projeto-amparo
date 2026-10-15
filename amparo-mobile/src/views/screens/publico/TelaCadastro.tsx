@@ -1,13 +1,8 @@
-import { useMutation } from '@tanstack/react-query';
 import { Image } from 'expo-image';
-import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { apiUsuarias } from '@/services/api/endpoints';
-import { ErroApi } from '@/services/api/erros';
-import type { DadosCadastro } from '@/models/tipos';
+import { TOTAL_ETAPAS, useTelaCadastro } from '@/controllers/telas/publico/useTelaCadastro';
 import { ChecklistSenha } from '@/views/components/dominio/ChecklistSenha';
 import { BarraEtapas, BotaoVoltar, NotaCadeado } from '@/views/components/ui/Basicos';
 import { Botao } from '@/views/components/ui/Botao';
@@ -17,27 +12,8 @@ import { CirculoIcone, CartaoInfo } from '@/views/components/ui/Cartao';
 import { EntradaPin } from '@/views/components/ui/EntradaPin';
 import { Icone } from '@/views/components/ui/Icone';
 import { Texto } from '@/views/components/ui/Texto';
-import { useRascunhoCadastro } from '@/models/stores/rascunhoCadastro';
-import { useSessao } from '@/models/stores/sessao';
 import { useTema } from '@/views/theme/tema';
 import { fixas, raios } from '@/views/theme/tokens';
-import { pedirCameraEMicrofone, pedirLocalizacao } from '@/utils/permissoes';
-import {
-  cpfValido,
-  dataNoFuturo,
-  dataParaIso,
-  emailValido,
-  mascararCpf,
-  mascararData,
-  mascararTelefone,
-  senhaAtendeRegras,
-  somenteDigitos,
-  telefoneValido,
-} from '@/utils/validacao/regras';
-
-const TOTAL = 8;
-type Guardia = { nome: string; telefone: string };
-type Erros = Record<string, string | null>;
 
 function Cabecalho({ titulo, sub, tamanho = 31 }: { titulo: string; sub: string; tamanho?: number }) {
   return (
@@ -53,129 +29,38 @@ function Cabecalho({ titulo, sub, tamanho = 31 }: { titulo: string; sub: string;
 export default function TelaCadastro() {
   const { cores, sombraCard } = useTema();
   const insets = useSafeAreaInsets();
-  const entrar = useSessao((s) => s.entrar);
-  const google = useRascunhoCadastro((s) => s.google);
-  const limparGoogle = useRascunhoCadastro((s) => s.definirGoogle);
-
-  const [etapa, setEtapa] = useState(1);
-  const [pinAberto, setPinAberto] = useState(false);
-  const [nome, setNome] = useState(google?.nome ?? '');
-  const [nascimento, setNascimento] = useState('');
-  const [telefone, setTelefone] = useState('');
-  const [cpf, setCpf] = useState('');
-  const [email, setEmail] = useState(google?.email ?? '');
-  const [senha, setSenha] = useState('');
-  const [disfarce, setDisfarce] = useState<'ativar' | 'padrao'>('ativar');
-  const [pin, setPin] = useState('');
-  const [pinConf, setPinConf] = useState('');
-  const [guardioes, setGuardioes] = useState<Guardia[]>([{ nome: '', telefone: '' }]);
-  const [erros, setErros] = useState<Erros>({});
-  const [erroEnvio, setErroEnvio] = useState<string | null>(null);
-
-  // Ao sair do cadastro, o token do Google não fica guardado
-  useEffect(() => () => limparGoogle(null), [limparGoogle]);
-
-  const pinOk = pin.length === 4 && pin === pinConf;
-  const pinDivergente = pinConf.length === 4 && pin !== pinConf;
-
-  const cadastro = useMutation({
-    mutationFn: () => {
-      const dados: DadosCadastro = {
-        cpf: somenteDigitos(cpf),
-        email: email.trim().toLowerCase(),
-        telefone: somenteDigitos(telefone),
-        nome_completo: nome.trim(),
-        data_nascimento: dataParaIso(nascimento) ?? '',
-        modo_disfarcado: disfarce === 'ativar',
-        guardioes: guardioes.map((g) => ({ nome_completo: g.nome.trim(), telefone: somenteDigitos(g.telefone) })),
-      };
-      if (google) dados.google_id_token = google.idToken;
-      else dados.senha = senha;
-      if (disfarce === 'ativar') dados.codigo_disfarce = pin;
-      return apiUsuarias.cadastrar(dados);
-    },
-    onSuccess: (r) => entrar(r, disfarce === 'ativar' ? pin : undefined),
-    onError: (e) => {
-      if (e instanceof ErroApi && e.status === 409) {
-        setErroEnvio('Já existe uma conta com este CPF ou e-mail. Entre com ela ou confira os dados.');
-      } else {
-        setErroEnvio(e instanceof ErroApi ? e.mensagem : 'Não foi possível concluir o cadastro. Tente de novo.');
-      }
-    },
-  });
-
-  const validar = (): boolean => {
-    const e: Erros = {};
-    if (etapa === 1) {
-      if (nome.trim().length < 2) e.nome = 'Digite seu nome completo.';
-      const iso = dataParaIso(nascimento);
-      if (!iso) e.nascimento = 'Confira a data (dia/mês/ano).';
-      else if (dataNoFuturo(iso)) e.nascimento = 'A data de nascimento não pode estar no futuro.';
-      if (!telefoneValido(telefone)) e.telefone = 'Digite o telefone com DDD.';
-    }
-    if (etapa === 2 && !cpfValido(cpf)) e.cpf = 'CPF inválido. Confira os números informados.';
-    if (etapa === 3 && !emailValido(email)) e.email = 'Esse e-mail não parece válido. Confira e tente de novo.';
-    if (etapa === 4 && !senhaAtendeRegras(senha)) e.senha = 'A senha ainda não atende a todas as regras abaixo.';
-    if (etapa === 8) {
-      guardioes.forEach((g, i) => {
-        if (g.nome.trim().length < 2) e[`gnome${i}`] = 'Digite o nome dela.';
-        if (!telefoneValido(g.telefone)) e[`gtel${i}`] = 'Digite o telefone com DDD.';
-      });
-      const tels = guardioes.map((g) => somenteDigitos(g.telefone));
-      tels.forEach((t, i) => {
-        if (t && tels.indexOf(t) !== i) e[`gtel${i}`] = 'Esse telefone já está na lista.';
-      });
-    }
-    setErros(e);
-    return Object.values(e).every((v) => !v);
-  };
-
-  const proxima = (n: number) => (n === 4 && google ? 5 : n);
-  const anterior = (n: number) => (n === 4 && google ? 3 : n);
-
-  const avancar = async () => {
-    if (!validar()) return;
-    if (etapa === 5) await pedirLocalizacao().catch(() => false);
-    if (etapa === 6) await pedirCameraEMicrofone().catch(() => false);
-    if (etapa === 7 && disfarce === 'ativar' && !pinAberto) return setPinAberto(true);
-    if (etapa === 7 && pinAberto) {
-      if (!pinOk) return;
-      setPinAberto(false);
-      return setEtapa(8);
-    }
-    if (etapa < TOTAL) return setEtapa(proxima(etapa + 1));
-    setErroEnvio(null);
-    cadastro.mutate();
-  };
-
-  const pular = () => setEtapa(etapa + 1);
-
-  const voltar = () => {
-    setErros({});
-    if (etapa === 7 && pinAberto) return setPinAberto(false);
-    if (etapa === 8 && disfarce === 'ativar') {
-      setEtapa(7);
-      return setPinAberto(true);
-    }
-    if (etapa > 1) return setEtapa(anterior(etapa - 1));
-    router.back();
-  };
-
-  const rotuloCta = etapa === 5 ? 'Permitir Localização' : etapa === 6 ? 'Permitir Notificação e Camera' : etapa === 8 ? 'Concluir cadastro' : 'Continuar';
-  const ctaBloqueado = etapa === 7 && pinAberto && !pinOk;
-
-  const atualizarGuardia = (i: number, campo: keyof Guardia, valor: string) =>
-    setGuardioes((lista) => lista.map((g, j) => (j === i ? { ...g, [campo]: valor } : g)));
+  const {
+    google,
+    etapa,
+    pinAberto,
+    nome,
+    nascimento,
+    telefone,
+    cpf,
+    email,
+    senha,
+    disfarce,
+    pin,
+    pinConf,
+    guardioes,
+    erros,
+    erroEnvio,
+    pinOk,
+    pinDivergente,
+    rotuloCta,
+    ctaBloqueado,
+    ...c
+  } = useTelaCadastro();
 
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: cores.tela }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <View style={{ flex: 1, paddingTop: Math.max(insets.top + 16, 48), paddingHorizontal: 32, paddingBottom: 32 + insets.bottom, gap: 32 }}>
         <View style={{ gap: 8 }}>
           <View style={{ height: 24, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-            <BotaoVoltar onPress={voltar} />
-            <Texto peso={500} cor="nota" style={{ lineHeight: 18 }}>{`Etapa ${etapa}/${TOTAL}`}</Texto>
+            <BotaoVoltar onPress={c.voltar} />
+            <Texto peso={500} cor="nota" style={{ lineHeight: 18 }}>{`Etapa ${etapa}/${TOTAL_ETAPAS}`}</Texto>
           </View>
-          <BarraEtapas atual={etapa} total={TOTAL} />
+          <BarraEtapas atual={etapa} total={TOTAL_ETAPAS} />
         </View>
 
         <ScrollView style={{ flex: 1 }} contentContainerStyle={{ gap: 24 }} keyboardShouldPersistTaps="handled">
@@ -183,12 +68,12 @@ export default function TelaCadastro() {
             <>
               <Cabecalho titulo="Um pouco sobre você" sub="Esses dados ficam associados à sua conta. Você pode alterá-los a qualquer momento" />
               <View style={{ gap: 16 }}>
-                <Campo rotulo="Nome completo" placeholder="Digite seu nome" value={nome} onChangeText={setNome} erro={erros.nome} autoComplete="name" textContentType="name" />
+                <Campo rotulo="Nome completo" placeholder="Digite seu nome" value={nome} onChangeText={c.alterarNome} erro={erros.nome} autoComplete="name" textContentType="name" />
                 <Campo
                   rotulo="Data de Nascimento"
                   placeholder="00/00/0000"
                   value={nascimento}
-                  onChangeText={(t) => setNascimento(mascararData(t))}
+                  onChangeText={c.alterarNascimento}
                   erro={erros.nascimento}
                   keyboardType="number-pad"
                 />
@@ -196,7 +81,7 @@ export default function TelaCadastro() {
                   rotulo="Telefone"
                   placeholder="(00) 00000-0000"
                   value={telefone}
-                  onChangeText={(t) => setTelefone(mascararTelefone(t))}
+                  onChangeText={c.alterarTelefone}
                   erro={erros.telefone}
                   keyboardType="phone-pad"
                   autoComplete="tel"
@@ -209,7 +94,7 @@ export default function TelaCadastro() {
           {etapa === 2 ? (
             <>
               <Cabecalho titulo="Qual é o seu CPF?" sub="Precisamos do seu CPF para validar sua conta." />
-              <Campo rotulo="CPF" placeholder="000.000.000-00" value={cpf} onChangeText={(t) => setCpf(mascararCpf(t))} erro={erros.cpf} keyboardType="number-pad" />
+              <Campo rotulo="CPF" placeholder="000.000.000-00" value={cpf} onChangeText={c.alterarCpf} erro={erros.cpf} keyboardType="number-pad" />
               <NotaCadeado>Seu CPF é usado só para validar a conta. Ele nunca aparece para suas guardiãs.</NotaCadeado>
             </>
           ) : null}
@@ -221,7 +106,7 @@ export default function TelaCadastro() {
                 rotulo="E-mail"
                 placeholder="seuemail@exemplo.com"
                 value={email}
-                onChangeText={setEmail}
+                onChangeText={c.alterarEmail}
                 erro={erros.email}
                 keyboardType="email-address"
                 autoCapitalize="none"
@@ -236,7 +121,7 @@ export default function TelaCadastro() {
           {etapa === 4 ? (
             <>
               <Cabecalho titulo="Crie uma senha" sub="Essa é a senha que você vai usar para entrar com seu e-mail." />
-              <Campo rotulo="Senha" placeholder="Crie sua senha" value={senha} onChangeText={setSenha} erro={erros.senha} secureTextEntry autoComplete="new-password" textContentType="newPassword" />
+              <Campo rotulo="Senha" placeholder="Crie sua senha" value={senha} onChangeText={c.alterarSenha} erro={erros.senha} secureTextEntry autoComplete="new-password" textContentType="newPassword" />
               <NotaCadeado>Sua senha passa por criptografia e fica protegida em nosso sistema. Nenhuma pessoa, consegue visualizá-la</NotaCadeado>
               <ChecklistSenha senha={senha} />
             </>
@@ -282,14 +167,14 @@ export default function TelaCadastro() {
                     titulo="Ativar Modo Disfarce"
                     corpo="O app terá o ícone e o nome de uma calculadora comum."
                     selecionado={disfarce === 'ativar'}
-                    onPress={() => setDisfarce('ativar')}
+                    onPress={() => c.escolherDisfarce('ativar')}
                   />
                 </View>
                 <CartaoEscolha
                   titulo="Manter Modo Padrão"
                   corpo="Manter o ícone e a marca oficial do Amparo visíveis na sua tela inicial."
                   selecionado={disfarce === 'padrao'}
-                  onPress={() => setDisfarce('padrao')}
+                  onPress={() => c.escolherDisfarce('padrao')}
                 />
               </View>
               <NotaCadeado>Você pode ativar ou desativar qualquer uma dessas permissões quando quiser, nas configurações do app.</NotaCadeado>
@@ -303,9 +188,9 @@ export default function TelaCadastro() {
                 sub={'Você vai digitar esses quatro números na calculadora e apertar "=" para destravar a área protegida do app.'}
                 tamanho={25}
               />
-              <EntradaPin rotulo="Senha de 4 dígitos" valor={pin} aoMudar={setPin} autoFocus testID="pin" />
+              <EntradaPin rotulo="Senha de 4 dígitos" valor={pin} aoMudar={c.alterarPin} autoFocus testID="pin" />
               <View style={{ gap: 8 }}>
-                <EntradaPin rotulo="Digite de novo para confirmar" valor={pinConf} aoMudar={setPinConf} erro={pinDivergente} testID="pin-conf" />
+                <EntradaPin rotulo="Digite de novo para confirmar" valor={pinConf} aoMudar={c.alterarPinConf} erro={pinDivergente} testID="pin-conf" />
                 <Texto variante="nota" corLivre={pinDivergente ? cores.sair : pinOk ? cores.verde : cores.nota} accessibilityLiveRegion="polite">
                   {pinDivergente ? 'Os dois números não são iguais. Confira e digite de novo.' : pinOk ? 'Senha definida.' : 'Use quatro números que você lembre com facilidade.'}
                 </Texto>
@@ -328,7 +213,7 @@ export default function TelaCadastro() {
                       </Texto>
                       {i > 0 ? (
                         <Pressable
-                          onPress={() => setGuardioes((l) => l.filter((_, j) => j !== i))}
+                          onPress={() => c.removerGuardia(i)}
                           accessibilityRole="button"
                           accessibilityLabel={`Remover guardiã ${i + 1}`}
                           hitSlop={8}
@@ -339,12 +224,12 @@ export default function TelaCadastro() {
                         </Pressable>
                       ) : null}
                     </View>
-                    <Campo rotulo="Nome" placeholder="Como você chama essa pessoa" value={g.nome} onChangeText={(t) => atualizarGuardia(i, 'nome', t)} erro={erros[`gnome${i}`]} />
+                    <Campo rotulo="Nome" placeholder="Como você chama essa pessoa" value={g.nome} onChangeText={(t) => c.alterarNomeGuardia(i, t)} erro={erros[`gnome${i}`]} />
                     <Campo
                       rotulo="Telefone"
                       placeholder="(00) 00000-0000"
                       value={g.telefone}
-                      onChangeText={(t) => atualizarGuardia(i, 'telefone', mascararTelefone(t))}
+                      onChangeText={(t) => c.alterarTelefoneGuardia(i, t)}
                       erro={erros[`gtel${i}`]}
                       keyboardType="phone-pad"
                     />
@@ -352,7 +237,7 @@ export default function TelaCadastro() {
                 ))}
                 {guardioes.length < 5 ? (
                   <Pressable
-                    onPress={() => setGuardioes((l) => [...l, { nome: '', telefone: '' }])}
+                    onPress={c.adicionarGuardia}
                     accessibilityRole="button"
                     style={{
                       flexDirection: 'row',
@@ -384,11 +269,11 @@ export default function TelaCadastro() {
               {erroEnvio}
             </Texto>
           ) : null}
-          <Botao onPress={avancar} desabilitado={ctaBloqueado} carregando={cadastro.isPending} testID="cadastro-avancar">
+          <Botao onPress={c.avancar} desabilitado={ctaBloqueado} carregando={c.enviando} testID="cadastro-avancar">
             {rotuloCta}
           </Botao>
           {etapa === 5 || etapa === 6 ? (
-            <Botao variante="secundario" onPress={pular}>
+            <Botao variante="secundario" onPress={c.pular}>
               Agora Não
             </Botao>
           ) : null}
