@@ -1,8 +1,7 @@
-import { router, useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 
-import { ErroApi } from '@/services/api/erros';
+import { voltar } from '@/controllers/navegacao';
+import { useFormularioGuardia, useTelaGuardia } from '@/controllers/telas/autenticada/rede/useTelaGuardia';
 import { TelaInterna } from '@/views/components/layout/TelaInterna';
 import type { Guardia } from '@/models/tipos';
 import { Botao } from '@/views/components/ui/Botao';
@@ -11,92 +10,52 @@ import { Confirmacao } from '@/views/components/ui/Confirmacao';
 import { Carregando } from '@/views/components/ui/Estados';
 import { Campo } from '@/views/components/ui/Campo';
 import { Texto } from '@/views/components/ui/Texto';
-import { useGuardioes, useReenviarConvite, useRemoverGuardia, useSalvarGuardia } from '@/controllers/dados';
 import { useTema } from '@/views/theme/tema';
 import { fixas, raios } from '@/views/theme/tokens';
 import { haQuantoTempo } from '@/utils/tempoRelativo';
-import { mascararTelefone, somenteDigitos, telefoneValido } from '@/utils/validacao/regras';
 
 const RELACOES = ['Amigos', 'Família'] as const;
 
 export default function TelaGuardia() {
-  const { id } = useLocalSearchParams<{ id?: string }>();
-  const guardioes = useGuardioes();
-  if (id && guardioes.isLoading) {
+  const { id, carregando, existente } = useTelaGuardia();
+  if (carregando) {
     return (
-      <TelaInterna cabecalho={{ titulo: 'Editar guardião', aoFecharTopo: () => router.back() }} semNav>
+      <TelaInterna cabecalho={{ titulo: 'Editar guardião', aoFecharTopo: voltar }} semNav>
         <Carregando />
       </TelaInterna>
     );
   }
-  const existente = id ? guardioes.data?.find((g) => g.id === id) : undefined;
   return <FormularioGuardia key={existente?.id ?? 'nova'} id={id} existente={existente} />;
 }
 
 function FormularioGuardia({ id, existente }: { id?: string; existente?: Guardia }) {
   const { cores } = useTema();
-  const editando = !!id;
-
-  const [nome, setNome] = useState(existente?.nome_completo ?? '');
-  const [telefone, setTelefone] = useState(existente ? mascararTelefone(existente.telefone) : '');
-  const [relacao, setRelacao] = useState<string>(existente?.parentesco_relacao ?? 'Amigos');
-  const [erros, setErros] = useState<{ nome?: string; telefone?: string }>({});
-  const [erroGeral, setErroGeral] = useState<string | null>(null);
-  const [aviso, setAviso] = useState<string | null>(null);
-  const [confirmando, setConfirmando] = useState(false);
-
-  const salvar = useSalvarGuardia();
-  const remover = useRemoverGuardia();
-  const reenviar = useReenviarConvite();
-
-  const mensagem = (e: unknown) => (e instanceof ErroApi ? e.mensagem : 'Algo deu errado. Tente de novo.');
-
-  const enviar = () => {
-    setErroGeral(null);
-    const e = {
-      nome: nome.trim().length < 2 ? 'Digite o nome dela.' : undefined,
-      telefone: telefoneValido(telefone) ? undefined : 'Digite o telefone com DDD.',
-    };
-    setErros(e);
-    if (e.nome || e.telefone) return;
-    salvar.mutate(
-      { id, dados: { nome_completo: nome.trim(), telefone: somenteDigitos(telefone), parentesco_relacao: relacao } },
-      { onSuccess: () => router.back(), onError: (err) => setErroGeral(mensagem(err)) },
-    );
-  };
-
-  const removerAgora = () => {
-    if (!id) return;
-    remover.mutate(id, { onSuccess: () => router.back() });
-  };
+  const { editando, nome, telefone, relacao, erros, erroGeral, aviso, ...c } = useFormularioGuardia({ id, existente });
 
   return (
     <TelaInterna
-      cabecalho={{ titulo: editando ? 'Editar guardião' : 'Adicionar guardião', sub: 'Ela vai receber um convite por WhatsApp.', aoFecharTopo: () => router.back() }}
+      cabecalho={{ titulo: editando ? 'Editar guardião' : 'Adicionar guardião', sub: 'Ela vai receber um convite por WhatsApp.', aoFecharTopo: voltar }}
       semNav
       sobreposicao={
         <Confirmacao
-          visivel={confirmando}
+          visivel={c.confirmando}
           titulo="Remover guardiã?"
           texto={`${nome || 'Ela'} deixa de receber seus pedidos de ajuda.`}
           rotuloConfirmar="Remover"
-          aoConfirmar={removerAgora}
-          aoFechar={() => {
-            setConfirmando(false);
-            remover.reset();
-          }}
-          carregando={remover.isPending}
-          erro={remover.isError ? mensagem(remover.error) : null}
+          aoConfirmar={c.removerAgora}
+          aoFechar={c.fecharRemocao}
+          carregando={c.removendo}
+          erro={c.erroRemover}
         />
       }
     >
       <View style={{ gap: 16 }}>
-        <Campo rotulo="Nome completo" placeholder="Como você chama essa pessoa" value={nome} onChangeText={setNome} erro={erros.nome} />
+        <Campo rotulo="Nome completo" placeholder="Como você chama essa pessoa" value={nome} onChangeText={c.alterarNome} erro={erros.nome} />
         <Campo
           rotulo="Telefone"
           placeholder="(00) 00000-0000"
           value={telefone}
-          onChangeText={(t) => setTelefone(mascararTelefone(t))}
+          onChangeText={c.alterarTelefone}
           erro={erros.telefone}
           keyboardType="phone-pad"
           nota={editando ? 'Trocar o telefone envia um convite novo.' : undefined}
@@ -109,7 +68,7 @@ function FormularioGuardia({ id, existente }: { id?: string; existente?: Guardia
               return (
                 <Pressable
                   key={r}
-                  onPress={() => setRelacao(r)}
+                  onPress={() => c.escolherRelacao(r)}
                   accessibilityRole="radio"
                   accessibilityState={{ checked: on }}
                   style={{
@@ -155,10 +114,8 @@ function FormularioGuardia({ id, existente }: { id?: string; existente?: Guardia
               variante="secundario"
               compacto
               estilo={{ alignSelf: 'flex-start' }}
-              carregando={reenviar.isPending}
-              onPress={() =>
-                reenviar.mutate(existente.id, { onSuccess: () => setAviso('Convite reenviado.'), onError: (err) => setErroGeral(mensagem(err)) })
-              }
+              carregando={c.reenviando}
+              onPress={() => c.reenviarConvite(existente.id)}
             >
               Reenviar convite
             </Botao>
@@ -177,11 +134,11 @@ function FormularioGuardia({ id, existente }: { id?: string; existente?: Guardia
         </Texto>
       ) : null}
 
-      <Botao onPress={enviar} carregando={salvar.isPending} estilo={{ marginTop: 8 }}>
+      <Botao onPress={c.enviar} carregando={c.salvando} estilo={{ marginTop: 8 }}>
         {editando ? 'Salvar alterações' : 'Salvar guardião'}
       </Botao>
       {editando ? (
-        <Botao variante="perigo" onPress={() => setConfirmando(true)}>
+        <Botao variante="perigo" onPress={c.pedirRemocao}>
           Remover guardião
         </Botao>
       ) : null}

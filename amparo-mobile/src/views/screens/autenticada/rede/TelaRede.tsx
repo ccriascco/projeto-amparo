@@ -1,9 +1,7 @@
-import { router } from 'expo-router';
-import { useState } from 'react';
 import { Pressable, RefreshControl, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
-import { MENSAGEM_CARREGAR, mensagemDeErro } from '@/services/api/erros';
+import { useTelaRede } from '@/controllers/telas/autenticada/rede/useTelaRede';
 import type { Guardia } from '@/models/tipos';
 import { TelaInterna } from '@/views/components/layout/TelaInterna';
 import { Botao } from '@/views/components/ui/Botao';
@@ -13,12 +11,9 @@ import { Carregando, ErroCarregar, Vazio } from '@/views/components/ui/Estados';
 import { Sheet } from '@/views/components/ui/Sheet';
 import { Texto } from '@/views/components/ui/Texto';
 import { FAQ_REDE, POR_QUE_REDE } from '@/config/conteudo/textos';
-import { useGuardioes } from '@/controllers/dados';
 import { useTema } from '@/views/theme/tema';
 import { raios } from '@/views/theme/tokens';
 import { haQuantoTempo } from '@/utils/tempoRelativo';
-
-const MAXIMO = 5;
 
 function atividade(g: Guardia) {
   if (g.status_convite === 'CONFIRMADO' && g.confirmado_em) return `Confirmou ${haQuantoTempo(g.confirmado_em)}`;
@@ -27,24 +22,19 @@ function atividade(g: Guardia) {
 
 export default function TelaRede() {
   const { cores } = useTema();
-  const guardioes = useGuardioes();
-  const [info, setInfo] = useState<{ titulo: string; texto: string } | null>(null);
-
-  // Confirmadas primeiro, depois as que ainda não aceitaram (ordem do protótipo)
-  const lista = [...(guardioes.data ?? [])].sort((a, b) => Number(b.status_convite === 'CONFIRMADO') - Number(a.status_convite === 'CONFIRMADO'));
-  const cheia = lista.length >= MAXIMO;
+  const { lista, cheia, info, ...c } = useTelaRede();
 
   return (
     <TelaInterna
       aba="rede"
       cabecalho={{ titulo: 'Rede de apoio', sub: 'Pessoas de confiança que podem ser avisadas em situações de risco.' }}
-      controleAtualizar={<RefreshControl refreshing={guardioes.isRefetching} onRefresh={() => guardioes.refetch()} tintColor={cores.acento} />}
-      sobreposicao={<Sheet visivel={!!info} aoFechar={() => setInfo(null)} titulo={info?.titulo} texto={info?.texto} />}
+      controleAtualizar={<RefreshControl refreshing={c.atualizando} onRefresh={c.atualizar} tintColor={cores.acento} />}
+      sobreposicao={<Sheet visivel={!!info} aoFechar={c.fecharInfo} titulo={info?.titulo} texto={info?.texto} />}
     >
       <View style={{ gap: 12 }}>
-        {guardioes.isLoading ? <Carregando rotulo="Carregando sua rede…" /> : null}
-        {guardioes.isError ? <ErroCarregar mensagem={mensagemDeErro(guardioes.error, MENSAGEM_CARREGAR)} aoTentar={() => guardioes.refetch()} /> : null}
-        {guardioes.isSuccess && lista.length === 0 ? (
+        {c.carregando ? <Carregando rotulo="Carregando sua rede…" /> : null}
+        {c.erroCarregar !== null ? <ErroCarregar mensagem={c.erroCarregar} aoTentar={c.atualizar} /> : null}
+        {c.carregou && lista.length === 0 ? (
           <Vazio icone="users-round" titulo="Nenhuma guardiã ainda" texto="Adicione pelo menos uma pessoa de confiança." />
         ) : null}
         {lista.map((g) => {
@@ -52,7 +42,7 @@ export default function TelaRede() {
           return (
             <Cartao
               key={g.id}
-              onPress={() => router.push({ pathname: '/rede/guardia', params: { id: g.id } })}
+              onPress={() => c.abrirGuardia(g.id)}
               rotuloAcessivel={`${g.nome_completo}, ${g.parentesco_relacao ?? 'sem relação definida'}, ${ok ? 'confirmou o convite' : 'convite pendente'}. Editar.`}
               estilo={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 16, paddingHorizontal: 20 }}
             >
@@ -96,7 +86,7 @@ export default function TelaRede() {
           <Texto variante="nota">Você já tem 5 guardiões. Remova um para abrir espaço.</Texto>
         </View>
       ) : (
-        <Botao onPress={() => router.push('/rede/guardia')} desabilitado={!guardioes.isSuccess}>
+        <Botao onPress={c.adicionarGuardia} desabilitado={!c.carregou}>
           Adicionar guardião
         </Botao>
       )}
@@ -105,7 +95,7 @@ export default function TelaRede() {
         {FAQ_REDE.map((f) => (
           <Pressable
             key={f.rotulo}
-            onPress={() => setInfo({ titulo: f.rotulo, texto: f.texto })}
+            onPress={() => c.mostrarInfo({ titulo: f.rotulo, texto: f.texto })}
             accessibilityRole="button"
             accessibilityLabel={f.rotulo}
             style={{ width: 84, alignItems: 'center', gap: 8 }}
@@ -118,7 +108,7 @@ export default function TelaRede() {
         ))}
       </Carrossel>
 
-      <Cartao onPress={() => setInfo(POR_QUE_REDE)} borda={cores.borda12} estilo={{ gap: 8 }} rotuloAcessivel="Por que ter uma rede importa. Saiba mais.">
+      <Cartao onPress={() => c.mostrarInfo(POR_QUE_REDE)} borda={cores.borda12} estilo={{ gap: 8 }} rotuloAcessivel="Por que ter uma rede importa. Saiba mais.">
         <CirculoIcone nome="heart-handshake" />
         <View style={{ gap: 4 }}>
           <Texto peso={600} tamanho={18} style={{ lineHeight: 22 }}>
