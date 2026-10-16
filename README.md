@@ -276,7 +276,9 @@ npm run lint        # análise estática (oxlint)
 
 No app (`amparo-mobile`): `npm test` (63 testes) e `npm run test:e2e` (2 testes pelas telas reais, contra o backend de demonstração).
 
-O serviço de IA não tem testes automatizados (`amparo-ia/scripts/test_local.py` é só um script manual que carrega o modelo e faz uma previsão). A avaliação do modelo é feita pelo pipeline descrito abaixo.
+Na IA (`amparo-ia`): `python -m unittest discover -s tests -t . -v` (8 testes: rota, segredo, validação dos campos, regra de histórico e respostas do modelo real). A avaliação da qualidade do modelo é feita pelo pipeline descrito abaixo.
+
+**CI:** o GitHub Actions (`.github/workflows/ci.yml`) roda os testes do backend, do app e da IA em cada pull request e em cada push no `main`, com segredos fictícios e o banco em memória (nunca o Supabase).
 
 ## Treinamento do modelo de IA
 
