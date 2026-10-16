@@ -1,0 +1,90 @@
+# Roda os testes do backend, do app e da IA a cada pull request e a cada push no main.
+# Nenhum segredo real é usado: o backend roda com banco em memória e os segredos abaixo são fictícios.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend (NestJS)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: amparo-backend
+    env:
+      JWT_SECRET: segredo-de-teste-ci
+      JWT_EXPIRES_IN: 2h
+      IA_SHARED_SECRET: segredo-ia-de-teste-ci
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: amparo-backend/package-lock.json
+      - run: npm ci
+      - name: Lint
+        run: npm run lint
+      - name: Typecheck
+        run: npx tsc --noEmit -p tsconfig.json
+      - name: Testes unitários
+        run: npm test
+      - name: Testes E2E (banco em memória)
+        run: npm run test:e2e
+      - name: Build
+        run: npm run build
+
+  app:
+    name: App mobile (Expo)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: amparo-mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: |
+            amparo-mobile/package-lock.json
+            amparo-backend/package-lock.json
+      - name: Dependências do backend (o E2E do app sobe o backend de demonstração)
+        run: npm ci
+        working-directory: amparo-backend
+      - run: npm ci
+      - name: Lint
+        run: npm run lint
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Testes unitários
+        run: npm test
+      - name: Testes E2E (telas reais + backend de demonstração)
+        run: npm run test:e2e
+
+  ia:
+    name: IA (FastAPI)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: amparo-ia
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+          cache: pip
+          cache-dependency-path: amparo-ia/requirements.txt
+      - run: pip install -r requirements.txt
+      - name: Testes (modelo real)
+        run: python -m unittest discover -s tests -t . -v
