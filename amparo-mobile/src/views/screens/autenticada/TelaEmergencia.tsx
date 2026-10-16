@@ -87,9 +87,9 @@ export default function TelaEmergencia() {
         </Cartao>
 
         <View style={{ flexDirection: 'row', gap: 8, alignItems: 'flex-start' }}>
-          <Icone nome="refresh-cw" tamanho={20} cor={cores.nota} />
+          <Icone nome="map-pin" tamanho={20} cor={cores.nota} />
           <Texto variante="nota" style={{ flex: 1 }}>
-            Sua localização é reenviada a cada 30 s enquanto o aviso estiver ativo.
+            Sua localização foi enviada no momento do pedido. Ela não é atualizada depois.
           </Texto>
         </View>
 

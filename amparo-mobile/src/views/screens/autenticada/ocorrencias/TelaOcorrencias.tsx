@@ -35,7 +35,7 @@ export default function TelaOcorrencias() {
             Ocorrências registradas
           </Texto>
           <Texto tamanho={12} cor="textoSuave" style={{ lineHeight: 17 }}>
-            Criptografado e guardado só no seu aparelho. Só você tem a chave que abre esse cofre.
+            Guardado em um cofre protegido, que só abre com a sua conta. Suas guardiãs não têm acesso.
           </Texto>
         </View>
       </Cartao>

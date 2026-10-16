@@ -7,7 +7,7 @@ App do Amparo em **React Native + TypeScript (Expo SDK 57)**, feito a partir do 
 - **Conta:** cadastro em 8 etapas (CPF validado, senha forte, permissões, Modo Disfarce e guardiãs), login por e-mail e senha ou Google, perfil, troca de senha, tema claro/escuro/automático, sair e excluir a conta.
 - **Sessão do aparelho:** o app reabre sem pedir a senha de novo. Com o Modo Disfarce ligado, ele abre como uma calculadora funcional, e só o código de 4 números + "=" destrava. Cinco códigos errados encerram a sessão, mas o app continua parecendo uma calculadora.
 - **Início:** botão SOS (segurar 3 s), registros da semana, leitura de risco calculada pela IA, ações rápidas e guias.
-- **Pedido de ajuda:** envia a localização, mostra "Quem foi avisada" (confirmou ou aguardando) e reenvia a localização a cada 30 s enquanto o app está aberto.
+- **Pedido de ajuda:** envia a localização do momento do acionamento (uma vez só, sem reenvio) e mostra "Quem foi avisada" (confirmou ou aguardando).
 - **Rede de apoio:** até 5 guardiãs, com o status do convite e a opção de reenviar.
 - **Ocorrências:**
   - Registro com 6 tipos de violência, a data em que aconteceu, o relato e anexos (foto, vídeo, áudio e PDF, pela câmera, pelo gravador ou pela galeria).
@@ -124,7 +124,7 @@ src/
     navegacao.ts       abrir, voltar e trocar de tela
     dados.ts           hooks do React Query (perfil, guardiãs, ocorrências, emergência)
     privacidade.ts     bloqueio de print e capa da calculadora
-    logicaCalculadora.ts, RastreadorEmergencia.tsx
+    logicaCalculadora.ts
   models/              tipos da API e stores/ (sessão, preferências, anexos, rascunho do cadastro; Zustand)
   services/            api/ (cliente HTTP único, rotas tipadas, erros em português), login com Google,
                        download e conferência de integridade das provas
@@ -161,15 +161,15 @@ As views não importam `services/` nem as stores: tudo passa pelos controllers (
 | Segurança | Sem "Salvar alterações": cada opção vale na hora; permissões abrem os ajustes do sistema | Permissões são do sistema operacional |
 | Todas | Estados de carregando, vazio e erro | Não existem no design |
 | Captura | O X volta para a ocorrência, não para o Início | Evita perder o que já foi preenchido |
+| Textos de privacidade, SOS e guias | Ajustados ao que o sistema faz: arquivos no armazenamento privado do servidor (não "só no aparelho"), localização só no momento do pedido, sem exportação, sem ícone de calculadora, delegacias pelo app de mapas, sem guardiã principal | Decisão aprovada: nenhum texto promete o que o app não faz |
+| Emergência | Sem reenvio da localização a cada 30 s (o ícone de atualizar virou um marcador de mapa) | Decisão aprovada: a localização vai só no acionamento |
 
 ## Pendências
 
 - **Ícone e nome de calculadora:** com o Modo Disfarce ligado, o app abre como calculadora, mas o ícone e o nome do app na tela inicial ainda são do Amparo. Exige módulo nativo; no iOS só o ícone pode mudar.
-- **Localização em segundo plano:** durante um pedido de ajuda, a localização só é reenviada com o app aberto.
 - **Notificações:** o app ainda não envia notificações.
 - **Mensagens às guardiãs:** continuam simuladas no backend (sem WhatsApp ou SMS real).
 - **Google:** falta criar os IDs de cliente OAuth no Google Cloud Console.
-- **Textos de privacidade:** mantidos como no design por decisão sua, para revisar depois. Alguns ainda dizem "guardado só no seu aparelho", mas os arquivos ficam no armazenamento privado do servidor.
 - **Banco de teste com Postgres real:** falta o dump da estrutura do banco de produção. Por enquanto os testes usam o banco em memória, que reproduz as regras do banco.
 - **Identificadores do app:** `br.com.amparo.app` é provisório.
 - **Builds nativos:** não foram gerados aqui (exigem Android Studio/Xcode ou conta EAS). O empacotamento JavaScript para Android, iOS e web foi gerado sem erros.

@@ -32,7 +32,7 @@ export default function TelaSeguranca() {
       >
         <View style={{ flex: 1, gap: 4 }}>
           <Texto variante="cardTitulo">Modo Disfarce</Texto>
-          <Texto variante="cardCorpo">No seu celular, o app aparece como uma calculadora comum.</Texto>
+          <Texto variante="cardCorpo">Ao abrir, o app aparece como uma calculadora comum.</Texto>
         </View>
         <Interruptor ligado={disfarce} />
       </Cartao>

@@ -69,7 +69,5 @@ export const apiEmergencias = {
     requisicao<RespostaAcionar>('POST', '/emergencias/acionar', { corpo: local ?? {} }),
   ativa: () => requisicao<SituacaoEmergencia>('GET', '/emergencias/ativa'),
   detalhe: (id: string) => requisicao<SituacaoEmergencia>('GET', `/emergencias/${id}`),
-  enviarLocalizacao: (id: string, local: { latitude: number; longitude: number }) =>
-    requisicao<{ mensagem: string }>('POST', `/emergencias/${id}/localizacao`, { corpo: local }),
   encerrar: (id: string) => requisicao<{ mensagem: string }>('POST', `/emergencias/${id}/encerrar`),
 };
