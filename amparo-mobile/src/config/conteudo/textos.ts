@@ -2,8 +2,8 @@
 import type { NomeIcone } from '@/views/components/ui/Icone';
 
 export const SLIDES = [
-  { foto: require('@/assets/images/carrossel-1.jpg'), titulo: 'Você não está sozinha', sub: 'Peça ajuda a qualquer momento, com um toque mesmo com a tela bloqueada.' },
-  { foto: require('@/assets/images/carrossel-2.png'), titulo: 'Guarde o que importa', sub: 'Registre fotos, áudios e relatos com criptografia e valor de prova legal.' },
+  { foto: require('@/assets/images/carrossel-1.jpg'), titulo: 'Você não está sozinha', sub: 'Peça ajuda a qualquer momento, com um toque.' },
+  { foto: require('@/assets/images/carrossel-2.png'), titulo: 'Guarde o que importa', sub: 'Registre fotos, áudios e relatos com data, hora e código de integridade.' },
   { foto: require('@/assets/images/carrossel-3.png'), titulo: 'Uma rede com você.', sub: 'Conte com pessoas de confiança e profissionais de apoio, no seu tempo.' },
   { foto: require('@/assets/images/carrossel-4.png'), titulo: 'Sua história, suas escolhas.', sub: 'Você decide quando e como agir, o Amparo apoia cada passo.' },
 ];
@@ -11,19 +11,19 @@ export const SLIDES = [
 type ItemInfo = { rotulo: string; icone: NomeIcone; texto: string };
 
 export const GUIA: ItemInfo[] = [
-  { rotulo: 'Como funcionam as ocorrências', icone: 'folder-lock', texto: 'Cada ocorrência guarda fotos, áudios, vídeos ou relatos em um cofre criptografado que só você abre. Elas ficam em ordem de data, com hora e local registrados automaticamente, e podem ser exportadas depois se você decidir levar o caso adiante.' },
+  { rotulo: 'Como funcionam as ocorrências', icone: 'folder-lock', texto: 'Cada ocorrência guarda fotos, áudios, vídeos, documentos ou relatos em um cofre que só abre com a sua conta. Elas ficam em ordem de data, com a hora do registro e o local (se a localização estiver permitida) guardados automaticamente.' },
   { rotulo: 'Central de Conteúdo e Direitos', icone: 'book-open', texto: 'Artigos curtos sobre a Lei Maria da Penha, medidas protetivas e o que esperar de cada etapa. Tudo escrito em linguagem simples e sem termos jurídicos.' },
-  { rotulo: 'Delegacias Próximas', icone: 'map-pin', texto: 'Mostramos as delegacias especializadas mais perto de você, com distância e telefone. Se a localização estiver desligada, dá para buscar por cidade ou CEP.' },
-  { rotulo: 'Como funciona o Modo Disfarçado', icone: 'calculator', texto: 'O app passa a ter o ícone e o nome de uma calculadora comum, que funciona de verdade. Para voltar ao Amparo, você digita o seu código pessoal e toca em "=". Se alguém digitar errado, nada acontece.' },
-  { rotulo: 'Como funciona o SOS', icone: 'circle-alert', texto: 'Toque e segure o botão por alguns segundos. Sua rede recebe um aviso com a sua localização, que continua sendo atualizada a cada 30 segundos enquanto o alerta estiver ativo. Nada aparece na sua tela nem toca no seu celular.' },
-  { rotulo: 'Como registrar uma prova', icone: 'camera', texto: 'Em Ocorrências, toque em registrar e escolha foto, áudio, vídeo ou texto. Local e hora entram sozinhos e não podem ser alterados — é isso que dá valor ao registro depois.' },
+  { rotulo: 'Delegacias Próximas', icone: 'map-pin', texto: 'Abrimos o app de mapas do seu celular já buscando a Delegacia da Mulher mais perto de você.' },
+  { rotulo: 'Como funciona o Modo Disfarçado', icone: 'calculator', texto: 'Ao abrir, o Amparo aparece como uma calculadora comum, que funciona de verdade. Para entrar, digite o seu código e toque em "=". Se alguém digitar errado, nada acontece.' },
+  { rotulo: 'Como funciona o SOS', icone: 'circle-alert', texto: 'Toque e segure o botão por alguns segundos. Sua rede recebe um aviso com a sua localização no momento do pedido. Nada aparece na sua tela nem toca no seu celular.' },
+  { rotulo: 'Como registrar uma prova', icone: 'camera', texto: 'Em Ocorrências, toque em registrar e escolha foto, áudio, vídeo, PDF ou texto. A hora do registro e o local entram sozinhos; se você editar depois, a edição fica marcada com a data.' },
 ];
 
 export const FAQ_REDE: ItemInfo[] = [
-  { rotulo: 'Como funciona o convite', icone: 'send', texto: 'Ela recebe uma mensagem no WhatsApp com um link. Ao abrir, confirma que aceita ser sua guardiã. Não precisa instalar nada e o convite não diz nada sobre o motivo.' },
+  { rotulo: 'Como funciona o convite', icone: 'send', texto: 'Ela recebe uma mensagem com um link. Ao abrir, confirma que aceita ser sua guardiã. Não precisa instalar nada e o convite não diz nada sobre o motivo.' },
   { rotulo: 'Se ela não responder', icone: 'clock', texto: 'O convite fica como pendente e você pode reenviar quando quiser. Em um aviso, a mensagem é enviada mesmo assim — só não temos a confirmação de que ela aceitou o papel.' },
-  { rotulo: 'Sua privacidade', icone: 'lock', texto: 'Ela vê o aviso e a sua localização enquanto ele estiver ativo. Não vê suas ocorrências, seus arquivos, nem quem mais faz parte da sua rede.' },
-  { rotulo: 'Trocar guardiã principal', icone: 'heart', texto: 'A guardiã com o coração é a primeira a ser avisada. Abra o card de outra pessoa e marque-a como principal para trocar — o aviso continua indo para toda a rede.' },
+  { rotulo: 'Sua privacidade', icone: 'lock', texto: 'Ela vê o aviso e a localização do momento do pedido. Não vê suas ocorrências, seus arquivos, nem quem mais faz parte da sua rede.' },
+  { rotulo: 'Quem é avisada primeiro', icone: 'bell', texto: 'Todas as guardiãs são avisadas ao mesmo tempo. Não existe uma principal: quem puder responder primeiro, responde.' },
   { rotulo: 'Quantas guardiãs posso ter', icone: 'users-round', texto: 'Entre 1 e 5 pessoas. Uma já protege, mas com três ou mais a chance de alguém estar disponível na hora aumenta bastante. Você pode trocar quem faz parte quando quiser.' },
 ];
 
@@ -33,11 +33,11 @@ export const POR_QUE_REDE = {
 };
 
 export const FAQ_DOC: ItemInfo[] = [
-  { rotulo: 'Isso vira prova legal?', icone: 'scale', texto: 'Cada registro guarda data, hora e local no momento da captura, junto com um código de integridade que mostra que o arquivo não foi alterado depois. Isso ajuda muito em um processo, mas quem decide o valor de cada prova é a Justiça. Você pode exportar tudo quando quiser levar a uma delegacia ou a uma advogada.' },
-  { rotulo: 'Quem pode ver isso', icone: 'eye-off', texto: 'Só você. Os arquivos são criptografados com uma chave que fica no seu aparelho — nem o Amparo consegue abrir. Nada aparece na galeria do celular e suas guardiãs não têm acesso a nenhuma ocorrência.' },
+  { rotulo: 'Isso vira prova legal?', icone: 'scale', texto: 'Cada registro guarda data, hora e local no momento da captura, junto com um código de integridade que mostra que o arquivo não foi alterado depois. Isso ajuda muito em um processo, mas quem decide o valor de cada prova é a Justiça. Quando quiser levar a uma delegacia ou a uma advogada, você pode abrir cada registro e cada arquivo pelo app.' },
+  { rotulo: 'Quem pode ver isso', icone: 'eye-off', texto: 'Só você, entrando com a sua conta. Os arquivos ficam em um armazenamento privado e cada um só abre por um link temporário, que vale alguns minutos. Nada aparece na galeria do celular, e suas guardiãs não têm acesso a nenhuma ocorrência.' },
   { rotulo: 'Por que registrar mesmo sem denunciar', icone: 'notebook-pen', texto: 'Registrar não obriga a denunciar. O que fica guardado é a sua memória organizada, com datas que você não vai precisar lembrar sozinha. Se um dia você decidir agir, o histórico já está pronto; se não decidir, ele continua só seu.' },
-  { rotulo: 'Posso apagar uma ocorrência depois?', icone: 'trash-2', texto: 'Pode, a qualquer momento. Ao apagar, o arquivo sai do aparelho e não tem como recuperar. Por isso pedimos uma confirmação antes — vale pensar com calma, porque um registro apagado hoje não volta se você precisar dele depois.' },
-  { rotulo: 'Como funciona a criptografia?', icone: 'key-round', texto: 'Os arquivos são embaralhados assim que você captura, com uma chave derivada da sua senha. Eles ficam só neste aparelho e são ilegíveis sem essa chave — nada é enviado para nossos servidores e nem a nossa equipe consegue abrir.' },
+  { rotulo: 'Posso apagar uma ocorrência depois?', icone: 'trash-2', texto: 'Pode, a qualquer momento. Ao apagar, o registro e os arquivos saem dos nossos servidores e não têm como ser recuperados. Por isso pedimos uma confirmação antes — vale pensar com calma, porque um registro apagado hoje não volta se você precisar dele depois.' },
+  { rotulo: 'Como seus arquivos são protegidos?', icone: 'key-round', texto: 'Eles viajam por conexão segura e ficam guardados em um armazenamento privado, que só abre com a sua conta. Cada arquivo recebe um código de integridade no momento do registro; ao abrir, o app confere se ele continua igual ao que foi guardado.' },
 ];
 
 export const POR_QUE_REGISTRAR = {

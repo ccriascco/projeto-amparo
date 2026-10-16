@@ -165,7 +165,7 @@ export default function TelaCadastro() {
                   </View>
                   <CartaoEscolha
                     titulo="Ativar Modo Disfarce"
-                    corpo="O app terá o ícone e o nome de uma calculadora comum."
+                    corpo="Ao abrir, o app aparece como uma calculadora comum, que funciona de verdade."
                     selecionado={disfarce === 'ativar'}
                     onPress={() => c.escolherDisfarce('ativar')}
                   />

@@ -47,7 +47,7 @@ export default function TelaEvidencia() {
           <CartaoInfo
             icone="lock-keyhole"
             titulo="Guardado com segurança"
-            corpo={registradoEm ? `Criptografado neste aparelho em ${diaMesHora(registradoEm)}.` : 'Guardado no seu cofre.'}
+            corpo={registradoEm ? `Guardado no seu cofre em ${diaMesHora(registradoEm)}.` : 'Guardado no seu cofre.'}
             borda={cores.verde30}
             corIcone={cores.verde}
             fundoIcone={cores.verde12}

@@ -161,6 +161,8 @@ As views não importam `services/` nem as stores: tudo passa pelos controllers (
 | Segurança | Sem "Salvar alterações": cada opção vale na hora; permissões abrem os ajustes do sistema | Permissões são do sistema operacional |
 | Todas | Estados de carregando, vazio e erro | Não existem no design |
 | Captura | O X volta para a ocorrência, não para o Início | Evita perder o que já foi preenchido |
+| Textos de privacidade, SOS e guias | Ajustados ao que o sistema faz: arquivos no armazenamento privado do servidor (não "só no aparelho"), localização só no momento do pedido, sem exportação, sem ícone de calculadora, delegacias pelo app de mapas, sem guardiã principal | Decisão aprovada: nenhum texto promete o que o app não faz |
+| Emergência | Sem reenvio da localização a cada 30 s (o ícone de atualizar virou um marcador de mapa) | Decisão aprovada: a localização vai só no acionamento |
 
 ## Pendências
 
@@ -168,7 +170,6 @@ As views não importam `services/` nem as stores: tudo passa pelos controllers (
 - **Notificações:** o app ainda não envia notificações.
 - **Mensagens às guardiãs:** continuam simuladas no backend (sem WhatsApp ou SMS real).
 - **Google:** falta criar os IDs de cliente OAuth no Google Cloud Console.
-- **Textos de privacidade:** mantidos como no design por decisão sua, para revisar depois. Alguns ainda dizem "guardado só no seu aparelho", mas os arquivos ficam no armazenamento privado do servidor.
 - **Banco de teste com Postgres real:** falta o dump da estrutura do banco de produção. Por enquanto os testes usam o banco em memória, que reproduz as regras do banco.
 - **Identificadores do app:** `br.com.amparo.app` é provisório.
 - **Builds nativos:** não foram gerados aqui (exigem Android Studio/Xcode ou conta EAS). O empacotamento JavaScript para Android, iOS e web foi gerado sem erros.
