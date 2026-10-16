@@ -110,6 +110,9 @@ export async function criarApp(): Promise<INestApplication> {
   const app = modulo.createNestApplication({ logger: false });
   configurarApp(app);
   await app.init();
+  // Uma porta local só para os testes, aberta uma vez: sem isso o supertest abre e fecha o servidor
+  // a cada requisição, e requisições simultâneas derrubam umas às outras (ECONNRESET no Linux da CI).
+  await app.listen(0, '127.0.0.1');
   return app;
 }
 
