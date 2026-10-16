@@ -34,7 +34,7 @@ function FormularioGuardia({ id, existente }: { id?: string; existente?: Guardia
 
   return (
     <TelaInterna
-      cabecalho={{ titulo: editando ? 'Editar guardião' : 'Adicionar guardião', sub: 'Ela vai receber um convite por WhatsApp.', aoFecharTopo: voltar }}
+      cabecalho={{ titulo: editando ? 'Editar guardião' : 'Adicionar guardião', sub: 'Ela vai receber um convite por mensagem.', aoFecharTopo: voltar }}
       semNav
       sobreposicao={
         <Confirmacao
