@@ -13,6 +13,9 @@ export type UsuariaResumo = {
   modo_disfarcado: boolean;
 };
 
+/** Por onde chega o código de recuperação de senha: e-mail ou SMS da conta. */
+export type CanalRecuperacao = 'email' | 'sms';
+
 export type RespostaSessao = {
   mensagem: string;
   access_token: string;

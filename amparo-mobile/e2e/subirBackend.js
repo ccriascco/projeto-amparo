@@ -1,8 +1,12 @@
 // Sobe o backend de demonstração (amparo-backend, npm run demo) numa porta própria e espera ficar pronto.
 const { spawn } = require('child_process');
+const fs = require('fs');
+const os = require('os');
 const path = require('path');
 
 const PORTA = process.env.E2E_PORTA || '3100';
+// O log do backend também vai para um arquivo: o teste da recuperação de senha lê dali o código simulado
+const ARQUIVO_LOG = path.join(os.tmpdir(), `amparo-e2e-backend-${PORTA}.log`);
 
 module.exports = async () => {
   process.env.E2E_API_URL = `http://127.0.0.1:${PORTA}`;
@@ -14,11 +18,13 @@ module.exports = async () => {
   });
   globalThis.__BACKEND_E2E__ = processo;
 
+  fs.writeFileSync(ARQUIVO_LOG, '');
   let saida = '';
   await new Promise((resolve, reject) => {
     const limite = setTimeout(() => reject(new Error(`Backend de demonstração não subiu em 60 s:\n${saida.slice(-2000)}`)), 60_000);
     const ler = (dados) => {
       saida += dados.toString();
+      fs.appendFileSync(ARQUIVO_LOG, dados.toString());
       if (saida.includes('Servidor de demonstração')) {
         clearTimeout(limite);
         resolve();

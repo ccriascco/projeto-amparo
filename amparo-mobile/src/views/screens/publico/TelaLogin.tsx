@@ -88,7 +88,16 @@ export default function TelaLogin() {
                   <Texto variante="nota" corLivre={fixas.sos} centro accessibilityLiveRegion="polite">
                     {c.erroGeral}
                   </Texto>
+                ) : c.senhaAlterada ? (
+                  <Texto variante="nota" corLivre={cores.verde} centro accessibilityLiveRegion="polite">
+                    Senha alterada. Entre com a nova senha.
+                  </Texto>
                 ) : null}
+                <Pressable onPress={c.esqueciSenha} accessibilityRole="link" hitSlop={8}>
+                  <Texto peso={700} corLivre={cores.nota} style={{ lineHeight: 18 }}>
+                    Esqueceu a Senha?
+                  </Texto>
+                </Pressable>
                 <Pressable onPress={c.irParaCadastro} accessibilityRole="link" hitSlop={8}>
                   <Texto corLivre={cores.nota} style={{ lineHeight: 18 }}>
                     Ainda não tem conta? Clique aqui

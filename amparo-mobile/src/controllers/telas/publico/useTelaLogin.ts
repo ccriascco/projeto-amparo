@@ -1,5 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 
 import { useRascunhoCadastro } from '@/models/stores/rascunhoCadastro';
@@ -11,6 +11,8 @@ import { emailValido } from '@/utils/validacao/regras';
 
 // Login por e-mail e senha ou pelo Google. Sem conta no Google, leva ao cadastro já preenchido.
 export function useTelaLogin() {
+  // Volta da recuperação de senha com ?aviso=senha-alterada
+  const { aviso } = useLocalSearchParams<{ aviso?: string }>();
   const entrar = useSessao((s) => s.entrar);
   const definirGoogle = useRascunhoCadastro((s) => s.definirGoogle);
   const [email, setEmail] = useState('');
@@ -76,5 +78,7 @@ export function useTelaLogin() {
     entrarComGoogle: () => google.mutate(),
     entrandoComGoogle: google.isPending,
     irParaCadastro: () => router.replace('/cadastro'),
+    senhaAlterada: aviso === 'senha-alterada',
+    esqueciSenha: () => router.push({ pathname: '/recuperar-senha', params: email.trim() ? { email: email.trim() } : {} }),
   };
 }

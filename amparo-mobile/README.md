@@ -4,7 +4,7 @@ App do Amparo em **React Native + TypeScript (Expo SDK 57)**, feito a partir do 
 
 ## O que o app faz
 
-- **Conta:** cadastro em 8 etapas (CPF validado, senha forte, permissões, Modo Disfarce e guardiãs), login por e-mail e senha ou Google, perfil, troca de senha, tema claro/escuro/automático, sair e excluir a conta.
+- **Conta:** cadastro em 8 etapas (CPF validado, senha forte, permissões, Modo Disfarce e guardiãs), login por e-mail e senha ou Google, recuperação de senha por código (e-mail ou SMS), perfil, troca de senha, tema claro/escuro/automático, sair e excluir a conta.
 - **Sessão do aparelho:** o app reabre sem pedir a senha de novo. Com o Modo Disfarce ligado, ele abre como uma calculadora funcional, e só o código de 4 números + "=" destrava. Cinco códigos errados encerram a sessão, mas o app continua parecendo uma calculadora.
 - **Início:** botão SOS (segurar 3 s), registros da semana, leitura de risco calculada pela IA, ações rápidas e guias.
 - **Pedido de ajuda:** envia a localização do momento do acionamento (uma vez só, sem reenvio) e mostra "Quem foi avisada" (confirmou ou aguardando).
@@ -141,7 +141,8 @@ As views não importam `services/` nem as stores: tudo passa pelos controllers (
 
 | Tela | Diferença | Motivo |
 |---|---|---|
-| Login | Sem "Esqueceu a Senha?" e sem "Sign in with Apple"; "Sign in with Google" virou "Entrar com Google" | Decisão aprovada (não há recuperação de senha nem login Apple no backend) |
+| Login | Sem "Sign in with Apple"; "Sign in with Google" virou "Entrar com Google" | Decisão aprovada (não há login Apple no backend) |
+| Recuperação de senha | Tela nova (o design só tinha o link "Esqueceu a Senha?"), no estilo do cadastro: e-mail e canal (e-mail ou SMS), depois o código de 6 números e a senha nova | Decisão aprovada; a tela não mostra o e-mail nem o telefone cadastrados, para não revelar se a conta existe |
 | Login | Placeholder da senha "Sua senha" em vez de "123456" | O exemplo do design contradiz a regra de senha forte |
 | Cadastro, etapa 6 | Pede câmera e microfone, mas não notificações | O app ainda não envia notificações |
 | Cadastro, etapa 7 | Código de 4 números obrigatório só ao ativar o disfarce | Decisão aprovada |

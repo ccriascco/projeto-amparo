@@ -1,10 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UsuariasController } from './usuarias.controller';
 import { UsuariasService } from '../services/usuarias.service';
+import { RecuperacaoSenhaService } from '../services/recuperacao-senha.service';
 
 describe('UsuariasController', () => {
   let controller: UsuariasController;
   let service: Record<string, jest.Mock>;
+  let recuperacao: Record<string, jest.Mock>;
 
   beforeEach(async () => {
     service = {
@@ -14,13 +16,26 @@ describe('UsuariasController', () => {
       logout: jest.fn(),
       trocarSenha: jest.fn(),
     };
+    recuperacao = { pedir: jest.fn(), redefinir: jest.fn() };
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [UsuariasController],
-      providers: [{ provide: UsuariasService, useValue: service }],
+      providers: [
+        { provide: UsuariasService, useValue: service },
+        { provide: RecuperacaoSenhaService, useValue: recuperacao },
+      ],
     }).compile();
 
     controller = module.get<UsuariasController>(UsuariasController);
+  });
+
+  it('recuperação de senha delega pro service de recuperação', async () => {
+    recuperacao.pedir.mockResolvedValue({ mensagem: 'ok' });
+    recuperacao.redefinir.mockResolvedValue({ mensagem: 'trocada' });
+    await expect(controller.pedirRecuperacao({ email: 'a@a.com', canal: 'sms' })).resolves.toEqual({ mensagem: 'ok' });
+    expect(recuperacao.pedir).toHaveBeenCalledWith('a@a.com', 'sms');
+    await expect(controller.redefinirSenha({ email: 'a@a.com', codigo: '123456', nova_senha: 'Nova#Senha2026' })).resolves.toEqual({ mensagem: 'trocada' });
+    expect(recuperacao.redefinir).toHaveBeenCalledWith('a@a.com', '123456', 'Nova#Senha2026');
   });
 
   it('cadastrar delega pro service', async () => {

@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { TOTAL_ETAPAS, useTelaCadastro } from '@/controllers/telas/publico/useTelaCadastro';
 import { ChecklistSenha } from '@/views/components/dominio/ChecklistSenha';
 import { BarraEtapas, BotaoVoltar, NotaCadeado } from '@/views/components/ui/Basicos';
+import { CabecalhoEtapa as Cabecalho } from '@/views/components/ui/CabecalhoEtapa';
 import { Botao } from '@/views/components/ui/Botao';
 import { Campo } from '@/views/components/ui/Campo';
 import { CartaoEscolha } from '@/views/components/ui/CartaoEscolha';
@@ -14,17 +15,6 @@ import { Icone } from '@/views/components/ui/Icone';
 import { Texto } from '@/views/components/ui/Texto';
 import { useTema } from '@/views/theme/tema';
 import { fixas, raios } from '@/views/theme/tokens';
-
-function Cabecalho({ titulo, sub, tamanho = 31 }: { titulo: string; sub: string; tamanho?: number }) {
-  return (
-    <View style={{ gap: 4 }}>
-      <Texto accessibilityRole="header" peso={700} tamanho={tamanho} style={{ lineHeight: Math.round(tamanho * 1.2) }}>
-        {titulo}
-      </Texto>
-      <Texto variante="subtitulo">{sub}</Texto>
-    </View>
-  );
-}
 
 export default function TelaCadastro() {
   const { cores, sombraCard } = useTema();
