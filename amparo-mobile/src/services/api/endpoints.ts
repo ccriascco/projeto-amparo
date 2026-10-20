@@ -1,5 +1,6 @@
 import { requisicao } from './cliente';
 import type {
+  CanalRecuperacao,
   DadosCadastro,
   Guardia,
   GuardiaoCadastro,
@@ -25,6 +26,10 @@ export const apiUsuarias = {
     requisicao<RespostaSessao>('POST', '/usuarias/login-google', { corpo: { id_token: idToken }, publica: true }),
   renovarSessao: (refreshToken: string, codigo?: string) =>
     requisicao<RespostaSessao>('POST', '/usuarias/sessao/renovar', { corpo: { refresh_token: refreshToken, codigo }, publica: true }),
+  pedirRecuperacao: (email: string, canal: CanalRecuperacao) =>
+    requisicao<{ mensagem: string }>('POST', '/usuarias/senha/recuperar', { corpo: { email, canal }, publica: true }),
+  redefinirSenha: (email: string, codigo: string, novaSenha: string) =>
+    requisicao<{ mensagem: string }>('POST', '/usuarias/senha/redefinir', { corpo: { email, codigo, nova_senha: novaSenha }, publica: true }),
   logout: () => requisicao<{ mensagem: string }>('POST', '/usuarias/logout', { corpo: {} }),
   perfil: () => requisicao<Perfil>('GET', '/usuarias/me'),
   atualizarPerfil: (dados: Partial<Pick<Perfil, 'nome_completo' | 'telefone' | 'email' | 'modo_disfarcado'>> & { codigo_disfarce?: string }) =>

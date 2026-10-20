@@ -75,6 +75,8 @@ Todas as rotas exigem o cabeçalho `Authorization: Bearer <token>`, exceto as ma
 |---|---|---|
 | `POST` | `/usuarias` | Cadastro (público) |
 | `POST` | `/usuarias/login` | Login (público) |
+| `POST` | `/usuarias/senha/recuperar` | Envia um código de 6 números por e-mail ou SMS da conta (`canal`). A resposta é a mesma exista ou não a conta (público) |
+| `POST` | `/usuarias/senha/redefinir` | Troca a senha com o código (vale 15 min, uso único, 5 tentativas) e desconecta todos os aparelhos (público) |
 | `POST` | `/usuarias/login-google` | Login com o `id_token` do Google (público). Sem conta: `404` com `precisa_cadastro` |
 | `POST` | `/usuarias/sessao/renovar` | Reabre a sessão do aparelho com o `refresh_token` (e o `codigo` quando o Modo Disfarce está ligado) (público) |
 | `POST` | `/usuarias/logout` | Revoga o token atual e encerra a sessão do aparelho |
@@ -126,6 +128,7 @@ Os scripts estão em `supabase/` e devem ser executados no SQL Editor do Supabas
 5. `logout_e_exclusao_conta.sql`: tabela de tokens revogados e função de exclusão de conta.
 6. `janela_30_dias_e_lgpd.sql`: colunas `data_ocorrencia`, `nivel_risco` e `atualizado_em` em ocorrências, PDF como evidência e exclusão dos tokens revogados junto com a conta.
 7. `app_mobile_sessoes_google_convites.sql`: código do disfarce, Google, sessões do aparelho, convite das guardiãs, avisos de emergência e as funções de cadastro e exclusão atualizadas.
+8. `recuperacao_senha.sql`: tabela dos códigos de recuperação de senha.
 
 Além dos scripts, o bucket de Storage `evidencias_amparo` deve existir e ser **privado**, sem políticas liberando acesso para `anon` ou `public`.
 
