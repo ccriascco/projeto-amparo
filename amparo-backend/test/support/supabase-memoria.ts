@@ -22,7 +22,7 @@ type Resposta = { data: any; error: Erro | null; count?: number | null };
 
 const TABELAS = [
   'usuarias', 'guardioes', 'ocorrencias', 'evidencias', 'emergencias',
-  'rastreamento_gps', 'alertas_risco', 'tokens_revogados', 'sessoes_aparelho', 'avisos_emergencia',
+  'rastreamento_gps', 'alertas_risco', 'tokens_revogados', 'sessoes_aparelho', 'avisos_emergencia', 'recuperacoes_senha',
 ] as const;
 
 export class BancoMemoria {
@@ -77,6 +77,10 @@ export class BancoMemoria {
       base.criado_em = base.criado_em ?? this.agora();
       base.ultimo_uso_em = base.ultimo_uso_em ?? this.agora();
       base.tentativas_codigo = base.tentativas_codigo ?? 0;
+    }
+    if (nome === 'recuperacoes_senha') {
+      base.criado_em = base.criado_em ?? this.agora();
+      base.tentativas = base.tentativas ?? 0;
     }
     if (nome === 'avisos_emergencia') {
       base.enviado_em = base.enviado_em ?? this.agora();
@@ -185,7 +189,7 @@ export class BancoMemoria {
       const ocorrencias = this.tabela('ocorrencias').filter((o) => o.usuaria_id === u).map((o) => o.id);
       this.tabelas.rastreamento_gps = this.tabela('rastreamento_gps').filter((g) => !emergencias.includes(g.emergencia_id));
       this.tabelas.evidencias = this.tabela('evidencias').filter((e) => !ocorrencias.includes(e.ocorrencia_id));
-      for (const t of ['avisos_emergencia', 'sessoes_aparelho', 'alertas_risco', 'emergencias', 'ocorrencias', 'guardioes', 'tokens_revogados']) {
+      for (const t of ['recuperacoes_senha', 'avisos_emergencia', 'sessoes_aparelho', 'alertas_risco', 'emergencias', 'ocorrencias', 'guardioes', 'tokens_revogados']) {
         this.tabelas[t] = this.tabela(t).filter((l) => l.usuaria_id !== u);
       }
       this.tabelas.usuarias = this.tabela('usuarias').filter((l) => l.id !== u);

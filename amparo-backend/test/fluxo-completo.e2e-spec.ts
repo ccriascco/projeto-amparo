@@ -1204,3 +1204,84 @@ describe('10. Sessão do aparelho, Google, conta e confirmação das guardiãs',
     process.env.MOSTRAR_LINKS_SIMULADOS = '1';
   });
 });
+
+/* ===================================================================== */
+describe('11. Recuperação de senha', () => {
+  const NOVA = 'Recuperada#2026';
+  const codigoDoLog = () => {
+    const linha = [...logs].reverse().find((l) => l.includes('código de recuperação:'));
+    return linha ? linha.split(': ').pop()!.trim() : null;
+  };
+  const pedir = (email: string, canal = 'email') => http().post('/usuarias/senha/recuperar').send({ email, canal });
+  const redefinir = (email: string, codigo: string, nova_senha = NOVA) =>
+    http().post('/usuarias/senha/redefinir').send({ email, codigo, nova_senha });
+
+  beforeAll(() => {
+    process.env.MOSTRAR_LINKS_SIMULADOS = '1';
+  });
+  afterAll(() => {
+    delete process.env.MOSTRAR_LINKS_SIMULADOS;
+  });
+  beforeEach(() => zerarLimites(app));
+
+  it('[RS-01] a resposta é a mesma para e-mail com e sem conta (não revela quem tem conta)', async () => {
+    const { dados } = await criarUsuaria(app);
+    zerarLimites(app);
+    const comConta = await pedir(dados.email);
+    const semConta = await pedir('ninguem-aqui@amparo.test');
+    expect(comConta.status).toBe(200);
+    expect(semConta.status).toBe(200);
+    expect(semConta.body).toEqual(comConta.body);
+  });
+
+  it('[RS-02] o código certo troca a senha, derruba as sessões abertas e só vale uma vez', async () => {
+    const { dados, token } = await criarUsuaria(app);
+    zerarLimites(app);
+    logs.length = 0;
+    expect((await pedir(dados.email, 'sms')).status).toBe(200);
+    const codigo = codigoDoLog();
+    expect(codigo).toMatch(/^\d{6}$/);
+    expect(logs.join('\n')).toContain('por SMS');
+
+    const r = await redefinir(dados.email, codigo!);
+    expect(r.status).toBe(200);
+    expect((await http().get('/guardioes').set(auth(token))).status).toBe(401);
+    expect((await http().post('/usuarias/login').send({ email: dados.email, senha: dados.senha })).status).toBe(401);
+    expect((await http().post('/usuarias/login').send({ email: dados.email, senha: NOVA })).status).toBe(201);
+    expect((await redefinir(dados.email, codigo!, 'Outra#Senha2026')).status).toBe(400);
+  });
+
+  it('[RS-03] código errado, e-mail sem conta e pedido não feito recebem a mesma recusa', async () => {
+    const { dados } = await criarUsuaria(app);
+    zerarLimites(app);
+    const semPedido = await redefinir(dados.email, '123456');
+    await pedir(dados.email);
+    const errado = await redefinir(dados.email, codigoDoLog() === '000000' ? '000001' : '000000');
+    const semConta = await redefinir('ninguem-aqui@amparo.test', '123456');
+    for (const r of [semPedido, errado, semConta]) {
+      expect(r.status).toBe(400);
+      expect(r.body.erro).toBe('Código inválido ou expirado. Peça um novo código.');
+    }
+  });
+
+  it('[RS-04] valida canal, formato do código e força da senha nova', async () => {
+    expect((await pedir('ana@amparo.test', 'whatsapp')).status).toBe(400);
+    expect((await redefinir('ana@amparo.test', '12ab56')).status).toBe(400);
+    expect((await redefinir('ana@amparo.test', '123456', 'fraca')).status).toBe(400);
+  });
+
+  it('[RS-05] o log não mostra o e-mail nem o telefone completos', async () => {
+    const { dados } = await criarUsuaria(app);
+    zerarLimites(app);
+    delete process.env.MOSTRAR_LINKS_SIMULADOS;
+    logs.length = 0;
+    await pedir(dados.email);
+    await pedir(dados.email, 'sms');
+    const tudo = logs.join('\n');
+    expect(tudo).toMatch(/código de recuperação por e-mail/);
+    expect(tudo).not.toContain(dados.email);
+    expect(tudo).not.toContain(dados.telefone);
+    expect(codigoDoLog()).toBeNull();
+    process.env.MOSTRAR_LINKS_SIMULADOS = '1';
+  });
+});

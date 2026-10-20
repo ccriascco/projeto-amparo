@@ -1,6 +1,7 @@
-import { Controller, Post, Body, Delete, Get, Patch, Put } from '@nestjs/common';
+import { Controller, Post, Body, Delete, Get, HttpCode, Patch, Put } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { UsuariasService } from '../services/usuarias.service';
+import { RecuperacaoSenhaService } from '../services/recuperacao-senha.service';
 import { Public } from '../decorators/public.decorator';
 import { CurrentUser } from '../decorators/current-user.decorator';
 import { CadastrarUsuariaDto } from '../models/dto/usuarias/cadastrar-usuaria.dto';
@@ -8,16 +9,36 @@ import { LoginDto } from '../models/dto/usuarias/login.dto';
 import { ExcluirContaDto } from '../models/dto/usuarias/excluir-conta.dto';
 import { LoginGoogleDto, LogoutDto, RenovarSessaoDto } from '../models/dto/usuarias/sessao.dto';
 import { AtualizarPerfilDto, TrocarCodigoDto, TrocarSenhaDto } from '../models/dto/usuarias/perfil.dto';
+import { PedirRecuperacaoDto, RedefinirSenhaDto } from '../models/dto/usuarias/recuperacao-senha.dto';
 
 @Controller('usuarias')
 export class UsuariasController {
-  constructor(private readonly usuariasService: UsuariasService) {}
+  constructor(
+    private readonly usuariasService: UsuariasService,
+    private readonly recuperacao: RecuperacaoSenhaService,
+  ) {}
 
   @Public()
   @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @Post()
   async cadastrar(@Body() body: CadastrarUsuariaDto) {
     return await this.usuariasService.cadastrar(body);
+  }
+
+  @Public()
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  @HttpCode(200)
+  @Post('senha/recuperar')
+  async pedirRecuperacao(@Body() body: PedirRecuperacaoDto) {
+    return await this.recuperacao.pedir(body.email, body.canal);
+  }
+
+  @Public()
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  @HttpCode(200)
+  @Post('senha/redefinir')
+  async redefinirSenha(@Body() body: RedefinirSenhaDto) {
+    return await this.recuperacao.redefinir(body.email, body.codigo, body.nova_senha);
   }
 
   @Public()
