@@ -1,3 +1,5 @@
+import { aplicarIconeDisfarce } from '../iconeDisfarce';
+
 const mockIcones = { suporta: true, atual: null as string | null, trocar: jest.fn(async (nome: string | null) => nome) };
 
 jest.mock('expo-alternate-app-icons', () => ({
@@ -7,8 +9,6 @@ jest.mock('expo-alternate-app-icons', () => ({
   getAppIconName: () => mockIcones.atual,
   setAlternateAppIcon: (nome: string | null) => mockIcones.trocar(nome),
 }));
-
-import { aplicarIconeDisfarce } from '../iconeDisfarce';
 
 describe('aplicarIconeDisfarce', () => {
   beforeEach(() => {

@@ -1,6 +1,6 @@
 import * as Haptics from 'expo-haptics';
-import { useEffect, useRef, useState } from 'react';
-import { Platform, Pressable, View } from 'react-native';
+import { useEffect, useEffectEvent, useRef, useState } from 'react';
+import { AppState, Platform, Pressable, View } from 'react-native';
 import Animated, { cancelAnimation, Easing, interpolate, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { Icone } from '@/views/components/ui/Icone';
@@ -17,14 +17,17 @@ type Props = { aoAcionar: () => void; desabilitado?: boolean; testID?: string };
 export function BotaoSOS({ aoAcionar, desabilitado = false, testID }: Props) {
   const progresso = useSharedValue(0);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pressionado = useRef(false);
   const [segurando, setSegurando] = useState(false);
 
   useEffect(() => () => {
     if (timer.current) clearTimeout(timer.current);
   }, []);
 
+
   const iniciar = () => {
     if (desabilitado) return;
+    pressionado.current = true;
     setSegurando(true);
     if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     progresso.value = withTiming(1, { duration: TEMPO_SEGURAR_MS, easing: Easing.linear });
@@ -32,12 +35,16 @@ export function BotaoSOS({ aoAcionar, desabilitado = false, testID }: Props) {
       timer.current = null;
       setSegurando(false);
       progresso.value = 0;
+      // Só aciona se ela ainda estiver segurando o botão
+      if (!pressionado.current) return;
+      pressionado.current = false;
       if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
       aoAcionar();
     }, TEMPO_SEGURAR_MS);
   };
 
   const cancelar = () => {
+    pressionado.current = false;
     if (timer.current) {
       clearTimeout(timer.current);
       timer.current = null;
@@ -46,6 +53,17 @@ export function BotaoSOS({ aoAcionar, desabilitado = false, testID }: Props) {
     cancelAnimation(progresso);
     progresso.value = withTiming(0, { duration: 200 });
   };
+
+  // Se o app sai da frente no meio do toque (tela bloqueada, troca de app, troca do ícone do
+  // disfarce), o aviso de que o dedo saiu pode se perder: o pedido em andamento é cancelado,
+  // para o SOS nunca disparar sem ela estar segurando o botão.
+  const aoMudarEstadoDoApp = useEffectEvent((estado: string) => {
+    if (estado !== 'active') cancelar();
+  });
+  useEffect(() => {
+    const assinatura = AppState.addEventListener('change', aoMudarEstadoDoApp);
+    return () => assinatura.remove();
+  }, []);
 
   const estiloProgresso = useAnimatedStyle(() => ({
     opacity: interpolate(progresso.value, [0, 0.05, 1], [0, 0.35, 0.5]),
