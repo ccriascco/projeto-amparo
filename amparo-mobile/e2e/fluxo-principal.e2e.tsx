@@ -24,6 +24,8 @@ describe('fluxo principal (app + backend real com banco em memória + IA simulad
     // Início: saudação e leitura atual (2 ocorrências recentes sem violência física → risco médio)
     expect(await screen.findByText('Olá, Marina', {}, { timeout: 15_000 })).toBeOnTheScreen();
     expect(await screen.findByText('Você tem uma atualização', {}, { timeout: 15_000 })).toBeOnTheScreen();
+    // Cartão da leitura de risco, logo abaixo do SOS: nível calculado pela IA
+    expect(await screen.findByLabelText(/^Leitura de risco da IA: Médio\. Atualizada em \d{2}\/\d{2}/)).toBeOnTheScreen();
 
     // Nova ocorrência pela ação rápida "Registrar prova"
     await user.press(screen.getByRole('button', { name: 'Registrar prova' }));
@@ -37,5 +39,6 @@ describe('fluxo principal (app + backend real com banco em memória + IA simulad
     // De volta ao Início: a IA reclassificou para risco alto
     await user.press(screen.getAllByRole('tab', { name: 'Início' })[0]);
     expect(await screen.findByText('Ajuda mais perto de você', {}, { timeout: 20_000 })).toBeOnTheScreen();
+    expect(await screen.findByLabelText(/^Leitura de risco da IA: Alto\./)).toBeOnTheScreen();
   });
 });
