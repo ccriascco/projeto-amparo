@@ -10,3 +10,10 @@ globalThis.fetch = fetchBloqueado as unknown as typeof fetch;
 // Reanimated 4 / Worklets: usar os mocks oficiais no Jest
 jest.mock('react-native-worklets', () => require('react-native-worklets/src/mock'));
 jest.mock('react-native-reanimated', () => require('react-native-reanimated/mock'));
+
+// Ícone alternativo do Modo Disfarce: módulo nativo, sem implementação no ambiente de teste
+jest.mock('expo-alternate-app-icons', () => ({
+  supportsAlternateIcons: false,
+  getAppIconName: () => null,
+  setAlternateAppIcon: async () => null,
+}));

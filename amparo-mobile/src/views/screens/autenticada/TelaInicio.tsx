@@ -1,10 +1,12 @@
 import { Pressable, RefreshControl, View } from 'react-native';
 
+import { CONFIRMAR_DISFARCE } from '@/config/conteudo/disfarce';
 import { useTelaInicio } from '@/controllers/telas/autenticada/useTelaInicio';
 import type { NivelRisco, Ocorrencia, Perfil } from '@/models/tipos';
 import { BotaoSOS } from '@/views/components/dominio/BotaoSOS';
 import { TelaInterna } from '@/views/components/layout/TelaInterna';
 import { Cartao, CartaoInfo, CirculoIcone } from '@/views/components/ui/Cartao';
+import { Confirmacao } from '@/views/components/ui/Confirmacao';
 import { Carrossel } from '@/views/components/ui/Carrossel';
 import { Icone, type NomeIcone } from '@/views/components/ui/Icone';
 import { Sheet } from '@/views/components/ui/Sheet';
@@ -34,7 +36,19 @@ export default function TelaInicio() {
       aba="inicio"
       cabecalho={{ modo: 'home', nome: nome.split(' ')[0], iniciais: iniciais(nome) }}
       controleAtualizar={<RefreshControl refreshing={c.atualizando} onRefresh={c.atualizar} tintColor={cores.acento} />}
-      sobreposicao={<Sheet visivel={!!info} aoFechar={c.fecharInfo} titulo={info?.titulo} texto={info?.texto} />}
+      sobreposicao={
+        <>
+          <Sheet visivel={!!info} aoFechar={c.fecharInfo} titulo={info?.titulo} texto={info?.texto} />
+          <Confirmacao
+            visivel={c.confirmandoDisfarce}
+            titulo={CONFIRMAR_DISFARCE.titulo}
+            texto={CONFIRMAR_DISFARCE.texto}
+            rotuloConfirmar={CONFIRMAR_DISFARCE.rotuloConfirmar}
+            aoConfirmar={c.confirmarDisfarce}
+            aoFechar={c.cancelarDisfarce}
+          />
+        </>
+      }
     >
       {c.emergenciaAtiva ? (
         <Cartao

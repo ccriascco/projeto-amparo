@@ -87,3 +87,10 @@ jest.mock('expo-haptics', () => ({
   ImpactFeedbackStyle: { Light: 'light' },
   NotificationFeedbackType: { Warning: 'warning' },
 }));
+
+// Ícone alternativo do Modo Disfarce: módulo nativo, sem implementação no ambiente de teste
+jest.mock('expo-alternate-app-icons', () => ({
+  supportsAlternateIcons: false,
+  getAppIconName: () => null,
+  setAlternateAppIcon: async () => null,
+}));

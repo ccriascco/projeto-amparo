@@ -2,6 +2,7 @@ import { Image } from 'expo-image';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { RESUMO_DISFARCE } from '@/config/conteudo/disfarce';
 import { TOTAL_ETAPAS, useTelaCadastro } from '@/controllers/telas/publico/useTelaCadastro';
 import { ChecklistSenha } from '@/views/components/dominio/ChecklistSenha';
 import { BarraEtapas, BotaoVoltar, NotaCadeado } from '@/views/components/ui/Basicos';
@@ -155,7 +156,7 @@ export default function TelaCadastro() {
                   </View>
                   <CartaoEscolha
                     titulo="Ativar Modo Disfarce"
-                    corpo="Ao abrir, o app aparece como uma calculadora comum, que funciona de verdade."
+                    corpo={RESUMO_DISFARCE}
                     selecionado={disfarce === 'ativar'}
                     onPress={() => c.escolherDisfarce('ativar')}
                   />

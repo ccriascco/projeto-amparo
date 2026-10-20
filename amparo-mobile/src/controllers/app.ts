@@ -14,6 +14,7 @@ import { AppState } from 'react-native';
 
 import { useSessao } from '@/models/stores/sessao';
 import { ErroApi } from '@/services/api/erros';
+import { aplicarIconeDisfarce } from '@/services/iconeDisfarce';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -41,6 +42,7 @@ export function useInicializacaoApp() {
   });
   const [clienteQuery] = useState(novoClienteQuery);
   const estado = useSessao((s) => s.estado);
+  const disfarce = useSessao((s) => s.usuaria?.modo_disfarcado);
 
   useEffect(() => {
     useSessao.getState().iniciar();
@@ -58,6 +60,11 @@ export function useInicializacaoApp() {
   useEffect(() => {
     if (estado === 'deslogada') clienteQuery.clear();
   }, [estado, clienteQuery]);
+
+  // Ícone e nome do app seguem o Modo Disfarce (sem conta conectada, fica como está)
+  useEffect(() => {
+    if (disfarce !== undefined) aplicarIconeDisfarce(disfarce);
+  }, [disfarce]);
 
   const pronto = fontesProntas && estado !== 'iniciando';
   useEffect(() => {

@@ -1,10 +1,12 @@
 import { Pressable, View } from 'react-native';
 
+import { CONFIRMAR_DISFARCE, RESUMO_DISFARCE } from '@/config/conteudo/disfarce';
 import { voltar } from '@/controllers/navegacao';
 import { type IdPermissao, useTelaSeguranca } from '@/controllers/telas/autenticada/mais/useTelaSeguranca';
 import { TelaInterna } from '@/views/components/layout/TelaInterna';
 import { Interruptor } from '@/views/components/ui/Basicos';
 import { Cartao, CirculoIcone } from '@/views/components/ui/Cartao';
+import { Confirmacao } from '@/views/components/ui/Confirmacao';
 import type { NomeIcone } from '@/views/components/ui/Icone';
 import { Texto } from '@/views/components/ui/Texto';
 import { fixas } from '@/views/theme/tokens';
@@ -24,6 +26,16 @@ export default function TelaSeguranca() {
     <TelaInterna
       aba="mais"
       cabecalho={{ titulo: 'Configurações de segurança', sub: 'Disfarce, privacidade e o que sai do seu aparelho tudo no seu controle.', aoFecharTopo: voltar }}
+      sobreposicao={
+        <Confirmacao
+          visivel={c.confirmandoDisfarce}
+          titulo={CONFIRMAR_DISFARCE.titulo}
+          texto={CONFIRMAR_DISFARCE.texto}
+          rotuloConfirmar={CONFIRMAR_DISFARCE.rotuloConfirmar}
+          aoConfirmar={c.confirmarDisfarce}
+          aoFechar={c.cancelarDisfarce}
+        />
+      }
     >
       <Cartao
         onPress={c.alternarDisfarce}
@@ -32,7 +44,7 @@ export default function TelaSeguranca() {
       >
         <View style={{ flex: 1, gap: 4 }}>
           <Texto variante="cardTitulo">Modo Disfarce</Texto>
-          <Texto variante="cardCorpo">Ao abrir, o app aparece como uma calculadora comum.</Texto>
+          <Texto variante="cardCorpo">{RESUMO_DISFARCE}</Texto>
         </View>
         <Interruptor ligado={disfarce} />
       </Cartao>
