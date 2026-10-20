@@ -49,6 +49,12 @@ export function useTelaInicio() {
       ),
   });
 
+  // Quando a leitura foi atualizada: a ocorrência mais recente que recebeu um nível da IA
+  const leituraAtualizadaEm = useMemo(() => {
+    const datas = (ocorrencias.data?.ocorrencias ?? []).filter((o) => o.nivel_risco).map((o) => o.atualizado_em ?? o.criado_em);
+    return datas.sort().at(-1) ?? null;
+  }, [ocorrencias.data]);
+
   const semana = useMemo(() => {
     const dias = new Set((ocorrencias.data?.ocorrencias ?? []).map(diaDaOcorrencia));
     return semanaAtual().map((s) => ({ ...s, registrou: dias.has(s.dia) }));
@@ -85,6 +91,7 @@ export function useTelaInicio() {
     mostrarInfo: setInfo,
     fecharInfo: () => setInfo(null),
     perfil: perfil.data,
+    leituraAtualizadaEm,
     carregandoPerfil: perfil.isLoading,
     erroPerfil: perfil.isError,
     recarregarPerfil: () => perfil.refetch(),
