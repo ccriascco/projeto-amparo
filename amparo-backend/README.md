@@ -129,6 +129,7 @@ Os scripts estão em `supabase/` e devem ser executados no SQL Editor do Supabas
 6. `janela_30_dias_e_lgpd.sql`: colunas `data_ocorrencia`, `nivel_risco` e `atualizado_em` em ocorrências, PDF como evidência e exclusão dos tokens revogados junto com a conta.
 7. `app_mobile_sessoes_google_convites.sql`: código do disfarce, Google, sessões do aparelho, convite das guardiãs, avisos de emergência e as funções de cadastro e exclusão atualizadas.
 8. `recuperacao_senha.sql`: tabela dos códigos de recuperação de senha.
+9. `revogar_execucao_funcoes.sql`: tira das chaves públicas (`anon`, `authenticated`) a permissão de chamar as funções do banco; só o backend (`service_role`) chama.
 
 Além dos scripts, o bucket de Storage `evidencias_amparo` deve existir e ser **privado**, sem políticas liberando acesso para `anon` ou `public`.
 

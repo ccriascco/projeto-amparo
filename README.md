@@ -149,6 +149,7 @@ No SQL Editor do Supabase, com as tabelas `usuarias`, `guardioes`, `ocorrencias`
 6. `janela_30_dias_e_lgpd.sql` (inclui uma consulta de verificação; rode antes de subir o backend)
 7. `app_mobile_sessoes_google_convites.sql` (sessão do aparelho, código do disfarce, Google e confirmação das guardiãs)
 8. `recuperacao_senha.sql` (código de recuperação de senha)
+9. `revogar_execucao_funcoes.sql` (as funções do banco só podem ser chamadas pelo backend; sem isto, a chave pública poderia apagar contas)
 
 Crie também o bucket de Storage **`evidencias_amparo`**, como **privado** e sem políticas para `anon` ou `public`.
 
