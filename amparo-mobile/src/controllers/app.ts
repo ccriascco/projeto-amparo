@@ -9,8 +9,8 @@ import { Quicksand_700Bold } from '@expo-google-fonts/quicksand';
 import { QueryClient } from '@tanstack/react-query';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
-import { useEffect, useState } from 'react';
-import { AppState } from 'react-native';
+import { useEffect, useEffectEvent, useState } from 'react';
+import { AppState, Platform } from 'react-native';
 
 import { useSessao } from '@/models/stores/sessao';
 import { ErroApi } from '@/services/api/erros';
@@ -45,7 +45,11 @@ export function useInicializacaoApp() {
   const disfarce = useSessao((s) => s.usuaria?.modo_disfarcado);
 
   useEffect(() => {
+    if (__DEV__) console.log('[APP] tela raiz montada');
     useSessao.getState().iniciar();
+    return () => {
+      if (__DEV__) console.log('[APP] tela raiz desmontada');
+    };
   }, []);
 
   // Com o Modo Disfarce ligado, sair do app trava de novo na calculadora
@@ -61,10 +65,22 @@ export function useInicializacaoApp() {
     if (estado === 'deslogada') clienteQuery.clear();
   }, [estado, clienteQuery]);
 
-  // Ícone e nome do app seguem o Modo Disfarce (sem conta conectada, fica como está)
-  useEffect(() => {
+  // Ícone e nome do app seguem o Modo Disfarce (sem conta conectada, fica como está).
+  // No Android a troca acontece quando o app vai para segundo plano: trocar com ele aberto
+  // fecha a tela em uso. No iPhone a Apple só deixa trocar com o app aberto, então é na hora.
+  const aplicarIcone = useEffectEvent(() => {
     if (disfarce !== undefined) aplicarIconeDisfarce(disfarce);
+  });
+  useEffect(() => {
+    if (Platform.OS !== 'android') aplicarIcone();
   }, [disfarce]);
+  useEffect(() => {
+    if (Platform.OS !== 'android') return;
+    const assinatura = AppState.addEventListener('change', (s) => {
+      if (s === 'background') aplicarIcone();
+    });
+    return () => assinatura.remove();
+  }, []);
 
   const pronto = fontesProntas && estado !== 'iniciando';
   useEffect(() => {

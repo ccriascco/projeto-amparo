@@ -26,6 +26,7 @@ export function useTelaInicio() {
 
   const sos = useMutation({
     mutationFn: async () => {
+      if (__DEV__) console.log('[SOS] chamada à API /emergencias/acionar');
       // A localização não pode atrasar o pedido: espera no máximo 3 s
       const local = await Promise.race([localizacaoAtual(), new Promise<null>((r) => setTimeout(() => r(null), 3000))]);
       try {
