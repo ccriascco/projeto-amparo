@@ -26,6 +26,7 @@ export function useTelaInicio() {
 
   const sos = useMutation({
     mutationFn: async () => {
+      if (__DEV__) console.log('[SOS] chamada à API /emergencias/acionar');
       // A localização não pode atrasar o pedido: espera no máximo 3 s
       const local = await Promise.race([localizacaoAtual(), new Promise<null>((r) => setTimeout(() => r(null), 3000))]);
       try {
@@ -54,7 +55,9 @@ export function useTelaInicio() {
     return semanaAtual().map((s) => ({ ...s, registrou: dias.has(s.dia) }));
   }, [ocorrencias.data]);
 
-  const alternarDisfarce = () => {
+  const [confirmandoDisfarce, setConfirmandoDisfarce] = useState(false);
+
+  const trocarDisfarce = () => {
     const p = perfil.data;
     if (!p) return;
     if (!p.modo_disfarcado && !p.codigo_disfarce_definido) {
@@ -62,6 +65,14 @@ export function useTelaInicio() {
       return;
     }
     atualizarPerfil.mutate({ modo_disfarcado: !p.modo_disfarcado });
+  };
+
+  // Ligar avisa antes que o ícone e o nome do app vão mudar; desligar é direto
+  const alternarDisfarce = () => {
+    const p = perfil.data;
+    if (!p) return;
+    if (!p.modo_disfarcado) return setConfirmandoDisfarce(true);
+    trocarDisfarce();
   };
 
   const atualizar = () => {
@@ -97,5 +108,11 @@ export function useTelaInicio() {
     abrirDelegacias: () => abrirDelegaciasProximas(),
     abrirRecursos: () => router.push('/mais/conteudo'),
     alternarDisfarce,
+    confirmandoDisfarce,
+    confirmarDisfarce: () => {
+      setConfirmandoDisfarce(false);
+      trocarDisfarce();
+    },
+    cancelarDisfarce: () => setConfirmandoDisfarce(false),
   };
 }

@@ -28,7 +28,9 @@ export function useTelaSeguranca() {
     setPerms(await situacaoPermissoes());
   };
 
-  const alternarDisfarce = () => {
+  const [confirmandoDisfarce, setConfirmandoDisfarce] = useState(false);
+
+  const trocarDisfarce = () => {
     if (!perfil.data) return;
     if (!disfarce && !perfil.data.codigo_disfarce_definido) {
       router.push({ pathname: '/mais/codigo', params: { motivo: 'disfarce' } });
@@ -37,12 +39,25 @@ export function useTelaSeguranca() {
     atualizar.mutate({ modo_disfarcado: !disfarce });
   };
 
+  // Ligar avisa antes que o ícone e o nome do app vão mudar; desligar é direto
+  const alternarDisfarce = () => {
+    if (!perfil.data) return;
+    if (!disfarce) return setConfirmandoDisfarce(true);
+    trocarDisfarce();
+  };
+
   return {
     disfarce,
     codigoDefinido: !!perfil.data?.codigo_disfarce_definido,
     perms,
     erroDisfarce: atualizar.isError ? mensagemDeErro(atualizar.error, 'Não foi possível mudar o Modo Disfarce.') : null,
     alternarDisfarce,
+    confirmandoDisfarce,
+    confirmarDisfarce: () => {
+      setConfirmandoDisfarce(false);
+      trocarDisfarce();
+    },
+    cancelarDisfarce: () => setConfirmandoDisfarce(false),
     alternarPermissao,
     abrirCodigo: () => router.push('/mais/codigo'),
   };

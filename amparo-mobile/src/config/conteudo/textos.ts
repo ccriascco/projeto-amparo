@@ -1,6 +1,8 @@
 // Textos fixos do design (Design.html). Conteúdo local: não vem do backend.
 import type { NomeIcone } from '@/views/components/ui/Icone';
 
+import { RESUMO_DISFARCE } from './disfarce';
+
 export const SLIDES = [
   { foto: require('@/assets/images/carrossel-1.jpg'), titulo: 'Você não está sozinha', sub: 'Peça ajuda a qualquer momento, com um toque.' },
   { foto: require('@/assets/images/carrossel-2.png'), titulo: 'Guarde o que importa', sub: 'Registre fotos, áudios e relatos com data, hora e código de integridade.' },
@@ -14,7 +16,7 @@ export const GUIA: ItemInfo[] = [
   { rotulo: 'Como funcionam as ocorrências', icone: 'folder-lock', texto: 'Cada ocorrência guarda fotos, áudios, vídeos, documentos ou relatos em um cofre que só abre com a sua conta. Elas ficam em ordem de data, com a hora do registro e o local (se a localização estiver permitida) guardados automaticamente.' },
   { rotulo: 'Central de Conteúdo e Direitos', icone: 'book-open', texto: 'Artigos curtos sobre a Lei Maria da Penha, medidas protetivas e o que esperar de cada etapa. Tudo escrito em linguagem simples e sem termos jurídicos.' },
   { rotulo: 'Delegacias Próximas', icone: 'map-pin', texto: 'Abrimos o app de mapas do seu celular já buscando a Delegacia da Mulher mais perto de você.' },
-  { rotulo: 'Como funciona o Modo Disfarçado', icone: 'calculator', texto: 'Ao abrir, o Amparo aparece como uma calculadora comum, que funciona de verdade. Para entrar, digite o seu código e toque em "=". Se alguém digitar errado, nada acontece.' },
+  { rotulo: 'Como funciona o Modo Disfarçado', icone: 'calculator', texto: `${RESUMO_DISFARCE} Ela funciona de verdade. Para entrar, digite o seu código e toque em "=". Se alguém digitar errado, nada acontece.` },
   { rotulo: 'Como funciona o SOS', icone: 'circle-alert', texto: 'Toque e segure o botão por alguns segundos. Sua rede recebe um aviso com a sua localização no momento do pedido. Nada aparece na sua tela nem toca no seu celular.' },
   { rotulo: 'Como registrar uma prova', icone: 'camera', texto: 'Em Ocorrências, toque em registrar e escolha foto, áudio, vídeo, PDF ou texto. A hora do registro e o local entram sozinhos; se você editar depois, a edição fica marcada com a data.' },
 ];
