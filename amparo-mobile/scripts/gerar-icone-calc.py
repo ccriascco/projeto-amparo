@@ -4,6 +4,7 @@ Uso (na pasta amparo-mobile):  python scripts/gerar-icone-calc.py
 Saídas em assets/images/:
   calc-icon.png             iOS (1024x1024, sem transparência)
   calc-icon-foreground.png  Android, primeiro plano do ícone adaptativo (1024x1024, com transparência)
+  favicon-calc.png          navegador, ícone da aba com o Modo Disfarce ligado (48x48)
 O fundo do ícone adaptativo do Android é a cor FUNDO (configurada no app.json).
 
 Desenho próprio e genérico: não copia a calculadora de nenhum fabricante.
@@ -67,3 +68,7 @@ salvar(ios, 'calc-icon.png')
 frente = Image.new('RGBA', (LADO, LADO), (0, 0, 0, 0))
 desenhar(ImageDraw.Draw(frente), int(LADO * 0.50))
 salvar(frente, 'calc-icon-foreground.png')
+
+# Navegador: ícone da aba com o Modo Disfarce ligado (o mesmo desenho do iOS, em 48x48)
+ios.resize((48, 48), Image.LANCZOS).save(SAIDA / 'favicon-calc.png', optimize=True)
+print('gerado', SAIDA / 'favicon-calc.png')

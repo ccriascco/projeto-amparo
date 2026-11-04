@@ -5,7 +5,7 @@ App do Amparo em **React Native + TypeScript (Expo SDK 57)**, feito a partir do 
 ## O que o app faz
 
 - **Conta:** cadastro em 8 etapas (CPF validado, senha forte, permissões, Modo Disfarce e guardiãs), login por e-mail e senha ou Google, recuperação de senha por código (e-mail ou SMS), perfil, troca de senha, tema claro/escuro/automático, sair e excluir a conta.
-- **Sessão do aparelho:** o app reabre sem pedir a senha de novo. Com o Modo Disfarce ligado, ele abre como uma calculadora funcional, e só o código de 4 números + "=" destrava. Cinco códigos errados encerram a sessão, mas o app continua parecendo uma calculadora. No Android, o ícone e o nome do app viram uma calculadora ("Calc"); no iPhone, só o ícone muda (a Apple não deixa trocar o nome, e o iOS avisa a troca citando o app).
+- **Sessão do aparelho:** o app reabre sem pedir a senha de novo. Com o Modo Disfarce ligado, ele abre como uma calculadora funcional, e só o código de 4 números + "=" destrava. Cinco códigos errados encerram a sessão, mas o app continua parecendo uma calculadora. No Android, o ícone e o nome do app viram uma calculadora ("Calc"); no iPhone, só o ícone muda (a Apple não deixa trocar o nome, e o iOS avisa a troca citando o app); no navegador, o ícone e o título da aba viram "Calc" (`services/iconeDisfarce.web.ts`).
 - **Início:** botão SOS (segurar 3 s), registros da semana, cartão "Leitura de risco · IA" (escala Baixo · Médio · Alto, com a data da última atualização e como a IA calcula), ações rápidas e guias.
 - **Pedido de ajuda:** envia a localização do momento do acionamento (uma vez só, sem reenvio), mostra esse ponto num mapa real (Apple Maps no iPhone, Google Maps no Android, OpenStreetMap na web; sem localização, fica a imagem do design) e "Quem foi avisada" (confirmou ou aguardando).
 - **Rede de apoio:** até 5 guardiãs, com o status do convite e a opção de reenviar.
@@ -163,7 +163,7 @@ As views não importam `services/` nem as stores: tudo passa pelos controllers (
 | Segurança | Sem "Salvar alterações": cada opção vale na hora; permissões abrem os ajustes do sistema | Permissões são do sistema operacional |
 | Todas | Estados de carregando, vazio e erro | Não existem no design |
 | Captura | O X volta para a ocorrência, não para o Início | Evita perder o que já foi preenchido |
-| Modo Disfarce | Ao ligar, um aviso explica o que muda; no Android o app vira "Calc" com ícone de calculadora, no iPhone só o ícone muda | Decisão aprovada. Ícone próprio e genérico (`scripts/gerar-icone-calc.py`), trocado pelo `expo-alternate-app-icons`; o nome "Calc" vem de `plugins/nome-icone-disfarce.js` |
+| Modo Disfarce | Ao ligar, um aviso explica o que muda; no Android o app vira "Calc" com ícone de calculadora, no iPhone só o ícone muda, no navegador muda a aba | Decisão aprovada. Ícone próprio e genérico (`scripts/gerar-icone-calc.py`), trocado pelo `expo-alternate-app-icons`; o nome "Calc" vem de `plugins/nome-icone-disfarce.js` |
 | Textos de privacidade, SOS e guias | Ajustados ao que o sistema faz: arquivos no armazenamento privado do servidor (não "só no aparelho"), localização só no momento do pedido, sem exportação, sem ícone de calculadora, delegacias pelo app de mapas, sem guardiã principal | Decisão aprovada: nenhum texto promete o que o app não faz |
 | Emergência | Sem reenvio da localização a cada 30 s (o ícone de atualizar virou um marcador de mapa) | Decisão aprovada: a localização vai só no acionamento |
 
