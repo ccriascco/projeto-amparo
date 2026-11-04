@@ -22,6 +22,7 @@ Fluxo: app → backend (HTTPS + JWT) → Supabase; backend → IA (`POST /classi
 - `views/screens/` — telas (só layout). `views/components/ui/` — componentes genéricos; `views/components/dominio/` — componentes do Amparo. `views/theme/` — tema e tokens.
 - `controllers/telas/<grupo>/useTela<Nome>.ts` — toda a lógica de cada tela fica num hook controlador. A tela chama o hook e só desenha.
 - `models/` — tipos e stores (Zustand). `services/` — API e integrações. `utils/` — funções puras. `config/conteudo/` — textos aprovados (privacidade, SOS, guias, disfarce).
+- `assets/images/` — o ícone do app (`icon.png`, `android-icon-*`, `favicon.png`, `splash-icon.png`) é a marca do `logo.png` sobre o vinho `#954B6E`, gerado por `scripts/gerar-icone-app.py`. Não edite esses PNGs à mão; troque o logo ou o script e gere de novo. Mudar o ícone exige novo build no celular.
 - `plugins/` — config plugins do Expo (ex.: `nome-icone-disfarce.js`, que precisa vir **antes** de `expo-alternate-app-icons` no `app.json`).
 - Não mexer em `Design.html` e `LEVANTAMENTO.md`: são a referência de design e o levantamento de requisitos.
 

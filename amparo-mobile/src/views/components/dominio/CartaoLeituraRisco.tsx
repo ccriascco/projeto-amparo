@@ -2,6 +2,7 @@ import { Pressable, View } from 'react-native';
 
 import type { NivelRisco } from '@/models/tipos';
 import { Cartao, CirculoIcone } from '@/views/components/ui/Cartao';
+import type { NomeIcone } from '@/views/components/ui/Icone';
 import { Texto } from '@/views/components/ui/Texto';
 import { useTema } from '@/views/theme/tema';
 import { fixas, raios } from '@/views/theme/tokens';
@@ -12,6 +13,10 @@ const NIVEIS: { id: NivelRisco; rotulo: string }[] = [
   { id: 'Medio', rotulo: 'Médio' },
   { id: 'Alto', rotulo: 'Alto' },
 ];
+
+// Ícone de cada nível, como no design (Início): escudo, sino e boia salva-vidas.
+// Sem leitura (carregando, erro ou antes do primeiro registro) fica o escudo.
+export const ICONE_RISCO: Record<NivelRisco, NomeIcone> = { Baixo: 'shield-check', Medio: 'bell', Alto: 'life-buoy' };
 
 type Props = {
   nivel: NivelRisco | null;
@@ -28,6 +33,7 @@ export function CartaoLeituraRisco({ nivel, atualizadaEm, carregando, erro, aoTe
   const { cores } = useTema();
   const corDo: Record<NivelRisco, string> = { Baixo: cores.verde, Medio: cores.acento, Alto: fixas.sos };
   const rotulo = NIVEIS.find((n) => n.id === nivel)?.rotulo;
+  const icone: NomeIcone = nivel && !carregando && !erro ? ICONE_RISCO[nivel] : 'shield-check';
 
   const nota = carregando
     ? 'Carregando sua leitura…'
@@ -46,7 +52,9 @@ export function CartaoLeituraRisco({ nivel, atualizadaEm, carregando, erro, aoTe
       {/* Para leitores de tela, o título, a escala e a data são lidos como uma frase só */}
       <View accessible accessibilityLabel={resumo} style={{ gap: 16 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-          <CirculoIcone nome="shield-check" />
+          <View testID={`icone-risco-${icone}`}>
+            <CirculoIcone nome={icone} />
+          </View>
           <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <Texto variante="cardTitulo">Leitura de risco</Texto>
             <View style={{ paddingVertical: 2, paddingHorizontal: 8, borderRadius: raios.pilula, backgroundColor: cores.borda10 }}>

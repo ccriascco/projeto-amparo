@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { AppState, type AppStateStatus } from 'react-native';
 
 import { BotaoSOS, TEMPO_SEGURAR_MS } from '@/views/components/dominio/BotaoSOS';
+import { CartaoLeituraRisco } from '@/views/components/dominio/CartaoLeituraRisco';
 import { Botao } from '@/views/components/ui/Botao';
 import { Campo } from '@/views/components/ui/Campo';
 import { EntradaPin } from '@/views/components/ui/EntradaPin';
@@ -147,5 +148,25 @@ describe('BotaoSOS', () => {
     await act(async () => fireEvent(screen.getByRole('button', { name: /SOS/ }), 'pressIn'));
     await act(async () => jest.advanceTimersByTime(TEMPO_SEGURAR_MS + 100));
     expect(aoAcionar).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('CartaoLeituraRisco', () => {
+  const props = { atualizadaEm: '2026-11-03T12:00:00Z', carregando: false, erro: false, aoTentar: jest.fn(), aoExplicar: jest.fn() };
+
+  it.each([
+    ['Baixo', 'shield-check'],
+    ['Medio', 'bell'],
+    ['Alto', 'life-buoy'],
+  ] as const)('nível %s usa o ícone do design (%s)', async (nivel, icone) => {
+    await render(<CartaoLeituraRisco {...props} nivel={nivel} />);
+    expect(screen.getByTestId(`icone-risco-${icone}`)).toBeOnTheScreen();
+  });
+
+  it('sem leitura ou carregando, fica o escudo', async () => {
+    await render(<CartaoLeituraRisco {...props} nivel={null} />);
+    expect(screen.getByTestId('icone-risco-shield-check')).toBeOnTheScreen();
+    await render(<CartaoLeituraRisco {...props} nivel="Alto" carregando />);
+    expect(screen.getByTestId('icone-risco-shield-check')).toBeOnTheScreen();
   });
 });
