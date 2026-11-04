@@ -1,8 +1,9 @@
-import { Image } from 'expo-image';
 import { Pressable, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useTelaEmergencia } from '@/controllers/telas/autenticada/useTelaEmergencia';
+import { MapaLocalizacao } from '@/views/components/dominio/MapaLocalizacao';
+import { PreviaMapa } from '@/views/components/dominio/PreviaMapa';
 import { Botao } from '@/views/components/ui/Botao';
 import { Cartao, CartaoInfo } from '@/views/components/ui/Cartao';
 import { Carregando } from '@/views/components/ui/Estados';
@@ -12,7 +13,7 @@ import { useTema } from '@/views/theme/tema';
 import { fixas, raios } from '@/views/theme/tokens';
 import { hora } from '@/utils/datas';
 
-// "Alerta enviado": confirmação, prévia do mapa, quem foi avisada (atualiza a cada 10 s)
+// "Alerta enviado": confirmação, mapa com a localização enviada, quem foi avisada (atualiza a cada 10 s)
 // e "Cancelar aviso" (encerra a emergência).
 export default function TelaEmergencia() {
   const { avisos, encerrada, ...c } = useTelaEmergencia();
@@ -58,10 +59,7 @@ export default function TelaEmergencia() {
         )}
 
         <View style={{ height: 180, borderRadius: 20, overflow: 'hidden', ...sombraCard }}>
-          <Image source={require('@/assets/images/mapa-previa.png')} contentFit="cover" style={{ width: '100%', height: '100%' }} accessibilityLabel="Prévia do mapa com sua localização" />
-          <View style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, alignItems: 'center', justifyContent: 'center' }}>
-            <Icone nome="map-pin" tamanho={32} cor={cores.acento} />
-          </View>
+          {c.localCarregando ? <PreviaMapa rotulo="Carregando o mapa" /> : <MapaLocalizacao local={c.local} />}
         </View>
 
         <Cartao estilo={{ gap: 12 }}>

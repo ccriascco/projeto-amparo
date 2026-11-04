@@ -87,3 +87,12 @@ jest.mock('expo-haptics', () => ({
   ImpactFeedbackStyle: { Light: 'light' },
   NotificationFeedbackType: { Warning: 'warning' },
 }));
+
+// react-native-maps é nativo: nos testes vira View simples
+jest.mock('react-native-maps', () => {
+  const React = require('react');
+  const { View } = require('react-native');
+  const MapView = (props: object) => React.createElement(View, props);
+  const Marker = (props: object) => React.createElement(View, { ...props, testID: 'mapa-marcador' });
+  return { __esModule: true, default: MapView, Marker };
+});

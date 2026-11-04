@@ -10,3 +10,12 @@ globalThis.fetch = fetchBloqueado as unknown as typeof fetch;
 // Reanimated 4 / Worklets: usar os mocks oficiais no Jest
 jest.mock('react-native-worklets', () => require('react-native-worklets/src/mock'));
 jest.mock('react-native-reanimated', () => require('react-native-reanimated/mock'));
+
+// react-native-maps é nativo: nos testes vira View simples
+jest.mock('react-native-maps', () => {
+  const React = require('react');
+  const { View } = require('react-native');
+  const MapView = (props: object) => React.createElement(View, props);
+  const Marker = (props: object) => React.createElement(View, { ...props, testID: 'mapa-marcador' });
+  return { __esModule: true, default: MapView, Marker };
+});

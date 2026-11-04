@@ -12,6 +12,7 @@ import type {
   RespostaAcionar,
   RespostaCadastro,
   RespostaSessao,
+  PontoGps,
   SituacaoEmergencia,
   Evidencia,
 } from '@/models/tipos';
@@ -75,4 +76,5 @@ export const apiEmergencias = {
   ativa: () => requisicao<SituacaoEmergencia>('GET', '/emergencias/ativa'),
   detalhe: (id: string) => requisicao<SituacaoEmergencia>('GET', `/emergencias/${id}`),
   encerrar: (id: string) => requisicao<{ mensagem: string }>('POST', `/emergencias/${id}/encerrar`),
+  rota: (id: string) => requisicao<{ rastro_gps: PontoGps[] }>('GET', `/emergencias/${id}/rota`),
 };

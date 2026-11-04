@@ -13,6 +13,7 @@ export const chaves = {
   ocorrencia: (id: string) => ['ocorrencias', id] as const,
   emergenciaAtiva: ['emergencia', 'ativa'] as const,
   emergencia: (id: string) => ['emergencia', id] as const,
+  rotaEmergencia: (id: string) => ['emergencia', id, 'rota'] as const,
 };
 
 const sessaoAtiva = () => useSessao.getState().estado === 'ativa';
@@ -118,5 +119,14 @@ export function useEmergencia(id: string | undefined) {
     queryFn: () => apiEmergencias.detalhe(id as string),
     enabled: !!id,
     refetchInterval: 10_000,
+  });
+}
+
+/** Localização enviada no acionamento (uma vez só, por isso não atualiza sozinha) */
+export function useRotaEmergencia(id: string | undefined) {
+  return useQuery({
+    queryKey: chaves.rotaEmergencia(id ?? ''),
+    queryFn: () => apiEmergencias.rota(id as string),
+    enabled: !!id,
   });
 }
