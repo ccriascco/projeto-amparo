@@ -71,6 +71,9 @@ describe('telas da conta, da rede e do Modo Disfarce (app + backend real com ban
     await user.press(screen.getAllByRole('tab', { name: 'Mais' })[0]);
     await user.press(await screen.findByRole('button', { name: /^Configurações de Segurança/ }, ESPERA));
     await user.press(await screen.findByRole('button', { name: 'Modo Disfarce, desligado' }, ESPERA));
+    // Antes de ligar, o app avisa que o ícone e o nome vão mudar
+    expect(await screen.findByText('Ligar o Modo Disfarce?', {}, ESPERA)).toBeOnTheScreen();
+    await user.press(screen.getByRole('button', { name: 'Ligar o disfarce' }));
     expect(await screen.findByText('Para ligar o Modo Disfarce, crie um código de quatro números.', {}, ESPERA)).toBeOnTheScreen();
     await user.type(screen.getByLabelText('Novo código'), NOVA.codigo);
     await user.type(screen.getByLabelText('Confirmar novo código'), '2469');

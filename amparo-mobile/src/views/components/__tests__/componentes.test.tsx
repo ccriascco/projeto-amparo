@@ -1,5 +1,6 @@
-import { render, screen, userEvent } from '@testing-library/react-native';
+import { act, fireEvent, render, screen, userEvent } from '@testing-library/react-native';
 import { useState } from 'react';
+import { AppState, type AppStateStatus } from 'react-native';
 
 import { BotaoSOS, TEMPO_SEGURAR_MS } from '@/views/components/dominio/BotaoSOS';
 import { Botao } from '@/views/components/ui/Botao';
@@ -106,5 +107,45 @@ describe('BotaoSOS', () => {
     await user.press(screen.getByRole('button', { name: /SOS/ }));
     jest.advanceTimersByTime(TEMPO_SEGURAR_MS * 2);
     expect(aoAcionar).not.toHaveBeenCalled();
+  });
+
+  it('se o app sai da frente no meio do toque, o SOS não dispara (mesmo sem o aviso de que o dedo saiu)', async () => {
+    const ouvintes: ((s: AppStateStatus) => void)[] = [];
+    // Troca direta (e não jest.spyOn): no ambiente de teste o addEventListener já é um mock,
+    // e restaurar um spy em cima dele apagaria a implementação para os testes seguintes
+    const original = AppState.addEventListener;
+    AppState.addEventListener = ((_tipo: string, fn: (s: AppStateStatus) => void) => {
+      ouvintes.push(fn);
+      return { remove: () => undefined };
+    }) as unknown as typeof AppState.addEventListener;
+    const aoAcionar = jest.fn();
+    const r = await render(<BotaoSOS aoAcionar={aoAcionar} />);
+    try {
+      // Encosta o dedo e o app vai para o fundo antes de soltar (o "soltou" nunca chega)
+      await act(async () => fireEvent(screen.getByRole('button', { name: /SOS/ }), 'pressIn'));
+      await act(async () => ouvintes.forEach((fn) => fn('background')));
+      await act(async () => jest.advanceTimersByTime(TEMPO_SEGURAR_MS * 2));
+      expect(aoAcionar).not.toHaveBeenCalled();
+    } finally {
+      await act(async () => r.unmount());
+      AppState.addEventListener = original;
+    }
+  });
+
+  it('desmontar a tela no meio do toque cancela o SOS', async () => {
+    const aoAcionar = jest.fn();
+    const r = await render(<BotaoSOS aoAcionar={aoAcionar} />);
+    await act(async () => fireEvent(screen.getByRole('button', { name: /SOS/ }), 'pressIn'));
+    await act(async () => r.unmount());
+    jest.advanceTimersByTime(TEMPO_SEGURAR_MS * 2);
+    expect(aoAcionar).not.toHaveBeenCalled();
+  });
+
+  it('o teste de interrupção vale: segurando sem interrupção, dispara', async () => {
+    const aoAcionar = jest.fn();
+    await render(<BotaoSOS aoAcionar={aoAcionar} />);
+    await act(async () => fireEvent(screen.getByRole('button', { name: /SOS/ }), 'pressIn'));
+    await act(async () => jest.advanceTimersByTime(TEMPO_SEGURAR_MS + 100));
+    expect(aoAcionar).toHaveBeenCalledTimes(1);
   });
 });

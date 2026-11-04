@@ -88,6 +88,13 @@ jest.mock('expo-haptics', () => ({
   NotificationFeedbackType: { Warning: 'warning' },
 }));
 
+// Ícone alternativo do Modo Disfarce: módulo nativo, sem implementação no ambiente de teste
+jest.mock('expo-alternate-app-icons', () => ({
+  supportsAlternateIcons: false,
+  getAppIconName: () => null,
+  setAlternateAppIcon: async () => null,
+}));
+
 // react-native-maps é nativo: nos testes vira View simples
 jest.mock('react-native-maps', () => {
   const React = require('react');

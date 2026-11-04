@@ -37,7 +37,21 @@
       ],
       "expo-secure-store",
       "expo-audio",
-      "expo-video"
+      "expo-video",
+      "./plugins/nome-icone-disfarce",
+      [
+        "expo-alternate-app-icons",
+        [
+          {
+            "name": "Calc",
+            "ios": "./assets/images/calc-icon.png",
+            "android": {
+              "foregroundImage": "./assets/images/calc-icon-foreground.png",
+              "backgroundColor": "#2F3437"
+            }
+          }
+        ]
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

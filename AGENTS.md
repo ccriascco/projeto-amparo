@@ -85,7 +85,7 @@ python -m uvicorn main:app --port 8000 --reload
 - O mapa da tela "Alerta enviado" mostra só esse ponto, sem `showsUserLocation`. Abrir o mapa envia as coordenadas ao provedor (Apple, Google ou OpenStreetMap): não use mapas em outras telas sem aprovação.
 - Telas públicas não revelam se uma conta existe, nem o e-mail ou telefone cadastrados.
 - Textos de privacidade, SOS, guias e disfarce ficam em `amparo-mobile/src/config/conteudo/` e foram aprovados. Não reescreva sem aprovação.
-- Modo disfarce: no Android, o app vira "Calc" com ícone de calculadora (a troca acontece quando o app vai para segundo plano); no iPhone, só o ícone muda.
+- Modo disfarce: no Android, o app vira "Calc" com ícone de calculadora (a troca acontece quando o app vai para segundo plano); no iPhone, só o ícone muda; no navegador, o ícone e o título da aba viram "Calc" (`iconeDisfarce.web.ts`). Os ícones de calculadora (inclusive `favicon-calc.png`) saem de `scripts/gerar-icone-calc.py`.
 
 ## Convenções de código
 

@@ -33,6 +33,7 @@ O problema que ele resolve: provas de violência costumam se perder ou ficar ace
 **Conta e acesso**
 - Cadastro com validação de CPF (dígitos verificadores, com ou sem máscara) e senha forte (letras e números, sem sequências nem senhas comuns).
 - Login com senha e **login disfarçado**: uma segunda senha, pensada para abrir o app a partir de uma tela de calculadora.
+- **Ícone de disfarce:** com o Modo Disfarce ligado, o app aparece no aparelho como uma calculadora. No Android, o ícone e o nome mudam para "Calc" quando a usuária sai do app; no iPhone, só o ícone muda; no navegador, a aba passa a mostrar "Calc" com ícone de calculadora.
 - Logout com revogação do token e exclusão definitiva da conta (confirmada com a senha).
 
 **Rede de apoio**
