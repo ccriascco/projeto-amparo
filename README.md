@@ -523,6 +523,8 @@ Mais detalhes das rotas e regras em [`amparo-backend/README.md`](amparo-backend/
 
 ## Como contribuir
 
+Antes de qualquer mudança, leia o [AGENTS.md](AGENTS.md): ele reúne a estrutura, os comandos, as regras do projeto e os problemas conhecidos (vale para pessoas e para agentes de IA).
+
 Hoje o projeto usa apenas a branch `main`. Para mudanças novas, o fluxo recomendado é:
 
 1. Crie uma branch a partir de `main`:
@@ -539,7 +541,8 @@ Hoje o projeto usa apenas a branch `main`. Para mudanças novas, o fluxo recomen
    npm run lint
    ```
 
-4. Abra o pull request para `main` descrevendo o que mudou, por que mudou e como foi testado. Se houver SQL novo, inclua o script em `amparo-backend/supabase/` e explique a ordem de execução.
+4. Atualize a documentação no mesmo pull request: o `AGENTS.md` e este `README.md` (e o README da parte alterada, se houver) precisam refletir toda mudança no projeto.
+5. Abra o pull request para `main` descrevendo o que mudou, por que mudou e como foi testado. Se houver SQL novo, inclua o script em `amparo-backend/supabase/` e explique a ordem de execução.
 
 Cuidados:
 - Nunca faça commit de `.env`, chaves ou senhas.

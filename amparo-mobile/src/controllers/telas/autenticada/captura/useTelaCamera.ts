@@ -1,7 +1,8 @@
 import { type CameraView, useCameraPermissions, useMicrophonePermissions } from 'expo-camera';
-import { router, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { useRef, useState } from 'react';
 
+import { voltar } from '@/controllers/navegacao';
 import { useTelaPrivada } from '@/controllers/privacidade';
 import { LIMITE_MB, problemaDoArquivo, useAnexos } from '@/models/stores/anexos';
 import { abrirAjustesDoSistema } from '@/utils/permissoes';
@@ -66,6 +67,6 @@ export function useTelaCamera() {
       if ((!c.granted && !c.canAskAgain) || (!m.granted && !m.canAskAgain)) abrirAjustesDoSistema();
     },
     capturar,
-    voltar: () => router.back(),
+    voltar,
   };
 }

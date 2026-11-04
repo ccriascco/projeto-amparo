@@ -1,7 +1,8 @@
-import { router, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 
 import { useGuardioes, useReenviarConvite, useRemoverGuardia, useSalvarGuardia } from '@/controllers/dados';
+import { voltar } from '@/controllers/navegacao';
 import type { Guardia } from '@/models/tipos';
 import { mensagemDeErro } from '@/services/api/erros';
 import { mascararTelefone, somenteDigitos, telefoneValido } from '@/utils/validacao/regras';
@@ -44,13 +45,13 @@ export function useFormularioGuardia({ id, existente }: { id?: string; existente
     if (e.nome || e.telefone) return;
     salvar.mutate(
       { id, dados: { nome_completo: nome.trim(), telefone: somenteDigitos(telefone), parentesco_relacao: relacao } },
-      { onSuccess: () => router.back(), onError: (err) => setErroGeral(mensagem(err)) },
+      { onSuccess: () => voltar(), onError: (err) => setErroGeral(mensagem(err)) },
     );
   };
 
   const removerAgora = () => {
     if (!id) return;
-    remover.mutate(id, { onSuccess: () => router.back() });
+    remover.mutate(id, { onSuccess: () => voltar() });
   };
 
   return {

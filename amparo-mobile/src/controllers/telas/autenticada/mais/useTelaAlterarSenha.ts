@@ -1,8 +1,8 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { router } from 'expo-router';
 import { useState } from 'react';
 
 import { chaves, usePerfil } from '@/controllers/dados';
+import { voltar } from '@/controllers/navegacao';
 import { apiUsuarias } from '@/services/api/endpoints';
 import { ErroApi, mensagemDeErro } from '@/services/api/erros';
 import { senhaAtendeRegras } from '@/utils/validacao/regras';
@@ -21,7 +21,7 @@ export function useTelaAlterarSenha() {
     mutationFn: () => apiUsuarias.trocarSenha(temSenha ? atual : undefined, nova),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: chaves.perfil });
-      router.back();
+      voltar();
     },
     onError: (e) => {
       if (e instanceof ErroApi && e.status === 401) setErros({ atual: 'A senha atual está incorreta.' });
