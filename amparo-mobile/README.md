@@ -7,7 +7,7 @@ App do Amparo em **React Native + TypeScript (Expo SDK 57)**, feito a partir do 
 - **Conta:** cadastro em 8 etapas (CPF validado, senha forte, permissões, Modo Disfarce e guardiãs), login por e-mail e senha ou Google, recuperação de senha por código (e-mail ou SMS), perfil, troca de senha, tema claro/escuro/automático, sair e excluir a conta.
 - **Sessão do aparelho:** o app reabre sem pedir a senha de novo. Com o Modo Disfarce ligado, ele abre como uma calculadora funcional, e só o código de 4 números + "=" destrava. Cinco códigos errados encerram a sessão, mas o app continua parecendo uma calculadora.
 - **Início:** botão SOS (segurar 3 s), registros da semana, cartão "Leitura de risco · IA" (escala Baixo · Médio · Alto, com a data da última atualização e como a IA calcula), ações rápidas e guias.
-- **Pedido de ajuda:** envia a localização do momento do acionamento (uma vez só, sem reenvio) e mostra "Quem foi avisada" (confirmou ou aguardando).
+- **Pedido de ajuda:** envia a localização do momento do acionamento (uma vez só, sem reenvio), mostra esse ponto num mapa real (Apple Maps no iPhone, Google Maps no Android, OpenStreetMap na web; sem localização, fica a imagem do design) e "Quem foi avisada" (confirmou ou aguardando).
 - **Rede de apoio:** até 5 guardiãs, com o status do convite e a opção de reenviar.
 - **Ocorrências:**
   - Registro com 6 tipos de violência, a data em que aconteceu, o relato e anexos (foto, vídeo, áudio e PDF, pela câmera, pelo gravador ou pela galeria).
@@ -35,6 +35,7 @@ cp .env.example .env
 | `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` | ID de cliente OAuth "Web" do Google (o mesmo deve estar em `GOOGLE_CLIENT_IDS` no backend). Sem ele, o botão do Google avisa que não está configurado |
 | `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID` | ID de cliente OAuth do iOS |
 | `EXPO_PUBLIC_GOOGLE_IOS_URL_SCHEME` | ID do iOS invertido (`com.googleusercontent.apps...`). Liga o plugin do Google no build |
+| `GOOGLE_MAPS_ANDROID_API_KEY` | Chave do "Maps SDK for Android" (restrita ao pacote `br.com.amparo.app`). Liga o mapa da tela "Alerta enviado" no Android; sem ela, o Android mostra a imagem do design. Exige novo build (`npx expo run:android`) |
 
 O app não guarda nenhuma chave secreta: a IA é chamada só pelo backend.
 

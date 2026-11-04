@@ -98,6 +98,13 @@ export type Ocorrencia = {
   evidencias?: Evidencia[];
 };
 
+/** Ponto de localização enviado no acionamento do SOS. O banco devolve latitude/longitude como texto. */
+export type PontoGps = {
+  latitude: number | string;
+  longitude: number | string;
+  registrado_em: string;
+};
+
 export type ListaOcorrencias = {
   ocorrencias: Ocorrencia[];
   total: number;

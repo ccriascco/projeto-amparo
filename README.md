@@ -47,6 +47,7 @@ O problema que ele resolve: provas de violência costumam se perder ou ficar ace
 
 **Botão de emergência**
 - Acionamento com notificação (simulada) das guardiãs, rastreamento de localização e encerramento.
+- A tela "Alerta enviado" mostra num mapa o ponto enviado no acionamento (lido de `GET /emergencias/:id/rota`).
 - Apenas uma emergência ativa por usuária, mesmo com cliques repetidos.
 - Acionamentos encerrados em até 30 segundos são tratados como engano e não aumentam o risco.
 
