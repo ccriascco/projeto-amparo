@@ -5,9 +5,9 @@ import {
   useAudioRecorder,
   useAudioRecorderState,
 } from 'expo-audio';
-import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 
+import { voltar } from '@/controllers/navegacao';
 import { useAnexos } from '@/models/stores/anexos';
 import { abrirAjustesDoSistema } from '@/utils/permissoes';
 
@@ -59,7 +59,7 @@ export function useTelaAudio() {
           detalhe: `${Math.floor(segundos / 60)} min ${segundos % 60} s`,
         });
       }
-      router.back();
+      voltar();
     } catch {
       setErro('Não foi possível salvar a gravação.');
     }
@@ -67,7 +67,7 @@ export function useTelaAudio() {
 
   const cancelar = async () => {
     if (estado.isRecording) await gravador.stop().catch(() => undefined);
-    router.back();
+    voltar();
   };
 
   return {

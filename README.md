@@ -33,6 +33,7 @@ O problema que ele resolve: provas de violência costumam se perder ou ficar ace
 **Conta e acesso**
 - Cadastro com validação de CPF (dígitos verificadores, com ou sem máscara) e senha forte (letras e números, sem sequências nem senhas comuns).
 - Login com senha e **login disfarçado**: uma segunda senha, pensada para abrir o app a partir de uma tela de calculadora.
+- **Ícone de disfarce:** com o Modo Disfarce ligado, o app aparece no aparelho como uma calculadora. No Android, o ícone e o nome mudam para "Calc" quando a usuária sai do app; no iPhone, só o ícone muda.
 - Logout com revogação do token e exclusão definitiva da conta (confirmada com a senha).
 
 **Rede de apoio**
@@ -523,6 +524,8 @@ Mais detalhes das rotas e regras em [`amparo-backend/README.md`](amparo-backend/
 
 ## Como contribuir
 
+Antes de qualquer mudança, leia o [AGENTS.md](AGENTS.md): ele reúne a estrutura, os comandos, as regras do projeto e os problemas conhecidos (vale para pessoas e para agentes de IA).
+
 Hoje o projeto usa apenas a branch `main`. Para mudanças novas, o fluxo recomendado é:
 
 1. Crie uma branch a partir de `main`:
@@ -539,7 +542,8 @@ Hoje o projeto usa apenas a branch `main`. Para mudanças novas, o fluxo recomen
    npm run lint
    ```
 
-4. Abra o pull request para `main` descrevendo o que mudou, por que mudou e como foi testado. Se houver SQL novo, inclua o script em `amparo-backend/supabase/` e explique a ordem de execução.
+4. Atualize a documentação no mesmo pull request: o `AGENTS.md` e este `README.md` (e o README da parte alterada, se houver) precisam refletir toda mudança no projeto.
+5. Abra o pull request para `main` descrevendo o que mudou, por que mudou e como foi testado. Se houver SQL novo, inclua o script em `amparo-backend/supabase/` e explique a ordem de execução.
 
 Cuidados:
 - Nunca faça commit de `.env`, chaves ou senhas.

@@ -1,7 +1,7 @@
 import { useMutation } from '@tanstack/react-query';
-import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 
+import { voltar as voltarTela } from '@/controllers/navegacao';
 import type { DadosCadastro } from '@/models/tipos';
 import { useRascunhoCadastro } from '@/models/stores/rascunhoCadastro';
 import { useSessao } from '@/models/stores/sessao';
@@ -133,7 +133,7 @@ export function useTelaCadastro() {
       return setPinAberto(true);
     }
     if (etapa > 1) return setEtapa(anterior(etapa - 1));
-    router.back();
+    voltarTela();
   };
 
   const rotuloCta = etapa === 5 ? 'Permitir Localização' : etapa === 6 ? 'Permitir Notificação e Camera' : etapa === 8 ? 'Concluir cadastro' : 'Continuar';

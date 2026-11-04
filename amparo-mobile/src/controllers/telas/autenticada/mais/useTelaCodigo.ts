@@ -1,8 +1,9 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { router, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 
 import { chaves, useAtualizarPerfil, usePerfil } from '@/controllers/dados';
+import { voltar } from '@/controllers/navegacao';
 import { useSessao } from '@/models/stores/sessao';
 import { apiUsuarias } from '@/services/api/endpoints';
 import { ErroApi, mensagemDeErro } from '@/services/api/erros';
@@ -38,11 +39,11 @@ export function useTelaCodigo() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: chaves.perfil });
       if (motivo === 'calculadora') {
-        router.back();
+        voltar();
         useSessao.getState().travar();
         return;
       }
-      router.back();
+      voltar();
     },
     onError: (e) => {
       if (e instanceof ErroApi && e.status === 401) setErroAtual(true);
