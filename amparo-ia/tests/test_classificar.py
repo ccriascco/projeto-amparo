@@ -79,3 +79,42 @@ class TestModelo(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class TestFalhas(unittest.TestCase):
+    """Falha nunca volta como sucesso: o backend só grava o nível quando recebe 200 com "risco"."""
+
+    def test_modelo_carregado_por_caminho_fixo(self):
+        # Mesmo iniciando de outra pasta, o modelo é encontrado (caminho a partir do código)
+        self.assertTrue((classificador.BASE_DIR / 'modelo_risco.pkl').exists())
+        self.assertIsNotNone(classificador.modelo)
+
+    def test_sem_modelo_responde_503(self):
+        original = classificador.modelo
+        classificador.modelo = None
+        try:
+            with self.assertRaises(HTTPException) as ctx:
+                classificar()
+            self.assertEqual(ctx.exception.status_code, 503)
+        finally:
+            classificador.modelo = original
+
+    def test_erro_inesperado_responde_500(self):
+        original = classificador.colunas
+        classificador.colunas = ['coluna_que_nao_existe']
+        try:
+            with self.assertLogs('amparo_ia', level='ERROR'):
+                with self.assertRaises(HTTPException) as ctx:
+                    classificar()
+            self.assertEqual(ctx.exception.status_code, 500)
+        finally:
+            classificador.colunas = original
+
+    def test_regra_de_historico_funciona_mesmo_sem_modelo(self):
+        original = classificador.modelo
+        classificador.modelo = None
+        try:
+            self.assertEqual(classificar(qtd_ocorrencias_totais=0, qtd_panico_acionado=0)['risco'], 'Medio')
+        finally:
+            classificador.modelo = original
+

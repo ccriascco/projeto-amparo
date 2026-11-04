@@ -491,6 +491,8 @@ curl -X POST http://127.0.0.1:8000/classificar \
 { "risco": "Alto", "codigo": 2, "justificativa": "Classificacao baseada em Inteligencia Artificial (Random Forest)." }
 ```
 
+Respostas da IA: `200` sempre traz `risco` (`Baixo`, `Medio` ou `Alto`); `401` segredo errado; `422` dados inválidos; `503` modelo não carregado (`modelo_risco.pkl` ausente); `500` erro inesperado. O backend só grava o nível quando recebe um desses três valores; qualquer outra resposta fica no log como "Análise de risco indisponível" e a ocorrência é salva sem nível.
+
 ### Códigos de resposta
 
 | Código | Quando |
@@ -514,6 +516,7 @@ Mais detalhes das rotas e regras em [`amparo-backend/README.md`](amparo-backend/
 | A IA responde `401` | Segredo diferente entre backend e IA | Use o mesmo valor nos dois |
 | `DLL load failed ... política de Controle de Aplicativo` ao subir a IA no Windows | Política do Windows bloqueando DLLs do scikit-learn/SciPy dentro do `venv` | Recrie o `venv` fora do OneDrive ou use um Python instalado no sistema |
 | Erro ou aviso ao carregar `modelo_risco.pkl` | Versão do scikit-learn diferente da usada no treino | Instale as versões do `requirements.txt` (scikit-learn 1.9.0) |
+| A IA responde `503 Modelo nao treinado` e a leitura de risco não muda | `modelo_risco.pkl` ou `colunas_modelo.pkl` faltando na pasta `amparo-ia` | Copie os arquivos para `amparo-ia/` (o caminho não depende mais da pasta de onde a IA é iniciada) |
 | `401 Sessão encerrada. Faça login novamente.` | Token revogado pelo logout, ou emitido antes da revogação existir | Faça login de novo |
 | `429 Too Many Requests` | Limite de requisições: login 10/min por IP e e-mail; login disfarçado 10/min por IP; cadastro 5/min por IP; demais rotas 120/min por usuária | Aguarde um minuto |
 | `500`/`503` em todas as rotas protegidas | Tabela `tokens_revogados` ausente, ou banco fora do ar | Rode `logout_e_exclusao_conta.sql` e confira o Supabase |
