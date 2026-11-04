@@ -9,6 +9,8 @@ import { montarEntradaRisco } from '../utils/risco.util';
 const JANELA_DUPLICIDADE_MS = 30_000;
 const VALIDADE_LINK_EVIDENCIA_S = 300;
 const CAMPOS_EDITAVEIS = ['tipos_violencia', 'mensagem', 'data_ocorrencia', 'latitude', 'longitude'];
+/** Únicos níveis que a IA devolve (sem acento, como no modelo). Qualquer outra resposta não é gravada. */
+const NIVEIS_RISCO = ['Baixo', 'Medio', 'Alto'];
 
 @Injectable()
 export class OcorrenciasService {
@@ -117,12 +119,19 @@ export class OcorrenciasService {
 
       if (respostaIA.ok) {
         const resultado = await respostaIA.json();
-        await this.supabase
+        // Resposta "ok" sem nível válido (ex.: modelo não carregado) não pode virar nível vazio no banco
+        if (!NIVEIS_RISCO.includes(resultado?.risco)) {
+          this.logger.warn(`Análise de risco indisponível: a IA respondeu sem nível válido (${String(resultado?.erro ?? 'sem campo risco').slice(0, 120)}).`);
+          return;
+        }
+        const { error: erroUsuaria } = await this.supabase
           .from('usuarias')
           .update({ nivel_risco: resultado.risco })
           .eq('id', usuariaId);
+        if (erroUsuaria) this.logger.error(`Falha ao gravar o nível de risco da usuária: ${erroUsuaria.message}`);
         if (ocorrenciaId) {
-          await this.supabase.from('ocorrencias').update({ nivel_risco: resultado.risco }).eq('id', ocorrenciaId);
+          const { error: erroOcorrencia } = await this.supabase.from('ocorrencias').update({ nivel_risco: resultado.risco }).eq('id', ocorrenciaId);
+          if (erroOcorrencia) this.logger.error(`Falha ao gravar o nível de risco da ocorrência: ${erroOcorrencia.message}`);
         }
 
         if (resultado.risco === 'Alto' && nivelRiscoAnterior !== 'Alto') {

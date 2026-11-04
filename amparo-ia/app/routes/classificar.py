@@ -3,7 +3,7 @@ from fastapi import FastAPI, Header, HTTPException
 
 from app.config import INTERNAL_SECRET
 from app.models.dados_usuaria import DadosUsuaria
-from app.services.classificador import classificar
+from app.services.classificador import FalhaClassificacao, ModeloIndisponivel, classificar
 
 
 def verificar_origem(x_internal_secret: str | None):
@@ -12,8 +12,14 @@ def verificar_origem(x_internal_secret: str | None):
 
 
 def classificar_risco(dados: DadosUsuaria, x_internal_secret: str | None = Header(default=None)):
+    """Sucesso (200) sempre traz "risco". Sem modelo: 503. Erro inesperado: 500."""
     verificar_origem(x_internal_secret)
-    return classificar(dados)
+    try:
+        return classificar(dados)
+    except ModeloIndisponivel as e:
+        raise HTTPException(status_code=503, detail=str(e))
+    except FalhaClassificacao as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 def registrar_rotas(app: FastAPI):

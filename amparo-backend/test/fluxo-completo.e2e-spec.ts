@@ -685,6 +685,7 @@ describe('5. Classificação de risco pela IA', () => {
   it.each([
     ['responde erro 500', 'erro500'],
     ['está fora do ar (erro de rede)', 'erroRede'],
+    ['responde 200 sem nível de risco (modelo não carregado)', 'semRisco'],
   ] as const)('[I-08] se a IA %s, a ocorrência é salva e o erro é registrado no log', async (_d, modo) => {
     const { id, token } = await criarUsuaria(app);
     ia.modo = modo;
@@ -694,6 +695,7 @@ describe('5. Classificação de risco pela IA', () => {
     expect(bancoTeste.tabelas.ocorrencias.some((o) => o.id === r.body.ocorrencia.id)).toBe(true);
     expect(await esperar(() => logs.some(falhaDaIA), 2000)).toBe(true);
     expect(nivelRisco(id)).toBeNull();
+    expect(bancoTeste.tabelas.ocorrencias.find((o) => o.id === r.body.ocorrencia.id)?.nivel_risco ?? null).toBeNull();
   });
 
   it('[I-09] se a IA demorar, a resposta não espera e o timeout (5 s) é registrado', async () => {
