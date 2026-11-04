@@ -12,12 +12,6 @@ import { fixas, raios } from '@/views/theme/tokens';
 // depois de SEGURAR por TEMPO_SEGURAR_MS, com um anel que cresce enquanto ela segura.
 export const TEMPO_SEGURAR_MS = 3000;
 
-// DIAGNÓSTICO TEMPORÁRIO (só no build de desenvolvimento): cada passo do SOS vai para o log,
-// com a instância do botão, para achar a causa dos acionamentos sem toque vistos no emulador.
-const logSOS = (instancia: string, evento: string) => {
-  if (__DEV__) console.log(`[SOS] ${instancia} ${evento}`);
-};
-
 type Props = { aoAcionar: () => void; desabilitado?: boolean; testID?: string };
 
 export function BotaoSOS({ aoAcionar, desabilitado = false, testID }: Props) {
@@ -25,20 +19,12 @@ export function BotaoSOS({ aoAcionar, desabilitado = false, testID }: Props) {
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pressionado = useRef(false);
   const [segurando, setSegurando] = useState(false);
-  const [instancia] = useState(() => Math.random().toString(36).slice(2, 7));
-
-  useEffect(() => {
-    logSOS(instancia, 'montado');
-    return () => logSOS(instancia, 'desmontado');
-  }, [instancia]);
 
   useEffect(() => () => {
     if (timer.current) clearTimeout(timer.current);
   }, []);
 
-
   const iniciar = () => {
-    logSOS(instancia, `dedo encostou (desabilitado=${desabilitado})`);
     if (desabilitado) return;
     pressionado.current = true;
     setSegurando(true);
@@ -49,19 +35,14 @@ export function BotaoSOS({ aoAcionar, desabilitado = false, testID }: Props) {
       setSegurando(false);
       progresso.value = 0;
       // Só aciona se ela ainda estiver segurando o botão
-      if (!pressionado.current) {
-        logSOS(instancia, 'cronômetro terminou, mas o botão não está pressionado: não aciona');
-        return;
-      }
+      if (!pressionado.current) return;
       pressionado.current = false;
-      logSOS(instancia, 'ACIONOU pelo cronômetro (3 s segurando)');
       if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
       aoAcionar();
     }, TEMPO_SEGURAR_MS);
   };
 
   const cancelar = () => {
-    logSOS(instancia, 'dedo saiu / cancelado');
     pressionado.current = false;
     if (timer.current) {
       clearTimeout(timer.current);
@@ -76,7 +57,6 @@ export function BotaoSOS({ aoAcionar, desabilitado = false, testID }: Props) {
   // disfarce), o aviso de que o dedo saiu pode se perder: o pedido em andamento é cancelado,
   // para o SOS nunca disparar sem ela estar segurando o botão.
   const aoMudarEstadoDoApp = useEffectEvent((estado: string) => {
-    logSOS(instancia, `app mudou para ${estado}`);
     if (estado !== 'active') cancelar();
   });
   useEffect(() => {
@@ -101,11 +81,7 @@ export function BotaoSOS({ aoAcionar, desabilitado = false, testID }: Props) {
       accessibilityState={{ disabled: desabilitado, busy: segurando }}
       accessibilityActions={[{ name: 'longpress', label: 'Acionar emergência' }]}
       onAccessibilityAction={(e) => {
-        logSOS(instancia, `ação de acessibilidade: ${e.nativeEvent.actionName}`);
-        if (e.nativeEvent.actionName === 'longpress') {
-          logSOS(instancia, 'ACIONOU pela ação de acessibilidade');
-          aoAcionar();
-        }
+        if (e.nativeEvent.actionName === 'longpress') aoAcionar();
       }}
       style={{ alignSelf: 'center', width: 200, height: 200, alignItems: 'center', justifyContent: 'center', opacity: desabilitado ? 0.5 : 1 }}
     >

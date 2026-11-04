@@ -45,11 +45,7 @@ export function useInicializacaoApp() {
   const disfarce = useSessao((s) => s.usuaria?.modo_disfarcado);
 
   useEffect(() => {
-    if (__DEV__) console.log('[APP] tela raiz montada');
     useSessao.getState().iniciar();
-    return () => {
-      if (__DEV__) console.log('[APP] tela raiz desmontada');
-    };
   }, []);
 
   // Com o Modo Disfarce ligado, sair do app trava de novo na calculadora
