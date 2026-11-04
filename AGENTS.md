@@ -82,6 +82,7 @@ python -m uvicorn main:app --port 8000 --reload
 
 - Textos que aparecem fora do app (SMS de código, notificações, nome do ícone) **não citam o Amparo** nem o tema.
 - A localização é enviada **só quando o SOS é acionado** (não há rastreamento contínuo).
+- O mapa da tela "Alerta enviado" mostra só esse ponto, sem `showsUserLocation`. Abrir o mapa envia as coordenadas ao provedor (Apple, Google ou OpenStreetMap): não use mapas em outras telas sem aprovação.
 - Telas públicas não revelam se uma conta existe, nem o e-mail ou telefone cadastrados.
 - Textos de privacidade, SOS, guias e disfarce ficam em `amparo-mobile/src/config/conteudo/` e foram aprovados. Não reescreva sem aprovação.
 - Modo disfarce: no Android, o app vira "Calc" com ícone de calculadora (a troca acontece quando o app vai para segundo plano); no iPhone, só o ícone muda.
@@ -104,4 +105,7 @@ python -m uvicorn main:app --port 8000 --reload
 - **Emulador com tela branca no dev client:** verifique se o modo avião está desligado e rode `adb reverse tcp:8081 tcp:8081` e `adb reverse tcp:3000 tcp:3000`.
 - **Git Bash + adb:** use `MSYS_NO_PATHCONV=1` antes de comandos `adb` com caminhos do aparelho.
 - **Ícone de disfarce no Android:** a biblioteca `expo-alternate-app-icons` desativa a `MainActivity` quando o ícone "Calc" está ligado; abrir o dev client por `.MainActivity` falha nesse estado (reinstalar o APK resolve).
+- **Mapa no Android:** precisa de `GOOGLE_MAPS_ANDROID_API_KEY` no `.env` do app e de um novo build; sem a chave aparece a imagem do design. Na web o mapa é um iframe do OpenStreetMap (`MapaLocalizacao.web.tsx`), porque o `react-native-maps` não roda no navegador.
+- **Leitura de risco não muda:** confira o log do backend ("Análise de risco indisponível") e o da IA. A IA responde `503` quando não acha o modelo; o backend só grava `Baixo`, `Medio` ou `Alto` e nunca grava resposta sem nível.
+- **Metro depois de trocar de branch:** se aparecer "Unable to resolve" de um arquivo que não existe no branch atual, reinicie com `--clear`.
 - `android/` e `ios/` são gerados (`expo prebuild`) e não são versionados: mudanças nativas vão em config plugins.

@@ -2,18 +2,29 @@
 import pickle
 import pandas as pd
 
-from app.config import logger
+from app.config import BASE_DIR, logger
 from app.models.dados_usuaria import DadosUsuaria
 
-# O modelo é lido da pasta de onde o serviço é iniciado (amparo-ia), como sempre foi.
+
+class ModeloIndisponivel(Exception):
+    """O arquivo do modelo não foi encontrado: o serviço não consegue classificar."""
+
+
+class FalhaClassificacao(Exception):
+    """Erro inesperado ao calcular o risco."""
+
+
+# O modelo fica na pasta amparo-ia. O caminho é fixo a partir deste arquivo, para funcionar
+# de qualquer pasta onde o serviço for iniciado.
 try:
-    with open('modelo_risco.pkl', 'rb') as f:
+    with open(BASE_DIR / 'modelo_risco.pkl', 'rb') as f:
         modelo = pickle.load(f)
-    with open('colunas_modelo.pkl', 'rb') as f:
+    with open(BASE_DIR / 'colunas_modelo.pkl', 'rb') as f:
         colunas = pickle.load(f)
 except FileNotFoundError:
     modelo = None
     colunas = []
+    logger.error("Modelo de risco não encontrado em %s: /classificar vai responder 503.", BASE_DIR)
 
 
 def classificar(dados: DadosUsuaria):
@@ -33,7 +44,7 @@ def classificar(dados: DadosUsuaria):
             }
 
         if modelo is None:
-            return {"erro": "Modelo nao treinado."}
+            raise ModeloIndisponivel("Modelo nao treinado.")
 
         # 2. Montar DataFrame
         df_novo = pd.DataFrame([{
@@ -61,6 +72,8 @@ def classificar(dados: DadosUsuaria):
             "codigo": int(previsao),
             "justificativa": "Classificacao baseada em Inteligencia Artificial (Random Forest)."
         }
+    except ModeloIndisponivel:
+        raise
     except Exception as e:
         logger.exception("Falha ao classificar risco")
-        return {"erro": "Falha interna ao calcular o risco."}
+        raise FalhaClassificacao("Falha interna ao calcular o risco.") from e

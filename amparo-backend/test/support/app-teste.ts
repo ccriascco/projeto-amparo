@@ -14,7 +14,7 @@ import { configurarApp } from '../../src/config/configurar-app';
 import { bancoTeste } from './supabase-memoria';
 import { GoogleService, IdentidadeGoogle } from '../../src/services/google.service';
 
-export type ModoIA = 'normal' | 'erro500' | 'erroRede' | 'lenta';
+export type ModoIA = 'normal' | 'erro500' | 'erroRede' | 'lenta' | 'semRisco';
 
 export const ia = {
   modo: 'normal' as ModoIA,
@@ -53,6 +53,8 @@ export function instalarRede(): void {
     if (ia.usarReal && ia.modo === 'normal') return fetchOriginal(url, opcoes);
     if (ia.modo === 'erroRede') throw new TypeError('fetch failed');
     if (ia.modo === 'erro500') return new Response('{"detail":"erro interno"}', { status: 500 });
+    // Como a IA antiga respondia sem o modelo: 200 sem o campo "risco"
+    if (ia.modo === 'semRisco') return new Response('{"erro":"Modelo nao treinado."}', { status: 200 });
     if (ia.modo === 'lenta') {
       await new Promise((resolve, reject) => {
         const t = setTimeout(resolve, 8000);
