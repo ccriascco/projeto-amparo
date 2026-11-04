@@ -2,6 +2,7 @@ import { useMutation } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 
+import { voltar } from '@/controllers/navegacao';
 import type { CanalRecuperacao } from '@/models/tipos';
 import { apiUsuarias } from '@/services/api/endpoints';
 import { mensagemDeErro } from '@/services/api/erros';
@@ -89,7 +90,7 @@ export function useTelaRecuperarSenha() {
       setErroGeral(null);
       setErros({});
       if (etapa === 2) return setEtapa(1);
-      router.back();
+      voltar();
     },
   };
 }
