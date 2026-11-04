@@ -6,7 +6,7 @@ App do Amparo em **React Native + TypeScript (Expo SDK 57)**, feito a partir do 
 
 - **Conta:** cadastro em 8 etapas (CPF validado, senha forte, permissões, Modo Disfarce e guardiãs), login por e-mail e senha ou Google, recuperação de senha por código (e-mail ou SMS), perfil, troca de senha, tema claro/escuro/automático, sair e excluir a conta.
 - **Sessão do aparelho:** o app reabre sem pedir a senha de novo. Com o Modo Disfarce ligado, ele abre como uma calculadora funcional, e só o código de 4 números + "=" destrava. Cinco códigos errados encerram a sessão, mas o app continua parecendo uma calculadora. No Android, o ícone e o nome do app viram uma calculadora ("Calc"); no iPhone, só o ícone muda (a Apple não deixa trocar o nome, e o iOS avisa a troca citando o app); no navegador, o ícone e o título da aba viram "Calc" (`services/iconeDisfarce.web.ts`).
-- **Início:** botão SOS (segurar 3 s), registros da semana, cartão "Leitura de risco · IA" (escala Baixo · Médio · Alto, com a data da última atualização e como a IA calcula), ações rápidas e guias.
+- **Início:** botão SOS (segurar 3 s), registros da semana, cartão "Leitura de risco · IA" (escala Baixo · Médio · Alto, com a data da última atualização e como a IA calcula; o ícone segue o design: escudo no Baixo, sino no Médio e boia no Alto), ações rápidas e guias.
 - **Pedido de ajuda:** envia a localização do momento do acionamento (uma vez só, sem reenvio), mostra esse ponto num mapa real (Apple Maps no iPhone, Google Maps no Android, OpenStreetMap na web; sem localização, fica a imagem do design) e "Quem foi avisada" (confirmou ou aguardando).
 - **Rede de apoio:** até 5 guardiãs, com o status do convite e a opção de reenviar.
 - **Ocorrências:**
@@ -132,7 +132,9 @@ src/
   utils/               armazenamento seguro, código local, permissões, mapas, datas, texto,
                        validacao/ (CPF, telefone, datas e senha, iguais às do backend)
   config/              conteudo/ (textos fixos do design: guias, FAQs, artigos, tipos de violência, anexos)
-assets/                imagens (na raiz, como o Expo espera)
+assets/                imagens (na raiz, como o Expo espera). O ícone do app (tela inicial, Android, aba do
+                       navegador e abertura) é a marca do logo.png: gere com `python scripts/gerar-icone-app.py`
+scripts/               geradores de imagens (ícone do app)
 e2e/                   teste de ponta a ponta
 ```
 
