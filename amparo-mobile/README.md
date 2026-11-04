@@ -6,7 +6,7 @@ App do Amparo em **React Native + TypeScript (Expo SDK 57)**, feito a partir do 
 
 - **Conta:** cadastro em 8 etapas (CPF validado, senha forte, permissões, Modo Disfarce e guardiãs), login por e-mail e senha ou Google, recuperação de senha por código (e-mail ou SMS), perfil, troca de senha, tema claro/escuro/automático, sair e excluir a conta.
 - **Sessão do aparelho:** o app reabre sem pedir a senha de novo. Com o Modo Disfarce ligado, ele abre como uma calculadora funcional, e só o código de 4 números + "=" destrava. Cinco códigos errados encerram a sessão, mas o app continua parecendo uma calculadora.
-- **Início:** botão SOS (segurar 3 s), registros da semana, leitura de risco calculada pela IA, ações rápidas e guias.
+- **Início:** botão SOS (segurar 3 s), registros da semana, cartão "Leitura de risco · IA" (escala Baixo · Médio · Alto, com a data da última atualização e como a IA calcula), ações rápidas e guias.
 - **Pedido de ajuda:** envia a localização do momento do acionamento (uma vez só, sem reenvio) e mostra "Quem foi avisada" (confirmou ou aguardando).
 - **Rede de apoio:** até 5 guardiãs, com o status do convite e a opção de reenviar.
 - **Ocorrências:**

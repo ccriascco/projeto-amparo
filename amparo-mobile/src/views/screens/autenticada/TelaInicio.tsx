@@ -3,6 +3,7 @@ import { Pressable, RefreshControl, View } from 'react-native';
 import { useTelaInicio } from '@/controllers/telas/autenticada/useTelaInicio';
 import type { NivelRisco, Ocorrencia, Perfil } from '@/models/tipos';
 import { BotaoSOS } from '@/views/components/dominio/BotaoSOS';
+import { CartaoLeituraRisco } from '@/views/components/dominio/CartaoLeituraRisco';
 import { TelaInterna } from '@/views/components/layout/TelaInterna';
 import { Cartao, CartaoInfo, CirculoIcone } from '@/views/components/ui/Cartao';
 import { Carrossel } from '@/views/components/ui/Carrossel';
@@ -94,6 +95,18 @@ export default function TelaInicio() {
         </Texto>
       ) : null}
 
+      <CartaoLeituraRisco
+        nivel={c.perfil?.nivel_risco ?? null}
+        atualizadaEm={c.leituraAtualizadaEm}
+        carregando={c.carregandoPerfil}
+        erro={c.erroPerfil}
+        aoTentar={c.recarregarPerfil}
+        aoExplicar={() =>
+          c.perfil?.nivel_risco &&
+          c.mostrarInfo({ titulo: 'Como a IA calcula', texto: textoClassificacao(ROTULO_RISCO[c.perfil.nivel_risco]) })
+        }
+      />
+
       <View style={{ gap: 12 }}>
         <Texto peso={500} tamanho={14} cor="nota" style={{ letterSpacing: -0.24 }}>
           Ações rápidas
@@ -114,7 +127,6 @@ export default function TelaInicio() {
         perfil={c.perfil}
         carregando={c.carregandoPerfil}
         erro={c.erroPerfil}
-        aoTentar={c.recarregarPerfil}
         ocorrencias={c.ocorrencias}
         aoExplicar={(t) => c.mostrarInfo(t)}
         aoDelegacias={c.abrirDelegacias}
@@ -160,7 +172,6 @@ function CartaoRisco({
   perfil,
   carregando,
   erro,
-  aoTentar,
   ocorrencias,
   aoExplicar,
   aoDelegacias,
@@ -169,27 +180,16 @@ function CartaoRisco({
   perfil?: Perfil;
   carregando: boolean;
   erro: boolean;
-  aoTentar: () => void;
   ocorrencias?: Ocorrencia[];
   aoExplicar: (t: { titulo: string; texto: string }) => void;
   aoDelegacias: () => void;
   aoRecursos: () => void;
 }) {
   const { cores } = useTema();
-  if (carregando) {
-    return <CartaoInfo icone="shield-check" titulo="Carregando sua leitura…" corpo="Só um instante." />;
-  }
-  if (erro || !perfil) {
-    return <CartaoInfo icone="refresh-cw" titulo="Não foi possível carregar sua leitura" corpo="Toque para tentar de novo." onPress={aoTentar} />;
-  }
+  // Carregando, erro e "ainda sem leitura" aparecem no cartão da leitura de risco, logo abaixo do SOS
+  if (carregando || erro || !perfil?.nivel_risco) return null;
   const risco = perfil.nivel_risco;
   const explicar = () => aoExplicar({ titulo: 'Como chegamos nesta leitura', texto: textoClassificacao(ROTULO_RISCO[risco ?? 'Baixo']) });
-
-  if (!risco) {
-    return (
-      <CartaoInfo icone="shield-check" titulo="Ainda não há uma leitura" corpo="Ela aparece depois do seu primeiro registro de ocorrência." />
-    );
-  }
 
   if (risco === 'Baixo') {
     const dias = (ocorrencias ?? []).map(diaDaOcorrencia).sort().reverse()[0];
